@@ -178,6 +178,11 @@
           <svg class="wasla-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3.5h14v12L14 20.5H5zM14 20.5v-5h5M8 8h8M8 12h5"/></svg>
           <span>الملاحظات</span>
         </li>
+        <li class="nav-item" data-page="ai-assistant" id="nav-ai">
+          <span class="nav-node" aria-hidden="true"></span>
+          <svg class="wasla-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 3" /></svg>
+          <span>المساعد الذكي</span>
+        </li>
       </ul>
       <div class="sidebar-footer">
         <div class="user-profile-card">
@@ -444,6 +449,108 @@
             <div id="notes-content"></div>
           </div>
         </div>
+
+        <!-- Wasla AI Assistant Standalone Page -->
+        <div class="page" id="page-ai-assistant">
+          <div class="ai-page-layout">
+            <!-- Header Card -->
+            <div class="ai-header-card">
+              <div class="ai-header-main">
+                <div class="ai-badge-icon">
+                  <svg class="wasla-nav-icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M12 7v5l3 3" />
+                  </svg>
+                </div>
+                <div class="ai-header-text">
+                  <h2>مساعد وصلة الذكي (Wasla AI)</h2>
+                  <p>تحليل فوري واستعلام ذكي محصور حصرياً في بيانات وأداء فريق وصلة عبر Groq</p>
+                </div>
+              </div>
+              <div class="ai-header-actions">
+                <span class="ai-status-pill">
+                  <span class="ai-status-dot"></span>
+                  متصل ببيانات الفريق
+                </span>
+                <button type="button" class="btn-text-action" onclick="openGroqKeyModal()" title="إعداد مفتاح Groq API في Supabase">
+                  <i class="fas fa-key"></i>
+                  إعدادات المفتاح
+                </button>
+              </div>
+            </div>
+
+            <!-- Suggestion Quick Chips -->
+            <div class="ai-suggestions-bar">
+              <span class="ai-suggestions-label">استعلامات سريعة:</span>
+              <div class="ai-chips-list">
+                <button type="button" class="ai-chip" onclick="askQuickPrompt('من هم الأعضاء المتأخرون في تسليم المهام؟')">
+                  المتأخرون في المهام
+                </button>
+                <button type="button" class="ai-chip" onclick="askQuickPrompt('ما هي نسبة إنجاز الكورسات بين الأعضاء؟')">
+                  نسب إنجاز الكورسات
+                </button>
+                <button type="button" class="ai-chip" onclick="askQuickPrompt('من من الأعضاء يمتلك لابتوب ويمكنه السفر للإسكندرية؟')">
+                  توفر اللابتوب وسفر الإسكندرية
+                </button>
+                <button type="button" class="ai-chip" onclick="askQuickPrompt('من هم أصحاب المراكز الأولى في الترتيب؟')">
+                  متصدرو الترتيب
+                </button>
+                <button type="button" class="ai-chip" onclick="askQuickPrompt('لخص لي أهم الملاحظات المسجلة للفريق حالياً')">
+                  ملخص الملاحظات
+                </button>
+              </div>
+            </div>
+
+            <!-- Chat Window -->
+            <div class="ai-chat-window">
+              <div class="ai-messages-container" id="ai-messages">
+                <div class="ai-msg ai-msg-bot">
+                  <div class="ai-msg-avatar">و</div>
+                  <div class="ai-msg-content">
+                    <p>أهلاً بك! أنا <strong>مساعد وصلة الذكي</strong>. مهمتي الإجابة حصرياً عن بيانات المنظومة الحالية (حالة الأعضاء، الكورسات، تسليم المهام، المواعيد النهائية، الملاحظات، وجاهزية الفريق). كيف يمكنني مساعدتك اليوم؟</p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Chat Input Bar -->
+              <div class="ai-input-wrapper">
+                <form id="ai-chat-form" onsubmit="handleAiSubmit(event)">
+                  <div class="ai-input-box">
+                    <textarea id="ai-prompt-input" rows="1" placeholder="اسأل عن أي معلومة تخص الفريق أو المهام..." required></textarea>
+                    <button type="submit" id="ai-send-btn" class="btn btn-primary ai-send-btn" aria-label="إرسال">
+                      <i class="fas fa-paper-plane"></i>
+                      <span>إرسال</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Groq API Key Modal -->
+  <div class="modal-overlay" id="groq-key-modal">
+    <div class="modal" style="max-width:480px">
+      <div class="modal-header">
+        <h3><i class="fas fa-shield-alt text-purple"></i> إعداد مفتاح Groq API في Supabase</h3>
+        <button type="button" class="modal-close" onclick="closeGroqKeyModal()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:0.92rem;color:var(--text-secondary);line-height:1.6;margin-bottom:14px">
+          يتم حفظ المفتاح بشكل مشفر ومخفي تماماً في <strong>Supabase Vault</strong> على خوادم السيرفر، ولا يمكن للمتصفح أو كود الواجهة الأمامية الوصول إليه نهائياً.
+        </p>
+        <div class="form-group">
+          <label>مفتاح Groq API (يبدأ بـ gsk_...)</label>
+          <input type="password" id="groq-key-input" placeholder="gsk_..." style="direction:ltr;text-align:left;font-family:monospace" />
+        </div>
+        <div id="groq-key-status" style="font-size:0.9rem;margin-top:8px"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeGroqKeyModal()">إغلاق</button>
+        <button type="button" class="btn btn-primary" onclick="saveGroqKeyToSupabase()">حفظ في Supabase Vault</button>
       </div>
     </div>
   </div>
@@ -622,8 +729,8 @@
     let noteDraftText = "";
     let noteDraftTarget = "";
 
-    const SUPABASE_URL = "https://gmkfhaodjebttlmoehhx.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdta2ZoYW9kamVidHRsbW9laGh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYxODA1MTEsImV4cCI6MjEwMTc1NjUxMX0.JWVvz7ECUjRMsaQqwX992SPPRJTDfPn7sCiLRd6Zpf0";
+    const SUPABASE_URL = "https://mukqrnmveydxfphftlaq.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im11a3Fybm12ZXlkeGZwaGZ0bGFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkwNzk2MDEsImV4cCI6MjEwNDY1NTYwMX0.-Kv6J-vnpBiONn6mpsXMZRdFPOvkjQ-HDQ_iVEpWPaM";
 
     let sbClient = null;
     function getSupabase() {
@@ -1042,7 +1149,8 @@
       dashboard: "M58 18C25 18 24 83 48 95",
       members: "M58 18C25 18 24 83 48 95c22 11 20 50-2 61",
       ranking: "M58 18C25 18 24 83 48 95c22 11 20 50-2 61-25 13-24 56 2 68",
-      notes: "M58 18C25 18 24 83 48 95c22 11 20 50-2 61-25 13-24 56 2 68 25 12 24 55 0 68"
+      notes: "M58 18C25 18 24 83 48 95c22 11 20 50-2 61-25 13-24 56 2 68 25 12 24 55 0 68",
+      "ai-assistant": "M58 18C25 18 24 83 48 95c22 11 20 50-2 61-25 13-24 56 2 68 25 12 24 55 0 68-23 12-23 54 5 58"
     };
 
     function updateNavConnection(page) {
@@ -1064,12 +1172,16 @@
         updateNavConnection(page);
         document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
         document.getElementById("page-" + page).classList.add("active");
-        const titles = { dashboard: "لوحة التحكم", members: "الأعضاء", notes: "الملاحظات", ranking: "نظام الترتيب" };
-        document.getElementById("page-title").textContent = titles[page];
+        const titles = { dashboard: "لوحة التحكم", members: "الأعضاء", notes: "الملاحظات", ranking: "نظام الترتيب", "ai-assistant": "مساعد وصلة الذكي" };
+        document.getElementById("page-title").textContent = titles[page] || "لوحة التحكم";
         if (page === "dashboard") renderDashboard();
         if (page === "members") renderMembersTable();
         if (page === "notes") renderNotes();
         if (page === "ranking") renderRanking();
+        if (page === "ai-assistant") {
+          const inp = document.getElementById("ai-prompt-input");
+          if (inp) setTimeout(() => inp.focus(), 100);
+        }
         document.getElementById("sidebar").classList.remove("open");
       });
     });
@@ -2078,6 +2190,233 @@
       } catch (_) {}
     }
 
+    /* =====================================================
+       Wasla AI Assistant Integration
+       ===================================================== */
+
+    function getSystemDataContext() {
+      const activeMembers = (members && members.length > 0) ? members : SAMPLE_MEMBERS;
+      const memSummary = activeMembers.map((m, i) => {
+        const lap = m.hasLaptop ? "نعم" : "لا";
+        const alex = m.canGoAlexandria ? "نعم يقدر" : "لا";
+        const rnk = m.completionRank ? `#${m.completionRank}` : "غير محدد";
+        return `- الاسم: ${m.fullName} | الكورس: ${m.courseStatus} | المهمة: ${m.taskStatus} | موعد التسليم: ${m.deadline || "غير محدد"} | تاريخ الإنجاز: ${m.taskFinishDate || "لم ينجز"} | الترتيب: ${rnk} | لابتوب: ${lap} | سفر إسكندرية: ${alex} | سكن: ${m.residence || "غير محدد"} | ملاحظات: ${m.teamNotes || "لا توجد"}`;
+      }).join("\n");
+
+      let notesSummary = "";
+      if (notes && notes.Wasla && notes.Wasla.length > 0) {
+        notesSummary = notes.Wasla.map(n => `- [${n.date}] كاتب الملاحظة: ${n.author} (${n.authorRole || "عضو"}): "${n.text}"`).join("\n");
+      } else {
+        notesSummary = "لا توجد ملاحظات مسجلة حالياً.";
+      }
+
+      return `[قائمة أعضاء فريق وصلة (${activeMembers.length} عضو)]:\n${memSummary}\n\n[ملاحظات الفريق]:\n${notesSummary}`;
+    }
+
+    async function handleAiSubmit(e) {
+      if (e) e.preventDefault();
+      const input = document.getElementById("ai-prompt-input");
+      const question = (input ? input.value : "").trim();
+      if (!question) return;
+
+      input.value = "";
+      input.style.height = "auto";
+
+      appendAiMessage(question, "user");
+
+      const loadingId = "ai-loading-" + Date.now();
+      appendAiLoading(loadingId);
+
+      try {
+        const sb = getSupabase();
+        if (!sb) {
+          removeAiLoading(loadingId);
+          appendAiMessage("تنبيه: قاعدة بيانات Supabase غير متصلة حالياً. تأكد من إعدادات الاتصال.", "bot", true);
+          return;
+        }
+
+        const context = getSystemDataContext();
+        const { data, error } = await sb.functions.invoke("wasla-ai", {
+          body: { question, context }
+        });
+
+        removeAiLoading(loadingId);
+
+        if (error) {
+          console.error("wasla-ai function error:", error);
+          let errorMsg = error.message || "حدث خطأ أثناء التواصل مع خادم الذكاء الاصطناعي.";
+          if (error.context && error.context.json) {
+            const errBody = await error.context.json().catch(() => null);
+            if (errBody && errBody.error) errorMsg = errBody.error;
+          }
+          if (errorMsg.includes("غير مُعدّ") || errorMsg.includes("Groq API")) {
+            appendAiMessage(`${errorMsg} <br><button type="button" class="btn btn-primary" style="margin-top:10px;font-size:0.85rem;padding:6px 14px;" onclick="openGroqKeyModal()">إعداد مفتاح Groq API الآن</button>`, "bot", true);
+          } else {
+            appendAiMessage(`عذراً: ${errorMsg}`, "bot", true);
+          }
+          return;
+        }
+
+        if (data && data.answer) {
+          appendAiMessage(data.answer, "bot");
+        } else if (data && data.error) {
+          appendAiMessage(`تنبيه: ${data.error}`, "bot", true);
+        } else {
+          appendAiMessage("لم يصل رد صالح من المساعد.", "bot", true);
+        }
+      } catch (err) {
+        console.error("AI invoke error:", err);
+        removeAiLoading(loadingId);
+        appendAiMessage("تعذر إرسال السؤال إلى خادم المساعد. تحقق من الاتصال بالإنترنت.", "bot", true);
+      }
+    }
+
+    function appendAiMessage(text, sender, isHtml = false) {
+      const container = document.getElementById("ai-messages");
+      if (!container) return;
+
+      const msgDiv = document.createElement("div");
+      msgDiv.className = `ai-msg ai-msg-${sender}`;
+
+      const avatar = document.createElement("div");
+      avatar.className = "ai-msg-avatar";
+      avatar.textContent = sender === "user" ? (currentUser ? currentUser.displayName.slice(0, 1) : "أ") : "و";
+
+      const content = document.createElement("div");
+      content.className = "ai-msg-content";
+
+      if (isHtml) {
+        content.innerHTML = `<div class="ai-msg-text">${text}</div>`;
+      } else {
+        const formatted = formatAiText(text);
+        content.innerHTML = `<div class="ai-msg-text">${formatted}</div>`;
+      }
+
+      if (sender === "bot") {
+        const actions = document.createElement("div");
+        actions.className = "ai-msg-actions";
+        actions.innerHTML = `<button type="button" class="ai-copy-btn" onclick="copyAiResponse(this)" title="نسخ الرد"><i class="far fa-copy"></i> نسخ</button>`;
+        content.appendChild(actions);
+      }
+
+      msgDiv.appendChild(avatar);
+      msgDiv.appendChild(content);
+      container.appendChild(msgDiv);
+
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function formatAiText(raw) {
+      const safe = raw.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      const lines = safe.split("\n");
+      let out = "";
+      let inList = false;
+
+      for (let line of lines) {
+        let trimmed = line.trim();
+        if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
+          if (!inList) { out += "<ul>"; inList = true; }
+          const itemText = trimmed.slice(2).replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+          out += `<li>${itemText}</li>`;
+        } else {
+          if (inList) { out += "</ul>"; inList = false; }
+          if (trimmed) {
+            const formatted = trimmed.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+            out += `<p>${formatted}</p>`;
+          }
+        }
+      }
+      if (inList) out += "</ul>";
+      return out || `<p>${safe}</p>`;
+    }
+
+    function appendAiLoading(id) {
+      const container = document.getElementById("ai-messages");
+      if (!container) return;
+      const loadDiv = document.createElement("div");
+      loadDiv.className = "ai-msg ai-msg-bot ai-loading-msg";
+      loadDiv.id = id;
+      loadDiv.innerHTML = `
+        <div class="ai-msg-avatar">و</div>
+        <div class="ai-msg-content">
+          <div class="ai-loading-dots">
+            <span></span><span></span><span></span>
+          </div>
+        </div>
+      `;
+      container.appendChild(loadDiv);
+      container.scrollTop = container.scrollHeight;
+    }
+
+    function removeAiLoading(id) {
+      const el = document.getElementById(id);
+      if (el) el.remove();
+    }
+
+    function askQuickPrompt(promptText) {
+      const input = document.getElementById("ai-prompt-input");
+      if (input) {
+        input.value = promptText;
+        handleAiSubmit();
+      }
+    }
+
+    function copyAiResponse(btn) {
+      const contentEl = btn.closest(".ai-msg-content");
+      if (!contentEl) return;
+      const textEl = contentEl.querySelector(".ai-msg-text");
+      const text = textEl ? textEl.innerText.trim() : contentEl.innerText.trim();
+      navigator.clipboard.writeText(text).then(() => {
+        btn.innerHTML = `<i class="fas fa-check"></i> تم النسخ`;
+        setTimeout(() => {
+          btn.innerHTML = `<i class="far fa-copy"></i> نسخ`;
+        }, 2000);
+      });
+    }
+
+    function openGroqKeyModal() {
+      const modal = document.getElementById("groq-key-modal");
+      if (modal) modal.classList.add("active");
+      const status = document.getElementById("groq-key-status");
+      if (status) status.innerHTML = "";
+    }
+
+    function closeGroqKeyModal() {
+      const modal = document.getElementById("groq-key-modal");
+      if (modal) modal.classList.remove("active");
+    }
+
+    async function saveGroqKeyToSupabase() {
+      const input = document.getElementById("groq-key-input");
+      const status = document.getElementById("groq-key-status");
+      const key = (input ? input.value : "").trim();
+
+      if (!key) {
+        if (status) status.innerHTML = `<span style="color:var(--danger)">يرجى كتابة أو لصق المفتاح أولاً.</span>`;
+        return;
+      }
+
+      if (status) status.innerHTML = `<span style="color:var(--text-secondary)">جاري الحفظ المشفر في Supabase Vault...</span>`;
+
+      try {
+        const sb = getSupabase();
+        if (!sb) throw new Error("Supabase غير متصل");
+
+        const { error } = await sb.rpc("set_groq_key", { p_key: key });
+        if (error) throw error;
+
+        if (status) status.innerHTML = `<span style="color:var(--success);font-weight:600"><i class="fas fa-check-circle"></i> تم حفظ المفتاح بنجاح وأمان في Supabase Vault!</span>`;
+        showToast("تم تحديث مفتاح Groq بنجاح في Supabase");
+        input.value = "";
+        setTimeout(() => {
+          closeGroqKeyModal();
+        }, 1500);
+      } catch (err) {
+        console.error("Vault save error:", err);
+        if (status) status.innerHTML = `<span style="color:var(--danger)">فشل الحفظ: ${err.message || "خطأ في الاتصال"}</span>`;
+      }
+    }
+
     (function init() {
       const savedTheme = localStorage.getItem("tms_theme") || "light";
       document.documentElement.setAttribute("data-theme", savedTheme);
@@ -2118,6 +2457,21 @@
         loginForm.addEventListener('submit', () => {
           loginBtn.classList.add('ls-loading');
         }, { capture: true });
+      }
+
+      // AI prompt input Enter key handler & auto-resize
+      const aiInput = document.getElementById("ai-prompt-input");
+      if (aiInput) {
+        aiInput.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            handleAiSubmit();
+          }
+        });
+        aiInput.addEventListener("input", () => {
+          aiInput.style.height = "auto";
+          aiInput.style.height = Math.min(aiInput.scrollHeight, 120) + "px";
+        });
       }
 
       // Restore existing session
