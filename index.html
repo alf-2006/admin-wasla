@@ -2259,6 +2259,9 @@
 
         if (data && data.answer) {
           appendAiMessage(data.answer, "bot");
+          if (data.action) {
+            executeAiAction(data.action);
+          }
         } else if (data && data.error) {
           appendAiMessage(`تنبيه: ${data.error}`, "bot", true);
         } else {
@@ -2268,6 +2271,89 @@
         console.error("AI invoke error:", err);
         removeAiLoading(loadingId);
         appendAiMessage("تعذر إرسال السؤال إلى خادم المساعد. تحقق من الاتصال بالإنترنت.", "bot", true);
+      }
+    }
+
+    function executeAiAction(action) {
+      if (!action || !action.type) return;
+
+      if (action.type === "update_member" && action.name) {
+        const queryName = action.name.trim().toLowerCase();
+        let m = members.find(x => x.fullName.trim().toLowerCase() === queryName);
+        if (!m) m = members.find(x => x.fullName.toLowerCase().includes(queryName) || queryName.includes(x.fullName.toLowerCase()));
+        
+        if (m) {
+          const patch = action.patch || {};
+          if (patch.taskStatus) m.taskStatus = patch.taskStatus;
+          if (patch.courseStatus) m.courseStatus = patch.courseStatus;
+          if (patch.deadline) m.deadline = patch.deadline;
+          if (patch.taskFinishDate) m.taskFinishDate = patch.taskFinishDate;
+          if (patch.hasLaptop !== undefined) m.hasLaptop = !!patch.hasLaptop;
+          if (patch.canGoAlexandria !== undefined) m.canGoAlexandria = !!patch.canGoAlexandria;
+          if (patch.completionRank !== undefined) m.completionRank = patch.completionRank;
+          if (patch.teamNotes) m.teamNotes = patch.teamNotes;
+
+          try {
+            const sb = getSupabase();
+            if (sb && m.id) {
+              dbUpdateMember(m.id, m).catch(err => console.warn("Supabase member update error:", err));
+            }
+          } catch (_) {}
+
+          renderMembersTable();
+          renderDashboard();
+          renderRanking();
+          showToast(`تم تحديث بيانات العضو ${m.fullName}`);
+        }
+      } else if (action.type === "add_member" && action.member) {
+        const item = action.member;
+        const newM = normalizeMember({
+          id: Date.now(),
+          fullName: item.fullName || "عضو جديد",
+          team: item.team || "Wasla",
+          courseStatus: item.courseStatus || "Not Started",
+          taskStatus: item.taskStatus || "Not Started",
+          deadline: item.deadline || "",
+          taskFinishDate: "",
+          completionRank: 0,
+          hasLaptop: item.hasLaptop !== undefined ? !!item.hasLaptop : true,
+          canGoAlexandria: item.canGoAlexandria !== undefined ? !!item.canGoAlexandria : false,
+          teamNotes: item.teamNotes || "",
+          residence: "",
+          workConditions: "",
+          bio: ""
+        });
+        members.push(newM);
+
+        try {
+          const sb = getSupabase();
+          if (sb) dbInsertMember(newM).catch(err => console.warn("Supabase insert error:", err));
+        } catch (_) {}
+
+        renderMembersTable();
+        renderDashboard();
+        renderRanking();
+        showToast(`تمت إضافة العضو ${newM.fullName} بنجاح`);
+      } else if (action.type === "add_note" && action.text) {
+        const newNote = {
+          id: Date.now(),
+          text: action.text,
+          author: currentUser ? currentUser.displayName : "قائد الفريق",
+          authorRole: currentUser ? currentUser.role : "Wasla Leader",
+          date: new Date().toISOString().slice(0, 10),
+          team: "Wasla",
+          targetTeam: "Wasla"
+        };
+        if (!notes.Wasla) notes.Wasla = [];
+        notes.Wasla.unshift(newNote);
+
+        try {
+          const sb = getSupabase();
+          if (sb) dbInsertNote(newNote).catch(err => console.warn("Supabase note insert error:", err));
+        } catch (_) {}
+
+        renderNotes();
+        showToast("تمت إضافة الملاحظة بنجاح");
       }
     }
 
