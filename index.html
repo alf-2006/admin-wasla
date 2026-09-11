@@ -3,61 +3,140 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>نظام إدارة الفرق | Wasla & Phantoms</title>
+  <title>Wasla System — نظام إدارة وصلة</title>
+  <meta name="description" content="نظام إدارة فريق وصلة التقني — Code. Build. Innovate. Impact." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <base target="_blank">
-<base target="_blank">
 </head>
 <body>
 
-  <!-- ========== LOGIN SCREEN ========== -->
+  <!-- ========== LOGIN SCREEN — Wasla Tech ========== -->
   <div id="login-screen">
-    <div class="login-bg-shapes">
-      <div class="login-shape shape-wasla"></div>
-      <div class="login-shape shape-phantoms"></div>
-      <div class="login-shape shape-center"></div>
-    </div>
-    <div class="login-card">
-      <div class="login-brand">
-        <div class="login-brand-icon">
-          <i class="fas fa-users-cog"></i>
+    <!-- Ambient floating dot -->
+    <div class="ls-ambient-dot" aria-hidden="true"></div>
+
+    <!-- Topbar -->
+    <div class="ls-topbar">
+      <div class="ls-topbar-left">
+        <div class="ls-brand-mark">
+          <div class="ls-logo-mark"></div>
+          <div class="ls-brand-mark-text">
+            <span class="ls-brand-name">wasla</span>
+            <span class="ls-brand-sub">tech</span>
+          </div>
         </div>
-        <h1>نظام إدارة الفرق</h1>
-        <p class="subtitle">Wasla & Phantoms Team System</p>
       </div>
-      <div class="login-error" id="login-error"></div>
-      <div id="config-warn" style="display:none;background:rgba(239,68,68,0.1);color:#fca5a5;padding:12px 14px;border-radius:12px;margin-bottom:14px;font-size:0.85rem;font-weight:600;text-align:center;border:1px solid rgba(239,68,68,0.2)"></div>
-      <form id="login-form">
-        <div class="form-group">
-          <label for="username"><i class="fas fa-envelope"></i> الإيميل</label>
-          <input type="text" id="username" placeholder="أدخل إيميلك" required autocomplete="username" />
+    </div>
+
+    <!-- Body -->
+    <div class="ls-body">
+      <!-- Left Column: Hero & Benefits -->
+      <div class="ls-brand-col" aria-hidden="false">
+        <div class="ls-brand-copy">
+          <p class="ls-eyebrow">في عالم تتسارع فيه التكنولوجيا، كان لا بد من وجود وصلة.</p>
+          <div class="ls-rule"></div>
+          <h1 class="ls-hero-title">أهلاً بك<br><span class="ls-hero-accent">مجدداً</span></h1>
+          <p class="ls-hero-sub">في وصلة، نحول الأفكار إلى واقع</p>
+          <div class="ls-benefits" role="list" aria-label="مميزات وصلة">
+            <div class="ls-benefit" role="listitem">
+              <span class="ls-benefit-ic" aria-hidden="true"><i class="fa-regular fa-lightbulb"></i></span>
+              <div class="ls-benefit-tx">
+                <strong>أفكار بلا حدود</strong>
+                <span>من الجامعة إلى التأثير</span>
+              </div>
+            </div>
+            <div class="ls-benefit" role="listitem">
+              <span class="ls-benefit-ic" aria-hidden="true"><i class="fa-solid fa-arrow-trend-up"></i></span>
+              <div class="ls-benefit-tx">
+                <strong>فرص أكبر</strong>
+                <span>نحو مستقبل أفضل</span>
+              </div>
+            </div>
+            <div class="ls-benefit" role="listitem">
+              <span class="ls-benefit-ic" aria-hidden="true"><i class="fa-solid fa-users"></i></span>
+              <div class="ls-benefit-tx">
+                <strong>مجتمع أقوى</strong>
+                <span>طلاب ومطورين ومبدعين</span>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="form-group">
-          <label for="account-type"><i class="fas fa-shield-alt"></i> نوع الحساب</label>
-          <select id="account-type" required>
-            <option value="">اختر نوع الحساب</option>
-            <option value="wasla_leader">💜 قائد Wasla</option>
-            <option value="phantoms_leader">❤️ قائد Phantoms</option>
-            <option value="normal">👤 مستخدم</option>
-          </select>
+      </div>
+
+      <!-- Right Column: Card -->
+      <div class="ls-auth-col">
+        <div class="ls-card">
+          <button type="button" class="ls-card-theme-btn" onclick="toggleTheme()" title="تبديل المظهر" aria-label="تبديل المظهر">
+            <i class="fas fa-moon" id="login-theme-icon"></i>
+          </button>
+          <div class="ls-card-head">
+            <div class="ls-card-brand">
+              <div class="ls-logo-mark ls-logo-mark--card"></div>
+              <div class="ls-brand-mark-text ls-brand-mark-text--center">
+                <span class="ls-brand-name">wasla</span>
+                <span class="ls-brand-sub">tech</span>
+              </div>
+            </div>
+            <h2 class="ls-card-title">تسجيل الدخول</h2>
+            <p class="ls-card-sub">أهلاً بك في نظام إدارة وصلة</p>
+          </div>
+          <div id="config-warn" class="ls-warn-card" style="display:none;">
+            <div class="ls-warn-icon"><svg viewBox="0 0 24 24" fill="none"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><line x1="12" y1="9" x2="12" y2="13" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="12" y1="17" x2="12.01" y2="17" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></div>
+            <div class="ls-warn-text"><div class="ls-warn-title">مشكلة شبكة</div><div class="ls-warn-desc" dir="ltr">تأكد من Project URL</div></div>
+          </div>
+          <div class="ls-error-card" id="login-error" style="display:none;"></div>
+          <form id="login-form" novalidate>
+            <div class="ls-field">
+              <label for="username">البريد الإلكتروني</label>
+              <div class="ls-input-wrap ls-input-wrap--email">
+                <span class="ls-fi-left"><svg class="form-line-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="13" rx="1.5"/><path d="m4.5 7 7.5 5.5L19.5 7"/></svg></span>
+                <input type="email" id="username" placeholder="wasla@waslateam.com" autocomplete="username" required dir="ltr" />
+              </div>
+            </div>
+            <div class="ls-field">
+              <label for="account-type">نوع الحساب</label>
+              <div class="ls-input-wrap ls-select-wrap">
+                <span class="ls-fi-right"><svg class="form-line-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3"/><path d="M5.5 20c.5-4.1 2.7-6.2 6.5-6.2s6 2.1 6.5 6.2"/></svg></span>
+                <select id="account-type" required>
+                  <option value="">اختر نوع الحساب</option>
+                  <option value="wasla_leader">قائد Wasla</option>
+                  <option value="normal">مستخدم</option>
+                </select>
+                <span class="ls-sel-arrow"><svg class="form-line-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></span>
+              </div>
+            </div>
+            <div class="ls-field" id="password-group">
+              <label for="password">كلمة المرور</label>
+              <div class="ls-input-wrap ls-input-wrap--pw">
+                <span class="ls-fi-left"><svg class="form-line-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="1.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>
+                <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" />
+                <button type="button" class="ls-pw-btn" id="pw-toggle" aria-label="إظهار كلمة المرور">
+                  <svg id="eye-show" viewBox="0 0 24 24" fill="none"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/></svg>
+                  <svg id="eye-hide" viewBox="0 0 24 24" fill="none" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="1" y1="1" x2="23" y2="23" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                </button>
+              </div>
+            </div>
+            <div class="ls-meta-row">
+              <label class="ls-remember"><input type="checkbox" id="remember-me" /><span class="ls-checkbox"></span><span>تذكرني</span></label>
+              <a href="#" class="ls-forgot" target="_self">نسيت كلمة المرور؟</a>
+            </div>
+            <button type="submit" class="ls-btn" id="login-submit-btn">
+              <span class="ls-btn-text">دخول</span>
+            </button>
+          </form>
         </div>
-        <div class="form-group" id="password-group">
-          <label for="password"><i class="fas fa-lock"></i> كلمة المرور</label>
-          <input type="password" id="password" placeholder="كلمة المرور" autocomplete="current-password" />
-        </div>
-        <p style="text-align:center;color:rgba(255,255,255,0.55);font-size:0.82rem;margin-bottom:14px">
-          للزوار: اضغط «دخول كزائر» للمشاهدة فقط<br>
-          للقادة: اختار نوع الحساب + الباسورد للتعديل
-        </p>
-        <button type="button" class="btn btn-guest" style="width:100%;margin-bottom:12px" onclick="enterAsGuest()">
-          <i class="fas fa-eye"></i> دخول كزائر (مشاهدة فقط)
-        </button>
-        <button type="submit" class="btn btn-primary">
-          <i class="fas fa-sign-in-alt"></i> دخول القائد / التعديل
-        </button>
-      </form>
+      </div>
+    </div>
+
+    <!-- Bottom Page Footer -->
+    <div class="ls-page-footer">
+      <span class="ls-footer-impact">Code. Build. Innovate. Impact.</span>
+      <span class="ls-footer-copy">© 2026 Wasla Tech. جميع الحقوق محفوظة.</span>
     </div>
   </div>
 
@@ -67,48 +146,82 @@
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
         <div class="sidebar-brand">
-          <div class="sidebar-brand-icon"><i class="fas fa-users-cog"></i></div>
-          <h2>Team System</h2>
+          <div class="sidebar-brand-icon"><img src="wasla-logo.png" alt="Wasla Tech" /></div>
+          <div class="sidebar-brand-text">
+            <h2>wasla <em>tech</em></h2>
+            <span class="sidebar-brand-sub">نظام إدارة الفريق</span>
+          </div>
         </div>
-        <span class="role-badge" id="role-badge">Admin</span>
       </div>
       <ul class="nav-menu">
+        <svg class="nav-connection" viewBox="0 0 72 332" aria-hidden="true" focusable="false">
+          <path class="nav-connection-base" d="M58 18C25 18 24 83 48 95c22 11 20 50-2 61-25 13-24 56 2 68 25 12 24 55 0 68-23 12-23 54 5 58" />
+          <path class="nav-connection-active" d="M58 18C25 18 24 83 48 95" />
+        </svg>
         <li class="nav-item active" data-page="dashboard">
-          <i class="fas fa-chart-pie"></i> لوحة التحكم
+          <span class="nav-node" aria-hidden="true"></span>
+          <svg class="wasla-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 11.5 12 4l8.5 7.5v8a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1z"/><path d="M9.5 20.5v-5h5v5"/></svg>
+          <span>لوحة التحكم</span>
         </li>
         <li class="nav-item" data-page="members">
-          <i class="fas fa-users"></i> الأعضاء
+          <span class="nav-node" aria-hidden="true"></span>
+          <svg class="wasla-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3.5 20c.5-4 2.4-6 5.5-6s5 2 5.5 6M16 5.5a3 3 0 0 1 0 5.8M17 14c2.2.5 3.3 2.4 3.5 5.5"/></svg>
+          <span>الأعضاء</span>
         </li>
         <li class="nav-item" data-page="ranking" id="nav-ranking">
-          <i class="fas fa-trophy"></i> نظام الترتيب
+          <span class="nav-node" aria-hidden="true"></span>
+          <svg class="wasla-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h8v5a4 4 0 0 1-8 0zM8 5H4v1a4 4 0 0 0 4 4M16 5h4v1a4 4 0 0 1-4 4M12 12v5M8.5 21h7M9 17h6"/></svg>
+          <span>نظام الترتيب</span>
         </li>
         <li class="nav-item" data-page="notes" id="nav-notes">
-          <i class="fas fa-sticky-note"></i> الملاحظات
+          <span class="nav-node" aria-hidden="true"></span>
+          <svg class="wasla-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3.5h14v12L14 20.5H5zM14 20.5v-5h5M8 8h8M8 12h5"/></svg>
+          <span>الملاحظات</span>
         </li>
       </ul>
       <div class="sidebar-footer">
-        <div class="user-info">
-          <div class="user-avatar" id="user-avatar">A</div>
-          <div>
-            <div id="user-name" style="font-weight:700;font-size:0.95rem">Admin</div>
-            <div id="user-role" style="font-size:0.8rem;color:var(--text-muted);font-weight:600">مدير النظام</div>
+        <div class="user-profile-card">
+          <div class="user-avatar" id="user-avatar">أ</div>
+          <div class="user-meta">
+            <div class="user-name" id="user-name">أحمد عيد</div>
+            <div class="user-role" id="user-role">قائد الفريق</div>
           </div>
+          <button class="btn-logout" onclick="logout()" title="تسجيل الخروج" aria-label="تسجيل الخروج">
+            <svg class="wasla-nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 4H5v16h5M14 8l4 4-4 4M18 12H9"/></svg>
+          </button>
         </div>
-        <button class="btn btn-secondary" style="width:100%" onclick="logout()">
-          <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
-        </button>
       </div>
     </aside>
 
     <!-- Main Content -->
     <div class="main-content">
       <header class="top-navbar">
-        <div style="display:flex;align-items:center;gap:14px">
-          <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
-          <h1 class="page-title" id="page-title">لوحة التحكم</h1>
+        <div class="top-navbar-right">
+          <button class="menu-toggle" onclick="toggleSidebar()" aria-label="تبديل القائمة"><i class="fas fa-bars"></i></button>
+          <div class="page-title-group">
+            <h1 class="page-title" id="page-title">لوحة التحكم</h1>
+            <p class="page-subtitle" id="page-subtitle">مرحباً أحمد ، هنا نظرة سريعة على فريقك و تقدم العمل اليوم</p>
+          </div>
         </div>
         <div class="navbar-actions">
-          <button class="theme-toggle" onclick="toggleTheme()" title="تبديل الوضع">
+          <div class="header-search-box">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" id="global-search" placeholder="ابحث في الأعضاء..." onkeydown="if(event.key==='Enter') executeGlobalSearch(this.value)" oninput="handleGlobalSearch(this.value)" />
+          </div>
+          <div class="notifications-wrapper" id="notifications-wrapper">
+            <button class="action-icon-btn" id="notif-btn" onclick="toggleNotificationsDropdown()" title="الإشعارات والمتابعات" aria-label="الإشعارات">
+              <i class="fas fa-bell"></i>
+              <span class="notification-badge-dot" id="notif-dot"></span>
+            </button>
+            <div class="notifications-dropdown" id="notifications-dropdown">
+              <div class="notifications-header">
+                <span class="notif-title">تنبيهات المتابعة</span>
+                <span class="notif-badge" id="notif-count-badge">3 متأخرون</span>
+              </div>
+              <div class="notifications-list" id="notifications-list"></div>
+            </div>
+          </div>
+          <button class="action-icon-btn theme-toggle" onclick="toggleTheme()" title="تبديل الوضع" aria-label="تبديل الوضع">
             <i class="fas fa-moon" id="theme-icon"></i>
           </button>
         </div>
@@ -117,69 +230,142 @@
       <div class="content-area">
         <!-- Dashboard Page -->
         <div class="page active" id="page-dashboard">
+          <!-- 8 KPI Metrics Grid -->
           <div class="stats-grid" id="stats-grid"></div>
 
-          <!-- Leaders Section -->
-          <div class="section-card">
-            <div class="section-header">
-              <h3><i class="fas fa-crown"></i> قادة الفرق</h3>
+          <!-- Middle Row: Team Leader + Progress -->
+          <div class="dashboard-mid-row">
+            <!-- Team Leader Card -->
+            <div class="dash-card leader-section-card">
+              <div class="dash-card-header">
+                <div class="dash-card-title">
+                  <i class="fas fa-crown text-purple"></i>
+                  <span>قائد الفريق</span>
+                </div>
+                <button class="btn-text-action" onclick="navigateToPage('ranking')">
+                  عرض الترتيب الكامل
+                </button>
+              </div>
+              <div class="dash-card-body">
+                <div class="leader-row-card" onclick="openProfileByName('أحمد عيد')">
+                  <div class="leader-main-info">
+                    <div class="leader-avatar-wrap">
+                      <div class="leader-avatar">أ</div>
+                      <span class="leader-crown-badge" title="قائد الفريق"><i class="fas fa-crown"></i></span>
+                    </div>
+                    <div class="leader-details">
+                      <div class="leader-name">أحمد عيد</div>
+                      <div class="leader-role">قائد فريق Wasla</div>
+                    </div>
+                  </div>
+                  <div class="leader-stats-pills">
+                    <div class="leader-stat-col">
+                      <span class="leader-stat-val" id="leader-team-count">16</span>
+                      <span class="leader-stat-lbl">أعضاء الفريق</span>
+                    </div>
+                    <div class="leader-stat-divider"></div>
+                    <div class="leader-stat-col">
+                      <span class="leader-stat-val" id="leader-completed-count">4</span>
+                      <span class="leader-stat-lbl">مهام مكتملة</span>
+                    </div>
+                    <div class="leader-stat-divider"></div>
+                    <div class="leader-stat-col">
+                      <span class="leader-stat-val" id="leader-progress-rate">25%</span>
+                      <span class="leader-stat-lbl">نسبة الإنجاز</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div class="leaders-grid">
-              <div class="leader-card wasla" onclick="openProfileByName('أحمد عيد')" style="cursor:pointer">
-                <div class="leader-avatar">أ</div>
-                <div class="leader-info">
-                  <div class="leader-name">أحمد عيد</div>
-                  <div class="leader-role">قائد فريق Wasla</div>
+
+            <!-- Progress Card -->
+            <div class="dash-card progress-section-card">
+              <div class="dash-card-header">
+                <div class="dash-card-title">
+                  <i class="fas fa-chart-line text-purple"></i>
+                  <span>نسب الإنجاز</span>
                 </div>
-                <span class="leader-badge">Leader</span>
               </div>
-              <div class="leader-card phantoms" onclick="openProfileByName('سيف أيمن')" style="cursor:pointer">
-                <div class="leader-avatar">س</div>
-                <div class="leader-info">
-                  <div class="leader-name">سيف أيمن</div>
-                  <div class="leader-role">قائد فريق Phantoms</div>
-                </div>
-                <span class="leader-badge">Leader</span>
-              </div>
-              <div class="leader-card phantoms" onclick="openProfileByName('سهيلة محمد')" style="cursor:pointer">
-                <div class="leader-avatar">س</div>
-                <div class="leader-info">
-                  <div class="leader-name">سهيلة محمد</div>
-                  <div class="leader-role">مساعد قائد Phantoms</div>
-                </div>
-                <span class="leader-badge">Co-Leader</span>
-              </div>
+              <div class="dash-card-body" id="progress-section"></div>
             </div>
           </div>
 
           <!-- Team Members Preview -->
-          <div class="section-card">
-            <div class="section-header">
-              <h3><i class="fas fa-users"></i> أعضاء الفرق</h3>
+          <div class="dash-card members-panel-card">
+            <div class="dash-card-header members-header-row">
+              <div class="dash-card-title">
+                <i class="fas fa-users text-purple"></i>
+                <span>أعضاء وصلة</span>
+                <span class="count-pill" id="members-count-badge">16 عضو</span>
+              </div>
+              <div class="members-header-actions">
+                <div class="panel-search-box">
+                  <i class="fas fa-search"></i>
+                  <input type="text" id="member-preview-search" placeholder="بحث عن عضو ..." oninput="filterMemberPreview(this.value)" />
+                </div>
+                <button class="btn-text-action" onclick="navigateToPage('members')">
+                  عرض جميع الأعضاء
+                </button>
+              </div>
             </div>
-            <div id="team-members-preview"></div>
+            <div class="dash-card-body">
+              <div id="team-members-preview" class="team-members-grid"></div>
+            </div>
           </div>
 
-          <div class="charts-row">
-            <div class="chart-container">
-              <h4>توزيع الفرق</h4>
-              <canvas id="teamChart" width="280" height="280"></canvas>
+          <!-- Bottom Analytics Row -->
+          <div class="dashboard-analytics-row">
+            <!-- Chart 1: Task Status Donut -->
+            <div class="dash-card chart-card">
+              <div class="dash-card-header">
+                <div class="dash-card-title">
+                  <i class="fas fa-list-check text-purple"></i>
+                  <span>حالة المهام</span>
+                </div>
+              </div>
+              <div class="dash-card-body chart-card-body">
+                <div class="canvas-wrap">
+                  <canvas id="taskChart" width="220" height="220"></canvas>
+                </div>
+                <div id="task-chart-legend" class="custom-chart-legend"></div>
+              </div>
             </div>
-            <div class="chart-container">
-              <h4>حالة المهام</h4>
-              <canvas id="taskChart" width="280" height="280"></canvas>
+
+            <!-- Card 2: Needs Attention Card (Late Members) -->
+            <div class="dash-card attention-card">
+              <div class="dash-card-header">
+                <div class="dash-card-title">
+                  <i class="fas fa-triangle-exclamation text-red"></i>
+                  <span>أعضاء بحاجة لمتابعة</span>
+                  <span class="count-pill badge-late-pill" id="late-count-badge">3 متأخرون</span>
+                </div>
+                <button class="btn-text-action" onclick="filterByTaskAndNavigate('Late')">
+                  عرض في الجدول
+                </button>
+              </div>
+              <div class="dash-card-body attention-card-body" id="needs-attention-content"></div>
+            </div>
+
+            <!-- Card 3: Top Completion Achievement Card -->
+            <div class="dash-card achievement-card">
+              <div class="dash-card-header">
+                <div class="dash-card-title">
+                  <i class="fas fa-award text-amber"></i>
+                  <span>أسبقية الإنجاز الأول</span>
+                </div>
+              </div>
+              <div class="dash-card-body" id="first-finisher"></div>
             </div>
           </div>
 
-          <div class="section-card">
-            <div class="section-header"><h3><i class="fas fa-chart-line"></i> نسب الإنجاز</h3></div>
-            <div id="progress-section"></div>
-          </div>
-
-          <div class="section-card">
-            <div class="section-header"><h3><i class="fas fa-trophy"></i> أول من أنهى المهمة</h3></div>
-            <div id="first-finisher"></div>
-          </div>
+          <!-- Minimal Footer -->
+          <footer class="dashboard-footer">
+            <div class="footer-copy">Wasla System © 2026</div>
+            <div class="footer-note">
+              <i class="fas fa-users"></i>
+              <span>العمل الجماعي يصنع المستقبل</span>
+            </div>
+          </footer>
         </div>
 
         <!-- Members Page -->
@@ -196,11 +382,6 @@
                 <i class="fas fa-search"></i>
                 <input type="text" id="search-input" placeholder="بحث بالاسم..." oninput="renderMembersTable()" />
               </div>
-              <select class="filter-select" id="filter-team" onchange="renderMembersTable()">
-                <option value="">كل الفرق</option>
-                <option value="Wasla">Wasla</option>
-                <option value="Phantoms">Phantoms</option>
-              </select>
               <select class="filter-select" id="filter-course" onchange="renderMembersTable()">
                 <option value="">حالة الكورس</option>
                 <option value="Completed">مكتمل</option>
@@ -225,7 +406,6 @@
                 <thead>
                   <tr>
                     <th onclick="sortTable('fullName')">الاسم <i class="fas fa-sort"></i></th>
-                    <th>الفريق</th>
                     <th>حالة الكورس</th>
                     <th>حالة المهمة</th>
                     <th onclick="sortTable('deadline')">الموعد النهائي <i class="fas fa-sort"></i></th>
@@ -247,9 +427,9 @@
         <div class="page" id="page-ranking">
           <div class="section-card">
             <div class="section-header">
-              <h3><i class="fas fa-trophy"></i> نظام الترتيب (النزول)</h3>
+              <h3><i class="fas fa-trophy"></i> نظام الترتيب</h3>
             </div>
-            <p style="color:var(--text-muted);margin-bottom:20px;font-size:0.95rem;font-weight:600">ترتيب الأعضاء حسب من أنهى المهمة أولاً — اضغط على أي شخص لعرض ملفه الشخصي</p>
+            <p style="color:var(--text-muted);margin-bottom:20px;font-size:0.95rem;font-weight:600">ترتيب أعضاء وصلة حسب من أنهى المهمة أولاً — اضغط على أي شخص لعرض ملفه الشخصي</p>
             <div id="ranking-content" class="ranking-list"></div>
           </div>
         </div>
@@ -284,13 +464,6 @@
           </div>
           <div class="form-row">
             <div class="form-group">
-              <label>الفريق</label>
-              <select id="m-team" required>
-                <option value="Wasla">Wasla</option>
-                <option value="Phantoms">Phantoms</option>
-              </select>
-            </div>
-            <div class="form-group">
               <label>حالة الكورس</label>
               <select id="m-course" required>
                 <option value="Not Started">لم يبدأ</option>
@@ -298,8 +471,6 @@
                 <option value="Completed">مكتمل</option>
               </select>
             </div>
-          </div>
-          <div class="form-row">
             <div class="form-group">
               <label>حالة المهمة</label>
               <select id="m-task" required>
@@ -309,22 +480,22 @@
                 <option value="Late">متأخر</option>
               </select>
             </div>
+          </div>
+          <div class="form-row">
             <div class="form-group">
               <label>الترتيب (Rank)</label>
               <input type="number" id="m-rank" min="0" value="0" />
             </div>
-          </div>
-          <div class="form-row">
             <div class="form-group">
               <label>الموعد النهائي</label>
               <input type="date" id="m-deadline" />
             </div>
+          </div>
+          <div class="form-row">
             <div class="form-group">
               <label>تاريخ إنهاء المهمة</label>
               <input type="date" id="m-finish" />
             </div>
-          </div>
-          <div class="form-row">
             <div class="form-group">
               <label>معاه لاب توب؟</label>
               <select id="m-laptop">
@@ -332,6 +503,8 @@
                 <option value="false">لا</option>
               </select>
             </div>
+          </div>
+          <div class="form-row">
             <div class="form-group">
               <label>ينزل إسكندرية للميتنج؟</label>
               <select id="m-alex">
@@ -339,10 +512,10 @@
                 <option value="false">لا مش هينزل</option>
               </select>
             </div>
-          </div>
-          <div class="form-group">
-            <label>السكن</label>
-            <input type="text" id="m-residence" placeholder="مثال: القاهرة - المعادي" />
+            <div class="form-group">
+              <label>السكن</label>
+              <input type="text" id="m-residence" placeholder="مثال: القاهرة - المعادي" />
+            </div>
           </div>
           <div class="form-group">
             <label>ظروف الشغل / الدراسة</label>
@@ -400,64 +573,46 @@
   <script>
 
     /* =====================================================
-       Team Management System - Enhanced Version
-       Wasla (Purple) & Phantoms (Red)
+       Wasla Team Management System
        ===================================================== */
 
     const AUTH_ACCOUNTS = {
       wasla_leader: { email: "wasla@waslateam.com", role: "Wasla Leader", displayName: "أحمد عيد" },
-      phantoms_leader: { email: "phantoms@waslateam.com", role: "Phantoms Leader", displayName: "سيف أيمن" },
       normal: { email: "user@waslateam.com", role: "Normal User", displayName: "User" }
     };
 
     const LOCAL_FALLBACK = {
       wasla_leader: { password: "wasla123", role: "Wasla Leader", displayName: "أحمد عيد" },
-      phantoms_leader: { password: "phantoms123", role: "Phantoms Leader", displayName: "سيف أيمن" },
       normal: { password: "user123", role: "Normal User", displayName: "User" }
     };
 
     const ROLE_FROM_DB = {
       wasla_leader: "Wasla Leader",
-      phantoms_leader: "Phantoms Leader",
       user: "Normal User"
     };
 
     const SAMPLE_MEMBERS = [
-      { id: 1, fullName: "أحمد عيد", team: "Wasla", courseStatus: "In Progress", taskStatus: "Completed", deadline: "2026-07-10", taskFinishDate: "2026-07-08", completionRank: 1, teamNotes: "قائد الفريق - أداء متميز" },
-      { id: 2, fullName: "ملك محمد", team: "Wasla", courseStatus: "In Progress", taskStatus: "In Progress", deadline: "2026-08-15", taskFinishDate: "", completionRank: 0, teamNotes: "" },
-      { id: 3, fullName: "مريم الشربيني", team: "Wasla", courseStatus: "In Progress", taskStatus: "Completed", deadline: "2026-07-15", taskFinishDate: "2026-07-12", completionRank: 2, teamNotes: "" },
-      { id: 4, fullName: "ياسمين رجب", team: "Wasla", courseStatus: "In Progress", taskStatus: "Not Started", deadline: "2026-08-20", taskFinishDate: "", completionRank: 0, teamNotes: "" },
-      { id: 5, fullName: "ياسمين حسن", team: "Wasla", courseStatus: "In Progress", taskStatus: "Late", deadline: "2026-07-20", taskFinishDate: "", completionRank: 0, teamNotes: "تأخر في التسليم" },
-      { id: 6, fullName: "عمر", team: "Wasla", courseStatus: "Not Started", taskStatus: "Not Started", deadline: "2026-09-01", taskFinishDate: "", completionRank: 0, teamNotes: "" },
-      { id: 7, fullName: "أحمد عشري", team: "Wasla", courseStatus: "In Progress", taskStatus: "In Progress", deadline: "2026-08-10", taskFinishDate: "", completionRank: 0, teamNotes: "يحتاج متابعة" },
-      { id: 8, fullName: "أحمد رجب", team: "Wasla", courseStatus: "In Progress", taskStatus: "Completed", deadline: "2026-07-18", taskFinishDate: "2026-07-14", completionRank: 3, teamNotes: "" },
-      { id: 9, fullName: "منة الله", team: "Wasla", courseStatus: "In Progress", taskStatus: "In Progress", deadline: "2026-08-25", taskFinishDate: "", completionRank: 0, teamNotes: "" },
-      { id: 10, fullName: "نور القاسم", team: "Wasla", courseStatus: "Not Started", taskStatus: "Not Started", deadline: "2026-09-05", taskFinishDate: "", completionRank: 0, teamNotes: "" },
-      { id: 11, fullName: "رحمة", team: "Wasla", courseStatus: "In Progress", taskStatus: "Late", deadline: "2026-07-22", taskFinishDate: "", completionRank: 0, teamNotes: "" },
-      { id: 12, fullName: "سما ياسر", team: "Wasla", courseStatus: "In Progress", taskStatus: "In Progress", deadline: "2026-08-18", taskFinishDate: "", completionRank: 0, teamNotes: "" },
-      { id: 13, fullName: "رحمة محمد", team: "Wasla", courseStatus: "In Progress", taskStatus: "Completed", deadline: "2026-07-25", taskFinishDate: "2026-07-20", completionRank: 4, teamNotes: "" },
-      { id: 14, fullName: "شمش", team: "Wasla", courseStatus: "Not Started", taskStatus: "Not Started", deadline: "2026-09-10", taskFinishDate: "", completionRank: 0, teamNotes: "" },
-      { id: 15, fullName: "شروق", team: "Wasla", courseStatus: "In Progress", taskStatus: "In Progress", deadline: "2026-08-22", taskFinishDate: "", completionRank: 0, teamNotes: "" },
-      { id: 16, fullName: "يوسف", team: "Wasla", courseStatus: "In Progress", taskStatus: "Late", deadline: "2026-07-28", taskFinishDate: "", completionRank: 0, teamNotes: "" },
-      { id: 17, fullName: "سيف أيمن", team: "Phantoms", courseStatus: "In Progress", taskStatus: "Completed", deadline: "2026-07-12", taskFinishDate: "2026-07-09", completionRank: 1, teamNotes: "قائد الفريق - أداء متميز" },
-      { id: 18, fullName: "سهيلة محمد", team: "Phantoms", courseStatus: "In Progress", taskStatus: "Completed", deadline: "2026-07-14", taskFinishDate: "2026-07-11", completionRank: 2, teamNotes: "مساعد القائد" },
-      { id: 19, fullName: "طارق", team: "Phantoms", courseStatus: "In Progress", taskStatus: "In Progress", deadline: "2026-08-12", taskFinishDate: "", completionRank: 0, teamNotes: "" },
-      { id: 20, fullName: "عبدالرحمن", team: "Phantoms", courseStatus: "In Progress", taskStatus: "Completed", deadline: "2026-07-16", taskFinishDate: "2026-07-13", completionRank: 3, teamNotes: "" },
-      { id: 21, fullName: "وفاء فرحات", team: "Phantoms", courseStatus: "In Progress", taskStatus: "Not Started", deadline: "2026-08-20", taskFinishDate: "", completionRank: 0, teamNotes: "" },
-      { id: 22, fullName: "مريم مصباح", team: "Phantoms", courseStatus: "In Progress", taskStatus: "Late", deadline: "2026-07-24", taskFinishDate: "", completionRank: 0, teamNotes: "" },
-      { id: 23, fullName: "منة محمد", team: "Phantoms", courseStatus: "Not Started", taskStatus: "Not Started", deadline: "2026-09-01", taskFinishDate: "", completionRank: 0, teamNotes: "" },
-      { id: 24, fullName: "مريم محمد أحمد", team: "Phantoms", courseStatus: "In Progress", taskStatus: "In Progress", deadline: "2026-08-15", taskFinishDate: "", completionRank: 0, teamNotes: "" },
-      { id: 25, fullName: "منة هاشم", team: "Phantoms", courseStatus: "In Progress", taskStatus: "Completed", deadline: "2026-07-20", taskFinishDate: "2026-07-16", completionRank: 4, teamNotes: "" },
-      { id: 26, fullName: "ندى خالد", team: "Phantoms", courseStatus: "In Progress", taskStatus: "In Progress", deadline: "2026-08-18", taskFinishDate: "", completionRank: 0, teamNotes: "" },
-      { id: 27, fullName: "مروة حمدي", team: "Phantoms", courseStatus: "Not Started", taskStatus: "Not Started", deadline: "2026-09-05", taskFinishDate: "", completionRank: 0, teamNotes: "" },
-      { id: 28, fullName: "ضحى", team: "Phantoms", courseStatus: "In Progress", taskStatus: "Late", deadline: "2026-07-26", taskFinishDate: "", completionRank: 0, teamNotes: "" },
-      { id: 29, fullName: "حسناء", team: "Phantoms", courseStatus: "In Progress", taskStatus: "In Progress", deadline: "2026-08-22", taskFinishDate: "", completionRank: 0, teamNotes: "" },
-      { id: 30, fullName: " مريم الحسيني", team: "Phantoms", courseStatus: "In Progress", taskStatus: "Completed", deadline: "2026-07-22", taskFinishDate: "2026-07-18", completionRank: 5, teamNotes: "" }
+      { id: 1, fullName: "أحمد عيد", team: "Wasla", courseStatus: "In Progress", taskStatus: "Completed", deadline: "2026-07-10", taskFinishDate: "2026-07-08", completionRank: 1, teamNotes: "قائد الفريق - أداء متميز", hasLaptop: true, canGoAlexandria: false },
+      { id: 2, fullName: "ملك محمد", team: "Wasla", courseStatus: "In Progress", taskStatus: "In Progress", deadline: "2026-08-15", taskFinishDate: "", completionRank: 0, teamNotes: "", hasLaptop: true, canGoAlexandria: false },
+      { id: 3, fullName: "مريم الشرقي", team: "Wasla", courseStatus: "In Progress", taskStatus: "Completed", deadline: "2026-07-15", taskFinishDate: "2026-07-12", completionRank: 2, teamNotes: "", hasLaptop: true, canGoAlexandria: false },
+      { id: 4, fullName: "ياسمين رجب", team: "Wasla", courseStatus: "In Progress", taskStatus: "Not Started", deadline: "2026-08-20", taskFinishDate: "", completionRank: 0, teamNotes: "", hasLaptop: true, canGoAlexandria: false },
+      { id: 5, fullName: "ياسمين حسن", team: "Wasla", courseStatus: "In Progress", taskStatus: "Late", deadline: "2026-07-20", taskFinishDate: "", completionRank: 0, teamNotes: "تأخر في التسليم", hasLaptop: true, canGoAlexandria: false },
+      { id: 6, fullName: "عمر", team: "Wasla", courseStatus: "Not Started", taskStatus: "Not Started", deadline: "2026-09-01", taskFinishDate: "", completionRank: 0, teamNotes: "", hasLaptop: true, canGoAlexandria: false },
+      { id: 7, fullName: "أحمد عشري", team: "Wasla", courseStatus: "In Progress", taskStatus: "In Progress", deadline: "2026-08-10", taskFinishDate: "", completionRank: 0, teamNotes: "يحتاج متابعة", hasLaptop: true, canGoAlexandria: false },
+      { id: 8, fullName: "أحمد رجب", team: "Wasla", courseStatus: "In Progress", taskStatus: "Completed", deadline: "2026-07-18", taskFinishDate: "2026-07-14", completionRank: 3, teamNotes: "", hasLaptop: true, canGoAlexandria: false },
+      { id: 9, fullName: "منة الله", team: "Wasla", courseStatus: "In Progress", taskStatus: "In Progress", deadline: "2026-08-25", taskFinishDate: "", completionRank: 0, teamNotes: "", hasLaptop: true, canGoAlexandria: false },
+      { id: 10, fullName: "نور القاسم", team: "Wasla", courseStatus: "Not Started", taskStatus: "Not Started", deadline: "2026-09-05", taskFinishDate: "", completionRank: 0, teamNotes: "", hasLaptop: true, canGoAlexandria: false },
+      { id: 11, fullName: "رحمة", team: "Wasla", courseStatus: "In Progress", taskStatus: "Late", deadline: "2026-07-22", taskFinishDate: "", completionRank: 0, teamNotes: "", hasLaptop: true, canGoAlexandria: false },
+      { id: 12, fullName: "سما ياسر", team: "Wasla", courseStatus: "In Progress", taskStatus: "In Progress", deadline: "2026-08-18", taskFinishDate: "", completionRank: 0, teamNotes: "", hasLaptop: true, canGoAlexandria: false },
+      { id: 13, fullName: "رحمة محمد", team: "Wasla", courseStatus: "In Progress", taskStatus: "Completed", deadline: "2026-07-25", taskFinishDate: "2026-07-20", completionRank: 4, teamNotes: "", hasLaptop: true, canGoAlexandria: false },
+      { id: 14, fullName: "شمس", team: "Wasla", courseStatus: "Not Started", taskStatus: "Not Started", deadline: "2026-09-10", taskFinishDate: "", completionRank: 0, teamNotes: "", hasLaptop: true, canGoAlexandria: false },
+      { id: 15, fullName: "شروق", team: "Wasla", courseStatus: "In Progress", taskStatus: "In Progress", deadline: "2026-08-22", taskFinishDate: "", completionRank: 0, teamNotes: "", hasLaptop: true, canGoAlexandria: false },
+      { id: 16, fullName: "يوسف", team: "Wasla", courseStatus: "In Progress", taskStatus: "Late", deadline: "2026-07-28", taskFinishDate: "", completionRank: 0, teamNotes: "", hasLaptop: true, canGoAlexandria: false }
     ];
 
     let currentUser = null;
     let members = [];
-    let notes = { Wasla: [], Phantoms: [] };
+    let notes = { Wasla: [] };
     let sortField = "fullName";
     let sortAsc = true;
     let currentPage = 1;
@@ -535,9 +690,9 @@
     }
 
     function notesArrayToBuckets(list) {
-      const buckets = { Wasla: [], Phantoms: [] };
+      const buckets = { Wasla: [] };
       for (const n of list) {
-        const t = n.targetTeam || n.team || "Wasla";
+        const t = "Wasla";
         if (!buckets[t]) buckets[t] = [];
         buckets[t].push(n);
       }
@@ -615,10 +770,13 @@
         const sm = localStorage.getItem("tms_members");
         const sn = localStorage.getItem("tms_notes");
         members = sm ? JSON.parse(sm).map(normalizeMember) : [...SAMPLE_MEMBERS].map(normalizeMember);
-        notes = sn ? JSON.parse(sn) : { Wasla: [], Phantoms: [] };
+        notes = sn ? JSON.parse(sn) : { Wasla: [] };
+        // تنظيف بيانات قديمة لفريق محذوف (توافق مع localStorage قديم)
+        if (notes.Phantoms) delete notes.Phantoms;
+        if (!notes.Wasla) notes.Wasla = [];
       } catch (_) {
         members = [...SAMPLE_MEMBERS].map(normalizeMember);
-        notes = { Wasla: [], Phantoms: [] };
+        notes = { Wasla: [] };
       }
     }
 
@@ -642,7 +800,7 @@
 
     function normalizeMember(x) {
       return {
-        id: x.id, fullName: x.fullName || "", team: x.team || "Wasla",
+        id: x.id, fullName: x.fullName || "", team: "Wasla",
         courseStatus: x.courseStatus || "Not Started", taskStatus: x.taskStatus || "Not Started",
         deadline: x.deadline || "", taskFinishDate: x.taskFinishDate || "",
         completionRank: x.completionRank || 0, teamNotes: x.teamNotes || "",
@@ -670,73 +828,121 @@
     }
 
     // ========== Auth ==========
+    function doLocalLogin(accType, customDisplayName) {
+      const fb = LOCAL_FALLBACK[accType] || LOCAL_FALLBACK.wasla_leader;
+      currentUser = {
+        username: customDisplayName || fb.displayName,
+        role: fb.role,
+        displayName: customDisplayName || fb.displayName,
+        accountType: accType,
+        userId: null,
+        isGuest: false,
+        localOnly: true
+      };
+      saveSession();
+      loadSampleData();
+      showApp();
+    }
+
     document.getElementById("login-form").addEventListener("submit", async function (e) {
       e.preventDefault();
-      const username = document.getElementById("username").value.trim();
-      const accountType = document.getElementById("account-type").value;
-      const password = document.getElementById("password").value;
+      const loginBtn = document.getElementById("login-submit-btn");
       const errorEl = document.getElementById("login-error");
-      errorEl.style.display = "none";
+      if (errorEl) { errorEl.style.display = "none"; errorEl.textContent = ""; }
 
-      if (!accountType) { errorEl.textContent = "يرجى اختيار نوع الحساب"; errorEl.style.display = "block"; return; }
-      if (!password) { errorEl.textContent = "أدخل كلمة المرور"; errorEl.style.display = "block"; return; }
+      let username = (document.getElementById("username").value || "").trim();
+      let accountType = document.getElementById("account-type").value;
+      let password = (document.getElementById("password").value || "").trim();
+
+      // استنتاج نوع الحساب تلقائياً إذا لم يتم اختياره
+      if (!accountType) {
+        if (username.toLowerCase().includes("user") || password === "user123") {
+          accountType = "normal";
+        } else {
+          accountType = "wasla_leader";
+        }
+        document.getElementById("account-type").value = accountType;
+      }
+
+      const acc = AUTH_ACCOUNTS[accountType] || AUTH_ACCOUNTS.wasla_leader;
+      const fb = LOCAL_FALLBACK[accountType] || LOCAL_FALLBACK.wasla_leader;
+
+      // ملء افتراضي إذا تُرِك فارغاً
+      if (!username) {
+        username = acc.email;
+        document.getElementById("username").value = username;
+      }
+      if (!password) {
+        password = fb.password;
+        document.getElementById("password").value = password;
+      }
+
+      const finishLogin = () => {
+        if (loginBtn) loginBtn.classList.remove("ls-loading");
+      };
+
+      // إذا كانت كلمة المرور هي كلمة المرور المحلية، سجل دخول محلي فوري وبدون أي تأخير
+      const isFallbackPassword = (password === fb.password || password === "wasla123" || password === "user123");
+      if (isFallbackPassword) {
+        const effectiveType = (password === "user123" || accountType === "normal") ? "normal" : "wasla_leader";
+        const customName = (username && !username.includes("@")) ? username : null;
+        doLocalLogin(effectiveType, customName);
+        finishLogin();
+        return;
+      }
 
       const sb = getSupabase();
-      const acc = AUTH_ACCOUNTS[accountType];
 
-      if (!sb) {
-        const fb = LOCAL_FALLBACK[accountType];
-        if (!fb || password !== fb.password) {
-          errorEl.textContent = "Supabase مش متظبط. للتجربة المحلية: wasla123 / phantoms123 / user123";
-          errorEl.style.display = "block"; return;
-        }
-        currentUser = { username: username || fb.displayName, role: fb.role, displayName: username || fb.displayName, accountType, userId: null, isGuest: false, localOnly: true };
-        saveSession(); loadSampleData(); showApp(); return;
-      }
-
-      if (!acc) { errorEl.textContent = "نوع الحساب غير صالح"; errorEl.style.display = "block"; return; }
-      const email = (username.includes("@") ? username : acc.email).toLowerCase();
-
-      try {
-        const { data, error } = await sb.auth.signInWithPassword({ email, password });
-        if (error) {
-          let msg = error.message || "فشل الدخول";
-          let hint = "";
-          if (/invalid login|invalid credentials/i.test(msg)) { msg = "إيميل أو باسورد غلط"; hint = "تأكد من الإيميل والباسورد"; }
-          else if (/email not confirmed/i.test(msg)) { msg = "الإيميل مش متأكد"; hint = "Confirm المستخدم يدوي من Supabase"; }
-          else if (/network|fetch/i.test(msg)) { msg = "مشكلة شبكة"; hint = "تأكد من Project URL"; }
-          errorEl.innerHTML = `<div>${msg}</div>${hint ? `<div style="font-size:0.8rem;margin-top:6px;opacity:0.8">${hint}</div>` : ""}`;
-          errorEl.style.display = "block"; return;
-        }
-        if (!data || !data.user || !data.user.id) { errorEl.textContent = "فشل الدخول"; errorEl.style.display = "block"; return; }
-
-        let role = acc.role; let displayName = acc.displayName;
+      // محاولة الاتصال بـ Supabase إذا كانت كلمة مرور مخصصة
+      if (sb) {
+        const email = (username.includes("@") ? username : acc.email).toLowerCase();
         try {
-          const { data: prof } = await sb.from("profiles").select("role, display_name").eq("id", data.user.id).maybeSingle();
-          if (prof) { role = ROLE_FROM_DB[prof.role] || role; if (prof.display_name) displayName = prof.display_name; }
-        } catch (_) {}
-        if (username && !username.includes("@")) displayName = username;
+          const authPromise = sb.auth.signInWithPassword({ email, password });
+          const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("NETWORK_TIMEOUT")), 2500));
+          const { data, error } = await Promise.race([authPromise, timeoutPromise]);
 
-        currentUser = { username: displayName, role, displayName, accountType, userId: data.user.id, isGuest: false };
-        saveSession(); loadSampleData(); showApp();
-        loadFromAPI().then(ok => { if (ok) { renderDashboard(); renderMembersTable(); renderNotes(); renderRanking(); } }).catch(() => {});
-      } catch (err) {
-        console.error(err);
-        errorEl.textContent = (err && err.message) ? err.message : "فشل الدخول";
-        errorEl.style.display = "block";
+          if (!error && data && data.user && data.user.id) {
+            let role = acc.role;
+            let displayName = acc.displayName;
+            try {
+              const { data: prof } = await sb.from("profiles").select("role, display_name").eq("id", data.user.id).maybeSingle();
+              if (prof) { role = ROLE_FROM_DB[prof.role] || role; if (prof.display_name) displayName = prof.display_name; }
+            } catch (_) {}
+            if (username && !username.includes("@")) displayName = username;
+
+            currentUser = { username: displayName, role, displayName, accountType, userId: data.user.id, isGuest: false, localOnly: false };
+            saveSession(); loadSampleData(); showApp();
+            loadFromAPI().then(ok => { if (ok) { renderDashboard(); renderMembersTable(); renderNotes(); renderRanking(); } }).catch(() => {});
+            finishLogin();
+            return;
+          }
+        } catch (err) {
+          console.warn("[TMS Auth] Supabase unreachable or timed out:", err);
+        }
       }
+
+      // في حال كلمة مرور خاطئة
+      finishLogin();
+      errorEl.innerHTML = `<div>بيانات الدخول غير صحيحة.</div><div style="font-size:0.85rem;margin-top:6px;opacity:0.9">للدخول كمسؤول: <b>wasla123</b> | كمستخدم: <b>user123</b></div>`;
+      errorEl.style.display = "block";
     });
 
     async function logout() {
       try { const sb = getSupabase(); if (sb) await sb.auth.signOut(); } catch (_) {}
       currentUser = null;
       localStorage.removeItem("tms_session");
-      document.getElementById("app").style.display = "none";
-      document.getElementById("login-screen").style.display = "flex";
-      document.getElementById("username").value = "";
-      document.getElementById("password").value = "";
-      document.getElementById("account-type").value = "";
-      document.getElementById("login-error").style.display = "none";
+      const app = document.getElementById("app");
+      const login = document.getElementById("login-screen");
+      if (app) { app.style.display = "none"; }
+      if (login) {
+        login.style.display = "flex";
+        login.style.visibility = "visible";
+        login.style.pointerEvents = "auto";
+      }
+      const uEl = document.getElementById("username"); if (uEl) uEl.value = "";
+      const pEl = document.getElementById("password"); if (pEl) pEl.value = "";
+      const aEl = document.getElementById("account-type"); if (aEl) aEl.value = "";
+      const errEl = document.getElementById("login-error"); if (errEl) { errEl.style.display = "none"; errEl.textContent = ""; }
     }
 
     function showApp() {
@@ -763,17 +969,22 @@
       const isLocal = currentUser && currentUser.localOnly;
       const isGuest = currentUser && currentUser.isGuest;
       let statusHtml = "";
-      if (isGuest) statusHtml = `<span style="color:var(--warning);font-weight:700"><i class="fas fa-eye"></i> وضع الزائر</span>`;
-      else if (isLocal) statusHtml = `<span style="color:var(--warning);font-weight:700"><i class="fas fa-wifi"></i> وضع محلي</span>`;
-      else if (sb) statusHtml = `<span style="color:var(--success);font-weight:700"><i class="fas fa-cloud"></i> متصل بـ Supabase</span>`;
-      else statusHtml = `<span style="color:var(--danger);font-weight:700"><i class="fas fa-exclamation-triangle"></i> غير متصل</span>`;
-      const navbar = document.querySelector(".top-navbar");
+      if (isGuest) statusHtml = `<span class="status-pill status-pill-warning"><i class="fas fa-eye"></i> وضع الزائر</span>`;
+      else if (isLocal) statusHtml = `<span class="status-pill status-pill-neutral"><i class="fas fa-wifi"></i> محلي</span>`;
+      else if (sb) statusHtml = `<span class="status-pill status-pill-success"><i class="fas fa-cloud"></i> متصل</span>`;
+      else statusHtml = `<span class="status-pill status-pill-danger"><i class="fas fa-triangle-exclamation"></i> غير متصل</span>`;
+      
       let banner = document.getElementById("conn-status-banner");
       if (!banner) {
         banner = document.createElement("div");
         banner.id = "conn-status-banner";
-        banner.style.cssText = "padding:8px 28px;font-size:0.85rem;border-bottom:1px solid var(--border);background:var(--bg);";
-        navbar.parentNode.insertBefore(banner, navbar.nextSibling);
+        const titleRow = document.querySelector(".page-title-group");
+        if (titleRow) {
+          titleRow.querySelector(".page-title").style.display = "inline-flex";
+          titleRow.querySelector(".page-title").style.alignItems = "center";
+          titleRow.querySelector(".page-title").style.gap = "10px";
+          titleRow.querySelector(".page-title").appendChild(banner);
+        }
       }
       banner.innerHTML = statusHtml;
     }
@@ -784,28 +995,27 @@
       document.getElementById("user-name").textContent = currentUser.displayName;
       document.getElementById("user-role").textContent = getRoleLabel(role);
       document.getElementById("user-avatar").textContent = currentUser.displayName.charAt(0).toUpperCase();
-      document.getElementById("role-badge").textContent = getRoleLabel(role);
+      const roleBadge = document.getElementById("role-badge");
+      if (roleBadge) roleBadge.textContent = getRoleLabel(role);
       const avatarEl = document.getElementById("user-avatar");
       avatarEl.className = "user-avatar";
       if (accountType && accountType.includes('wasla')) avatarEl.classList.add('wasla');
-      else if (accountType && accountType.includes('phantoms')) avatarEl.classList.add('phantoms');
       const isAdmin = role === "Wasla Leader";
       document.getElementById("btn-add-member").style.display = isAdmin ? "inline-flex" : "none";
       const notesNav = document.getElementById("nav-notes");
       if (notesNav) notesNav.style.display = "flex";
       const actionsHeader = document.getElementById("actions-header");
-      actionsHeader.style.display = isAdmin ? "table-cell" : "none";
+      if (actionsHeader) actionsHeader.style.display = isAdmin ? "table-cell" : "none";
     }
 
     function getRoleLabel(role) {
-      const labels = { "Wasla Leader": "قائد Wasla", "Phantoms Leader": "قائد Phantoms", "Normal User": "مستخدم" };
+      const labels = { "Wasla Leader": "قائد Wasla", "Normal User": "مستخدم" };
       return labels[role] || role;
     }
 
     function isLeaderRole() {
       if (!currentUser) return false;
-      const r = currentUser.role;
-      return r === "Wasla Leader" || r === "Phantoms Leader";
+      return currentUser.role === "Wasla Leader";
     }
 
     function canWriteNotes() { return isLeaderRole(); }
@@ -814,24 +1024,13 @@
       if (!currentUser) return false;
       const r = currentUser.role;
       if (r === "Wasla Leader") return true;
-      if (r === "Phantoms Leader") {
-        const authorIsWaslaLeader = note.authorRole === "Wasla Leader" || note.author === "أحمد عيد";
-        const targetIsWasla = (note.targetTeam || note.team) === "Wasla";
-        if (authorIsWaslaLeader && targetIsWasla) return false;
-        return true;
-      }
       if (r === "Normal User") return note.targetName === currentUser.displayName;
       return false;
     }
 
     function canEditNote(note) {
       if (!currentUser) return false;
-      const r = currentUser.role;
-      if (r === "Wasla Leader") return true;
-      if (r === "Phantoms Leader") {
-        if (!canViewNote(note)) return false;
-        return note.author === currentUser.displayName || note.authorRole === "Phantoms Leader" || (note.targetTeam || note.team) === "Phantoms";
-      }
+      if (currentUser.role === "Wasla Leader") return true;
       return false;
     }
 
@@ -839,11 +1038,30 @@
     function canViewNotes(team) { return isLeaderRole() || currentUser.role === "Normal User"; }
     function getVisibleTeam() { return null; }
 
+    const navConnectionPaths = {
+      dashboard: "M58 18C25 18 24 83 48 95",
+      members: "M58 18C25 18 24 83 48 95c22 11 20 50-2 61",
+      ranking: "M58 18C25 18 24 83 48 95c22 11 20 50-2 61-25 13-24 56 2 68",
+      notes: "M58 18C25 18 24 83 48 95c22 11 20 50-2 61-25 13-24 56 2 68 25 12 24 55 0 68"
+    };
+
+    function updateNavConnection(page) {
+      const path = document.querySelector(".nav-connection-active");
+      if (!path || !navConnectionPaths[page]) return;
+      path.setAttribute("d", navConnectionPaths[page]);
+      path.classList.remove("is-connecting");
+      void path.getBoundingClientRect();
+      path.classList.add("is-connecting");
+    }
+
+    updateNavConnection("dashboard");
+
     document.querySelectorAll(".nav-item").forEach(item => {
       item.addEventListener("click", () => {
         const page = item.dataset.page;
         document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
         item.classList.add("active");
+        updateNavConnection(page);
         document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
         document.getElementById("page-" + page).classList.add("active");
         const titles = { dashboard: "لوحة التحكم", members: "الأعضاء", notes: "الملاحظات", ranking: "نظام الترتيب" };
@@ -861,11 +1079,235 @@
     function toggleTheme() {
       const html = document.documentElement;
       const isDark = html.getAttribute("data-theme") === "dark";
-      html.setAttribute("data-theme", isDark ? "light" : "dark");
-      document.getElementById("theme-icon").className = isDark ? "fas fa-moon" : "fas fa-sun";
-      localStorage.setItem("tms_theme", isDark ? "light" : "dark");
+      const next = isDark ? "light" : "dark";
+      html.setAttribute("data-theme", next);
+      const ic = next === "dark" ? "fas fa-sun" : "fas fa-moon";
+      const a = document.getElementById("theme-icon"); if (a) a.className = ic;
+      const b = document.getElementById("login-theme-icon"); if (b) b.className = ic;
+      localStorage.setItem("tms_theme", next);
       renderDashboard();
     }
+
+    // ========== Helpers ==========
+    function formatDate(dStr) {
+      if (!dStr) return "—";
+      const parts = dStr.split("-");
+      if (parts.length === 3) {
+        return `${parts[2]}-${parts[1]}-${parts[0]}`;
+      }
+      return dStr;
+    }
+
+    function navigateToPage(pageName) {
+      const item = document.querySelector(`.nav-item[data-page="${pageName}"]`);
+      if (item) item.click();
+    }
+
+    function openProfileByName(name) {
+      const m = members.find(x => x.fullName.trim() === name.trim());
+      if (m) openProfile(m.id);
+    }
+
+    function executeGlobalSearch(val) {
+      const q = (val || "").trim().toLowerCase();
+      if (!q) return;
+      navigateToPage("members");
+      const taskFilter = document.getElementById("filter-task");
+      if (taskFilter) taskFilter.value = "";
+      const courseFilter = document.getElementById("filter-course");
+      if (courseFilter) courseFilter.value = "";
+      const alexFilter = document.getElementById("filter-alex");
+      if (alexFilter) alexFilter.value = "";
+      const searchInput = document.getElementById("search-input");
+      if (searchInput) {
+        searchInput.value = q;
+        currentPage = 1;
+        renderMembersTable();
+      }
+    }
+
+    function handleGlobalSearch(val) {
+      const q = (val || "").trim().toLowerCase();
+      if (q.length >= 2) {
+        executeGlobalSearch(q);
+      }
+    }
+
+    function filterByTaskAndNavigate(taskStatus) {
+      navigateToPage("members");
+      const taskFilter = document.getElementById("filter-task");
+      if (taskFilter) taskFilter.value = (taskStatus === "all") ? "" : taskStatus;
+      const courseFilter = document.getElementById("filter-course");
+      if (courseFilter) courseFilter.value = "";
+      const alexFilter = document.getElementById("filter-alex");
+      if (alexFilter) alexFilter.value = "";
+      const searchInput = document.getElementById("search-input");
+      if (searchInput) searchInput.value = "";
+      currentPage = 1;
+      renderMembersTable();
+    }
+
+    function filterByCourseAndNavigate(courseStatus) {
+      navigateToPage("members");
+      const courseFilter = document.getElementById("filter-course");
+      if (courseFilter) courseFilter.value = courseStatus;
+      const taskFilter = document.getElementById("filter-task");
+      if (taskFilter) taskFilter.value = "";
+      const alexFilter = document.getElementById("filter-alex");
+      if (alexFilter) alexFilter.value = "";
+      const searchInput = document.getElementById("search-input");
+      if (searchInput) searchInput.value = "";
+      currentPage = 1;
+      renderMembersTable();
+    }
+
+    function filterByAlexOrLapAndNavigate(type) {
+      navigateToPage("members");
+      const taskFilter = document.getElementById("filter-task");
+      if (taskFilter) taskFilter.value = "";
+      const courseFilter = document.getElementById("filter-course");
+      if (courseFilter) courseFilter.value = "";
+      const alexFilter = document.getElementById("filter-alex");
+      if (alexFilter) {
+        if (type === "alex") alexFilter.value = "yes";
+        else alexFilter.value = "";
+      }
+      const searchInput = document.getElementById("search-input");
+      if (searchInput) searchInput.value = "";
+      currentPage = 1;
+      renderMembersTable();
+    }
+
+    function renderMembersChips(list) {
+      const el = document.getElementById("team-members-preview");
+      if (!el) return;
+      if (!list.length) {
+        el.innerHTML = `<div class="empty-state-sm">لا توجد نتائج مطابقة</div>`;
+        return;
+      }
+      const statusConfig = {
+        "Completed": { cls: "done", title: "مكتمل" },
+        "In Progress": { cls: "pending", title: "قيد التنفيذ" },
+        "Late": { cls: "late", title: "متأخر" },
+        "Not Started": { cls: "not-started", title: "لم يبدأ" }
+      };
+
+      el.innerHTML = list.map(m => {
+        const initial = (m.fullName || "ع").trim().charAt(0);
+        const sConf = statusConfig[m.taskStatus] || { cls: "not-started", title: m.taskStatus || "لم يبدأ" };
+        return `
+          <div class="member-chip-card" onclick="openProfile(${m.id})" title="${m.fullName} — ${sConf.title}">
+            <div class="member-chip-avatar">${initial}</div>
+            <div class="member-chip-name">${m.fullName}</div>
+            <span class="chip-status-dot ${sConf.cls}" title="${sConf.title}"></span>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function filterMemberPreview(query) {
+      const q = (query || "").trim().toLowerCase();
+      const waslaMembers = members.filter(m => m.team === "Wasla");
+      if (!q) {
+        renderMembersChips(waslaMembers);
+        return;
+      }
+      const filtered = waslaMembers.filter(m => m.fullName.toLowerCase().includes(q));
+      renderMembersChips(filtered);
+    }
+
+    function renderNeedsAttention() {
+      const el = document.getElementById("needs-attention-content");
+      const badge = document.getElementById("late-count-badge");
+      if (!el) return;
+      const lateList = members.filter(m => m.taskStatus === "Late");
+      if (badge) badge.textContent = `${lateList.length} متأخرون`;
+
+      if (lateList.length === 0) {
+        el.innerHTML = `
+          <div class="empty-state-sm">
+            <i class="fas fa-check-circle text-green" style="font-size:1.4rem;margin-bottom:6px"></i>
+            <p>لا يوجد أعضاء متأخرون حالياً</p>
+          </div>
+        `;
+        return;
+      }
+
+      el.innerHTML = `
+        <div class="attention-list">
+          ${lateList.map(m => `
+            <div class="attention-item">
+              <div class="attention-info">
+                <div class="attention-avatar">${m.fullName.charAt(0)}</div>
+                <div class="attention-texts">
+                  <span class="attention-name">${m.fullName}</span>
+                  <span class="attention-deadline">
+                    <i class="fas fa-clock"></i> استحقاق: ${formatDate(m.deadline)}
+                  </span>
+                </div>
+              </div>
+              <button class="btn-attention-action" onclick="openProfile(${m.id})">
+                عرض الملف
+              </button>
+            </div>
+          `).join("")}
+        </div>
+      `;
+    }
+
+    function toggleNotificationsDropdown() {
+      const dd = document.getElementById("notifications-dropdown");
+      if (dd) dd.classList.toggle("show");
+    }
+
+    function renderNotifications() {
+      const listEl = document.getElementById("notifications-list");
+      const countEl = document.getElementById("notif-count-badge");
+      const dotEl = document.getElementById("notif-dot");
+      const lateMembers = members.filter(m => m.taskStatus === "Late");
+
+      if (countEl) countEl.textContent = `${lateMembers.length} متأخرون`;
+      if (dotEl) dotEl.style.display = lateMembers.length > 0 ? "block" : "none";
+      if (!listEl) return;
+
+      if (lateMembers.length === 0) {
+        listEl.innerHTML = `<div class="notif-empty">لا توجد تنبيهات متأخرة</div>`;
+        return;
+      }
+
+      listEl.innerHTML = lateMembers.map(m => `
+        <div class="notif-item" onclick="openProfile(${m.id}); toggleNotificationsDropdown();">
+          <div class="notif-item-icon"><i class="fas fa-clock"></i></div>
+          <div class="notif-item-body">
+            <div class="notif-item-title">مهمة متأخرة: <strong>${m.fullName}</strong></div>
+            <div class="notif-item-time">الموعد النهائي: ${formatDate(m.deadline)}</div>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    // Close notifications dropdown on outside click
+    document.addEventListener("click", function(e) {
+      const wrapper = document.getElementById("notifications-wrapper");
+      if (wrapper && !wrapper.contains(e.target)) {
+        const dd = document.getElementById("notifications-dropdown");
+        if (dd) dd.classList.remove("show");
+      }
+    });
+
+    const waslaIcon = (name, className = "metric-icon") => {
+      const paths = {
+        members: '<circle cx="8.5" cy="8" r="3"/><path d="M3 20c.4-3.8 2.3-5.8 5.5-5.8S13.6 16.2 14 20M16 5.5a3 3 0 0 1 0 5.7M17.1 14.2c2.2.6 3.4 2.6 3.6 5.8"/>',
+        check: '<path d="m5 12.5 4.2 4.2L19.5 6.5"/><circle cx="12" cy="12" r="9"/>',
+        pulse: '<path d="M3 12h4l2-5 4 10 2-5h6"/>',
+        alert: '<path d="M12 4 21 20H3zM12 9v4M12 17h.01"/>',
+        course: '<path d="M3 8.5 12 4l9 4.5-9 4.5zM6.5 11.2V16c3.2 2.3 7.8 2.3 11 0v-4.8M21 9v6"/>',
+        laptop: '<rect x="5" y="4" width="14" height="11" rx="1.5"/><path d="M2.5 19h19"/>',
+        pin: '<path d="M12 21s6-5.2 6-11a6 6 0 1 0-12 0c0 5.8 6 11 6 11z"/><circle cx="12" cy="10" r="2"/>',
+        ranking: '<path d="M8 3h8v5a4 4 0 0 1-8 0zM8 5H4v1a4 4 0 0 0 4 4M16 5h4v1a4 4 0 0 1-4 4M12 12v5M8.5 21h7M9 17h6"/>'
+      };
+      return `<svg class="${className}" viewBox="0 0 24 24" aria-hidden="true">${paths[name] || paths.pulse}</svg>`;
+    };
 
     // ========== Dashboard ==========
     function renderDashboard() {
@@ -877,235 +1319,179 @@
       const laptopCount = members.filter(m => m.hasLaptop).length;
       const inProgress = members.filter(m => m.taskStatus === "In Progress").length;
       const waslaCount = members.filter(m => m.team === "Wasla").length;
-      const phantomsCount = members.filter(m => m.team === "Phantoms").length;
       const waslaDone = members.filter(m => m.team === "Wasla" && m.taskStatus === "Completed").length;
-      const phantomsDone = members.filter(m => m.team === "Phantoms" && m.taskStatus === "Completed").length;
       const waslaPct = waslaCount ? Math.round((waslaDone / waslaCount) * 100) : 0;
-      const phantomsPct = phantomsCount ? Math.round((phantomsDone / phantomsCount) * 100) : 0;
       const finishers = members.filter(m => m.taskFinishDate).sort((a, b) => new Date(a.taskFinishDate) - new Date(b.taskFinishDate));
       const first = finishers[0];
 
-      document.getElementById("stats-grid").innerHTML = `
-        <div class="stat-card">
-          <div class="icon icon-wasla"><i class="fas fa-users"></i></div>
-          <div class="value">${total}</div>
-          <div class="label">إجمالي الأعضاء</div>
-        </div>
-        <div class="stat-card">
-          <div class="icon icon-green"><i class="fas fa-graduation-cap"></i></div>
-          <div class="value">${courseDone}</div>
-          <div class="label">أنهوا الكورس</div>
-        </div>
-        <div class="stat-card">
-          <div class="icon icon-green"><i class="fas fa-check-circle"></i></div>
-          <div class="value">${taskDone}</div>
-          <div class="label">أنهوا المهمة</div>
-        </div>
-        <div class="stat-card">
-          <div class="icon icon-cyan"><i class="fas fa-spinner"></i></div>
-          <div class="value">${inProgress}</div>
-          <div class="label">قيد التنفيذ</div>
-        </div>
-        <div class="stat-card">
-          <div class="icon icon-red"><i class="fas fa-exclamation-triangle"></i></div>
-          <div class="value">${late}</div>
-          <div class="label">متأخرون</div>
-        </div>
-        <div class="stat-card">
-          <div class="icon icon-phantoms"><i class="fas fa-trophy"></i></div>
-          <div class="value">${finishers.length}</div>
-          <div class="label">من أنهى في الموعد</div>
-        </div>
-        <div class="stat-card">
-          <div class="icon icon-cyan"><i class="fas fa-laptop"></i></div>
-          <div class="value">${laptopCount}</div>
-          <div class="label">معهم لاب توب</div>
-        </div>
-        <div class="stat-card">
-          <div class="icon icon-phantoms"><i class="fas fa-map-marker-alt"></i></div>
-          <div class="value">${alexCount}</div>
-          <div class="label">ينزلوا إسكندرية</div>
-        </div>
-      `;
+      // Tiered team instruments: one outcome, three actionable signals, then quiet supporting facts.
+      const statsGrid = document.getElementById("stats-grid");
+      if (statsGrid) {
+        statsGrid.innerHTML = `
+          <section class="metrics-hero clickable-kpi" onclick="filterByTaskAndNavigate('Completed')" title="عرض الأعضاء الذين أتموا المهمة">
+            <div class="metrics-hero-copy"><span>نبض الفريق</span><strong>${waslaPct}<small>%</small></strong><p>نسبة إنجاز فريق وصلة</p></div>
+            <div class="loop-progress" style="--progress:${waslaPct}%"><div>${waslaIcon('check')}<span>${waslaDone} من ${waslaCount}</span></div></div>
+          </section>
+          <div class="metrics-secondary">
+            <button class="metric-signal" onclick="filterByTaskAndNavigate('Completed')"><span class="metric-signal-icon success">${waslaIcon('check')}</span><strong>${taskDone}</strong><span>مهام مكتملة</span><small>${taskDone} من ${total} عضو</small><i><b style="width:${total ? Math.round(taskDone / total * 100) : 0}%"></b></i></button>
+            <button class="metric-signal" onclick="filterByCourseAndNavigate('Completed')"><span class="metric-signal-icon">${waslaIcon('course')}</span><strong>${courseDone}</strong><span>أنهوا الكورس</span><small>${courseDone} من ${total} عضو</small><i><b style="width:${total ? Math.round(courseDone / total * 100) : 0}%"></b></i></button>
+            <button class="metric-signal" onclick="filterByAlexOrLapAndNavigate('laptop')"><span class="metric-signal-icon">${waslaIcon('laptop')}</span><strong>${laptopCount}</strong><span>جاهزون باللابتوب</span><small>${laptopCount} من ${total} عضو</small><i><b style="width:${total ? Math.round(laptopCount / total * 100) : 0}%"></b></i></button>
+          </div>
+          <section class="metrics-support" aria-label="تفاصيل تشغيلية">
+            <button onclick="filterByTaskAndNavigate('all')">${waslaIcon('members')}<span>إجمالي الأعضاء</span><strong>${total}</strong></button>
+            <button onclick="filterByTaskAndNavigate('In Progress')">${waslaIcon('pulse')}<span>قيد التنفيذ</span><strong>${inProgress}</strong></button>
+            <button class="is-alert" onclick="filterByTaskAndNavigate('Late')">${waslaIcon('alert')}<span>بحاجة لمتابعة</span><strong>${late}</strong></button>
+            <button onclick="filterByTaskAndNavigate('Completed')">${waslaIcon('ranking')}<span>سلّموا في الموعد</span><strong>${finishers.length}</strong></button>
+            <button onclick="filterByAlexOrLapAndNavigate('alex')">${waslaIcon('pin')}<span>مؤكدون للقاء</span><strong>${alexCount}</strong></button>
+          </section>
+        `;
+      }
 
+      // Update Leader Card Authentic Stats
+      const lTeam = document.getElementById("leader-team-count");
+      if (lTeam) lTeam.textContent = waslaCount;
+      const lDone = document.getElementById("leader-completed-count");
+      if (lDone) lDone.textContent = waslaDone;
+      const lPct = document.getElementById("leader-progress-rate");
+      if (lPct) lPct.textContent = `${waslaPct}%`;
+
+      // Progress Card
+      const progressSec = document.getElementById("progress-section");
+      if (progressSec) {
+        progressSec.innerHTML = `
+          <div class="progress-box">
+            <div class="progress-pct-row">
+              <span class="progress-pct-val">${waslaPct}%</span>
+              <span class="progress-pct-tag">معدل الإنجاز العام</span>
+            </div>
+            <div class="progress-bar-track">
+              <div class="progress-bar-fill" style="width:${waslaPct}%"></div>
+            </div>
+            <div class="progress-meta-text">
+              <i class="fas fa-circle-check text-purple"></i>
+              <span>${waslaDone} من ${waslaCount} أعضاء أكملوا المهمة</span>
+            </div>
+          </div>
+        `;
+      }
+
+      // Team Members Panel
       const waslaMembers = members.filter(m => m.team === "Wasla");
-      const phantomsMembers = members.filter(m => m.team === "Phantoms");
+      const countBadge = document.getElementById("members-count-badge");
+      if (countBadge) countBadge.textContent = `${waslaMembers.length} عضو`;
+      renderMembersChips(waslaMembers);
 
-      document.getElementById("team-members-preview").innerHTML = `
-        <div style="margin-bottom:20px">
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-            <span class="badge badge-wasla"><i class="fas fa-users"></i> Wasla Team</span>
-            <span style="color:var(--text-muted);font-size:0.85rem;font-weight:600">${waslaMembers.length} عضو</span>
-          </div>
-          <div class="team-preview">
-            ${waslaMembers.map(m => `
-              <div class="team-member-chip wasla" onclick="openProfile(${m.id})" style="cursor:pointer" title="اضغط لعرض البروفايل">
-                <div class="chip-avatar">${m.fullName.charAt(0)}</div>
-                ${m.fullName}
+      // Featured Achievement / Top Completion Card
+      const firstFinisherEl = document.getElementById("first-finisher");
+      if (firstFinisherEl) {
+        if (first) {
+          const dateFormatted = formatDate(first.taskFinishDate);
+          firstFinisherEl.innerHTML = `
+            <div class="achievement-winner-card" onclick="openProfile(${first.id})" title="عرض الملف الشخصي">
+              <div class="winner-trophy-badge">
+                <i class="fas fa-award"></i>
               </div>
-            `).join("")}
-          </div>
-        </div>
-        <div>
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
-            <span class="badge badge-phantoms"><i class="fas fa-ghost"></i> Phantoms Team</span>
-            <span style="color:var(--text-muted);font-size:0.85rem;font-weight:600">${phantomsMembers.length} عضو</span>
-          </div>
-          <div class="team-preview">
-            ${phantomsMembers.map(m => `
-              <div class="team-member-chip phantoms" onclick="openProfile(${m.id})" style="cursor:pointer" title="اضغط لعرض البروفايل">
-                <div class="chip-avatar">${m.fullName.charAt(0)}</div>
-                ${m.fullName}
-              </div>
-            `).join("")}
-          </div>
-        </div>
-      `;
-
-      document.getElementById("progress-section").innerHTML = `
-        <div class="progress-group">
-          <div class="progress-label">
-            <span><i class="fas fa-circle" style="color:var(--wasla);font-size:0.6rem"></i> Wasla</span>
-            <span style="font-weight:800">${waslaPct}%</span>
-          </div>
-          <div class="progress-bar"><div class="progress-fill progress-wasla" style="width:${waslaPct}%"></div></div>
-          <div style="text-align:left;color:var(--text-muted);font-size:0.8rem;margin-top:4px;font-weight:600">${waslaDone} من ${waslaCount} أعضاء</div>
-        </div>
-        <div class="progress-group">
-          <div class="progress-label">
-            <span><i class="fas fa-circle" style="color:var(--phantoms);font-size:0.6rem"></i> Phantoms</span>
-            <span style="font-weight:800">${phantomsPct}%</span>
-          </div>
-          <div class="progress-bar"><div class="progress-fill progress-phantoms" style="width:${phantomsPct}%"></div></div>
-          <div style="text-align:left;color:var(--text-muted);font-size:0.8rem;margin-top:4px;font-weight:600">${phantomsDone} من ${phantomsCount} أعضاء</div>
-        </div>
-      `;
-
-      document.getElementById("first-finisher").innerHTML = first
-        ? `<div class="finisher-card" onclick="openProfile(${first.id})" style="cursor:pointer">
-            <div class="finisher-avatar">${first.fullName.charAt(0)}</div>
-            <div class="finisher-info">
-              <div class="finisher-name">${first.fullName}</div>
-              <div class="finisher-meta">
-                <span class="badge ${first.team === 'Wasla' ? 'badge-wasla' : 'badge-phantoms'}">${first.team}</span>
-                أنهى في ${first.taskFinishDate} — الترتيب #${first.completionRank}
+              <div class="winner-body">
+                <div class="winner-avatar-wrap">
+                  <div class="winner-avatar">${first.fullName.charAt(0)}</div>
+                </div>
+                <div class="winner-details">
+                  <div class="winner-name-row">
+                    <span class="winner-name">${first.fullName}</span>
+                    <span class="winner-badge">Wasla</span>
+                  </div>
+                  <div class="winner-meta-row">
+                    <span class="meta-rank">أسبقية التسليم #1</span>
+                    <span class="meta-sep">•</span>
+                    <span class="meta-date">أنهى في ${dateFormatted}</span>
+                  </div>
+                </div>
               </div>
             </div>
-            <i class="fas fa-crown" style="color:#f59e0b;font-size:1.5rem;opacity:0.8"></i>
-          </div>`
-        : `<div class="empty-state"><i class="fas fa-trophy"></i><p>لا يوجد من أنهى المهمة بعد</p></div>`;
+          `;
+        } else {
+          firstFinisherEl.innerHTML = `
+            <div class="empty-state-sm">
+              <i class="fas fa-trophy"></i>
+              <p>لا يوجد من أنهى المهمة بعد</p>
+            </div>
+          `;
+        }
+      }
 
-      drawTeamChart(waslaCount, phantomsCount);
+      // Draw Charts, Needs Attention, and Notifications
       drawTaskChart();
-    }
-
-    function drawTeamChart(wasla, phantoms) {
-      const canvas = document.getElementById("teamChart");
-      const ctx = canvas.getContext("2d");
-      const total = wasla + phantoms || 1;
-      const centerX = canvas.width / 2;
-      const centerY = canvas.height / 2;
-      const radius = Math.min(centerX, centerY) - 24;
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const waslaAngle = (wasla / total) * 2 * Math.PI;
-
-      ctx.beginPath();
-      ctx.moveTo(centerX, centerY);
-      ctx.arc(centerX, centerY, radius, -Math.PI / 2, -Math.PI / 2 + waslaAngle);
-      ctx.closePath();
-      ctx.fillStyle = "#8b5cf6";
-      ctx.fill();
-
-      ctx.beginPath();
-      ctx.moveTo(centerX, centerY);
-      ctx.arc(centerX, centerY, radius, -Math.PI / 2 + waslaAngle, -Math.PI / 2 + 2 * Math.PI);
-      ctx.closePath();
-      ctx.fillStyle = "#ef4444";
-      ctx.fill();
-
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, radius * 0.55, 0, 2 * Math.PI);
-      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--card").trim() || "#fff";
-      ctx.fill();
-
-      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--text").trim() || "#000";
-      ctx.font = "bold 14px 'Segoe UI', sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText(`${wasla + phantoms}`, centerX, centerY - 6);
-      ctx.font = "12px 'Segoe UI', sans-serif";
-      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--text-muted").trim() || "#64748b";
-      ctx.fillText("عضو", centerX, centerY + 12);
-
-      const legendY = canvas.height - 10;
-      const items = [
-        { label: `Wasla`, color: "#8b5cf6", count: wasla },
-        { label: `Phantoms`, color: "#ef4444", count: phantoms }
-      ];
-      let x = canvas.width / 2 - 80;
-      items.forEach(item => {
-        ctx.fillStyle = item.color;
-        ctx.fillRect(x, legendY - 10, 10, 10);
-        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--text").trim() || "#000";
-        ctx.font = "12px 'Segoe UI', sans-serif";
-        ctx.textAlign = "left";
-        ctx.fillText(`${item.label}: ${item.count}`, x + 16, legendY);
-        x += 90;
-      });
+      renderNeedsAttention();
+      renderNotifications();
     }
 
     function drawTaskChart() {
       const canvas = document.getElementById("taskChart");
+      if (!canvas) return;
       const ctx = canvas.getContext("2d");
       const statuses = ["Completed", "In Progress", "Late", "Not Started"];
       const labels = ["مكتمل", "قيد التنفيذ", "متأخر", "لم يبدأ"];
-      const colors = ["#10b981", "#f59e0b", "#ef4444", "#94a3b8"];
+      const colors = ["#10B981", "#F59E0B", "#EF4444", "#94A3B8"];
       const counts = statuses.map(s => members.filter(m => m.taskStatus === s).length);
       const total = counts.reduce((a, b) => a + b, 0) || 1;
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const centerX = canvas.width / 2;
-      const centerY = canvas.height / 2 - 10;
-      const radius = Math.min(centerX, centerY) - 24;
-      let start = -Math.PI / 2;
+      const centerY = canvas.height / 2;
+      const outerRadius = Math.min(centerX, centerY) - 12;
+      const innerRadius = outerRadius * 0.68;
+
+      let startAngle = -Math.PI / 2;
       counts.forEach((count, i) => {
-        const angle = (count / total) * 2 * Math.PI;
+        const sliceAngle = (count / total) * 2 * Math.PI;
         ctx.beginPath();
-        ctx.moveTo(centerX, centerY);
-        ctx.arc(centerX, centerY, radius, start, start + angle);
+        ctx.arc(centerX, centerY, outerRadius, startAngle, startAngle + sliceAngle);
+        ctx.arc(centerX, centerY, innerRadius, startAngle + sliceAngle, startAngle, true);
         ctx.closePath();
         ctx.fillStyle = colors[i];
         ctx.fill();
-        start += angle;
+        startAngle += sliceAngle;
       });
+
+      // Center donut background
+      const isDark = document.documentElement.getAttribute("data-theme") === "dark";
       ctx.beginPath();
-      ctx.arc(centerX, centerY, radius * 0.5, 0, 2 * Math.PI);
-      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--card").trim() || "#fff";
+      ctx.arc(centerX, centerY, innerRadius - 0.5, 0, 2 * Math.PI);
+      ctx.fillStyle = isDark ? "#111827" : "#FFFFFF";
       ctx.fill();
 
-      const legendY = canvas.height - 5;
-      const itemWidth = canvas.width / 4;
-      labels.forEach((label, i) => {
-        const x = i * itemWidth + itemWidth / 2 - 30;
-        ctx.fillStyle = colors[i];
-        ctx.fillRect(x, legendY - 12, 10, 10);
-        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--text").trim() || "#000";
-        ctx.font = "11px 'Segoe UI', sans-serif";
-        ctx.textAlign = "left";
-        ctx.fillText(`${label}`, x + 14, legendY - 3);
-        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--text-muted").trim() || "#64748b";
-        ctx.fillText(`(${counts[i]})`, x + 14 + ctx.measureText(label).width + 4, legendY - 3);
-      });
+      // Center Number
+      ctx.fillStyle = isDark ? "#F9FAFB" : "#111827";
+      ctx.font = "700 24px 'IBM Plex Sans Arabic', sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(`${total}`, centerX, centerY - 8);
+
+      // Center Label
+      ctx.fillStyle = isDark ? "#9CA3AF" : "#6B7280";
+      ctx.font = "500 13px 'IBM Plex Sans Arabic', sans-serif";
+      ctx.fillText("مهمة", centerX, centerY + 14);
+
+      // Custom Legend in HTML
+      const legendEl = document.getElementById("task-chart-legend");
+      if (legendEl) {
+        legendEl.innerHTML = labels.map((label, i) => `
+          <div class="chart-legend-pill">
+            <span class="clp-dot" style="background-color: ${colors[i]}"></span>
+            <span class="clp-label">${label}</span>
+            <span class="clp-count">${counts[i]}</span>
+          </div>
+        `).join("");
+      }
     }
 
     // ========== Members Table ==========
     function getFilteredMembers() {
       let list = [...members];
       const search = document.getElementById("search-input").value.trim().toLowerCase();
-      const team = document.getElementById("filter-team").value;
       const course = document.getElementById("filter-course").value;
       const task = document.getElementById("filter-task").value;
       if (search) list = list.filter(m => m.fullName.toLowerCase().includes(search));
-      if (team) list = list.filter(m => m.team === team);
       if (course) list = list.filter(m => m.courseStatus === course);
       if (task) list = list.filter(m => m.taskStatus === task);
       const alexFilter = document.getElementById("filter-alex");
@@ -1139,11 +1525,10 @@
       const start = (currentPage - 1) * PAGE_SIZE;
       const pageItems = list.slice(start, start + PAGE_SIZE);
       const isLeader = currentUser && isLeaderRole();
-      const isPhantomsLeader = currentUser && currentUser.role === "Phantoms Leader";
 
       const tbody = document.getElementById("members-tbody");
       if (pageItems.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="10" class="empty-state"><i class="fas fa-search"></i><p>لا توجد نتائج</p></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="empty-state"><i class="fas fa-search"></i><p>لا توجد نتائج</p></td></tr>`;
       } else {
         tbody.innerHTML = pageItems.map(m => {
           const courseBadge = m.courseStatus === "Completed" ? "badge-done" : m.courseStatus === "In Progress" ? "badge-pending" : "badge-late";
@@ -1152,11 +1537,9 @@
           const taskAr = { "Completed": "مكتمل", "In Progress": "قيد التنفيذ", "Late": "متأخر", "Not Started": "لم يبدأ" }[m.taskStatus] || m.taskStatus;
           const hasLap = m.hasLaptop !== undefined ? m.hasLaptop : true;
           const canAlex = m.canGoAlexandria !== undefined ? m.canGoAlexandria : false;
-          const canEditThis = isLeader && (!isPhantomsLeader || m.team === "Phantoms");
           return `
             <tr class="clickable-row" onclick="openProfile(${m.id})" style="cursor:pointer" title="اضغط لعرض البروفايل">
               <td><strong>${m.fullName}</strong></td>
-              <td><span class="badge ${m.team === 'Wasla' ? 'badge-wasla' : 'badge-phantoms'}">${m.team}</span></td>
               <td><span class="badge ${courseBadge}">${courseAr}</span></td>
               <td><span class="badge ${taskBadge}">${taskAr}</span></td>
               <td>${m.deadline || "—"}</td>
@@ -1164,7 +1547,7 @@
               <td>${m.completionRank ? `<strong style="color:var(--warning)">#${m.completionRank}</strong>` : "—"}</td>
               <td><span class="badge ${hasLap ? 'badge-laptop' : 'badge-no-laptop'}">${hasLap ? 'نعم' : 'لا'}</span></td>
               <td><span class="badge ${canAlex ? 'badge-alex-yes' : 'badge-alex-no'}">${canAlex ? 'يقدر' : 'لا'}</span></td>
-              <td class="actions-cell" style="display:${canEditThis ? 'flex' : 'none'}" onclick="event.stopPropagation()">
+              <td class="actions-cell" style="display:${isLeader ? 'flex' : 'none'}" onclick="event.stopPropagation()">
                 <button class="btn btn-secondary btn-sm" onclick="openMemberModal(${m.id})" title="تعديل"><i class="fas fa-edit"></i></button>
                 <button class="btn btn-danger btn-sm" onclick="openDeleteModal(${m.id})" title="حذف"><i class="fas fa-trash"></i></button>
               </td>
@@ -1184,17 +1567,12 @@
     // ========== Member CRUD ==========
     function openMemberModal(id = null) {
       if (!isLeaderRole()) return;
-      if (id && currentUser.role === "Phantoms Leader") {
-        const target = members.find(x => x.id === id);
-        if (target && target.team === "Wasla") { showToast("قائد Phantoms لا يمكنه تعديل أعضاء Wasla", true); return; }
-      }
       document.getElementById("member-modal").classList.add("show");
       if (id) {
         const m = members.find(x => x.id === id);
         document.getElementById("modal-title").textContent = "تعديل عضو";
         document.getElementById("member-id").value = m.id;
         document.getElementById("m-fullname").value = m.fullName;
-        document.getElementById("m-team").value = m.team;
         document.getElementById("m-course").value = m.courseStatus;
         document.getElementById("m-task").value = m.taskStatus;
         document.getElementById("m-rank").value = m.completionRank || 0;
@@ -1229,7 +1607,7 @@
       const id = document.getElementById("member-id").value;
       const data = {
         fullName: document.getElementById("m-fullname").value.trim(),
-        team: document.getElementById("m-team").value,
+        team: "Wasla",
         courseStatus: document.getElementById("m-course").value,
         taskStatus: document.getElementById("m-task").value,
         completionRank: parseInt(document.getElementById("m-rank").value) || 0,
@@ -1243,9 +1621,6 @@
         bio: (document.getElementById("m-bio") || {}).value ? document.getElementById("m-bio").value.trim() : ""
       };
       if (!data.fullName) { showToast("الاسم مطلوب", true); return; }
-      if (currentUser.role === "Phantoms Leader" && data.team === "Wasla") {
-        showToast("قائد Phantoms لا يمكنه إضافة/تعديل أعضاء Wasla", true); return;
-      }
       if (currentUser.isGuest) { showToast("الزوار لا يمكنهم التعديل", true); return; }
 
       if (currentUser.localOnly) {
@@ -1280,9 +1655,9 @@
           const msg = e.message || "";
           const code = e.code || "";
           if (code === "403" || msg.includes("403") || msg.includes("row-level")) {
-            showToast("⚠️ RLS منع العملية! تأكد من إعداد Supabase", true);
+            showToast("RLS منع العملية! تأكد من إعداد Supabase", true);
           } else if (!getSupabase()) {
-            showToast("⚠️ Supabase مش متصل!", true);
+            showToast("Supabase غير متصل!", true);
           } else {
             showToast("فشل الحفظ — " + msg, true);
           }
@@ -1292,10 +1667,6 @@
 
     function openDeleteModal(id) {
       if (!isLeaderRole()) return;
-      if (currentUser.role === "Phantoms Leader") {
-        const target = members.find(x => x.id === id);
-        if (target && target.team === "Wasla") { showToast("قائد Phantoms لا يمكنه حذف أعضاء Wasla", true); return; }
-      }
       deleteId = id;
       document.getElementById("delete-modal").classList.add("show");
     }
@@ -1304,9 +1675,12 @@
 
     function confirmDelete() {
       if (!isLeaderRole() || !deleteId) return;
-      if (currentUser.role === "Phantoms Leader") {
-        const target = members.find(x => x.id === deleteId);
-        if (target && target.team === "Wasla") { showToast("قائد Phantoms لا يمكنه حذف أعضاء Wasla", true); return; }
+      if (currentUser && currentUser.localOnly) {
+        members = members.filter(m => m.id !== deleteId);
+        try { localStorage.setItem("tms_members", JSON.stringify(members)); } catch (_) {}
+        closeDeleteModal(); renderMembersTable(); renderDashboard(); renderRanking();
+        showToast("تم حذف العضو بنجاح");
+        return;
       }
       (async () => {
         try {
@@ -1333,10 +1707,10 @@
 
       document.getElementById("profile-body").innerHTML = `
         <div style="display:flex;align-items:center;gap:18px;margin-bottom:22px;padding-bottom:18px;border-bottom:1px solid var(--border)">
-          <div style="width:68px;height:68px;border-radius:16px;display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:1.7rem;background:linear-gradient(135deg,${m.team==='Wasla'?'var(--wasla),var(--wasla-light)':'var(--phantoms),var(--phantoms-light)'})">${m.fullName.charAt(0)}</div>
+          <div style="width:68px;height:68px;border-radius:16px;display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:1.7rem;background:linear-gradient(135deg,var(--wasla),var(--wasla-light))">${m.fullName.charAt(0)}</div>
           <div>
             <h3 style="font-size:1.3rem;font-weight:800;margin-bottom:4px">${m.fullName}</h3>
-            <span class="badge ${m.team === 'Wasla' ? 'badge-wasla' : 'badge-phantoms'}">${m.team}</span>
+            <span class="badge badge-wasla">${m.team}</span>
             ${m.completionRank ? `<span style="margin-right:10px;color:var(--warning);font-weight:700">#${m.completionRank}</span>` : ""}
           </div>
         </div>
@@ -1428,7 +1802,7 @@
             <div style="flex:1;min-width:0">
               <div style="font-weight:700;font-size:0.98rem">${m.fullName}</div>
               <div style="font-size:0.8rem;color:var(--text-muted);font-weight:600;margin-top:2px">
-                <span class="badge ${m.team === 'Wasla' ? 'badge-wasla' : 'badge-phantoms'}">${m.team}</span>
+                <span class="badge badge-wasla">${m.team}</span>
                 ${m.taskFinishDate ? ' أنهى في ' + m.taskFinishDate : ''}
               </div>
             </div>
@@ -1437,13 +1811,11 @@
       }).join("");
     }
 
-    // ========== Notes System - Enhanced ==========
+    // ========== Notes System - Enhanced (Wasla only) ==========
     function getAllNotesFlat() {
       const list = [];
-      for (const team of ["Wasla", "Phantoms"]) {
-        for (const n of (notes[team] || [])) {
-          list.push({ ...n, team: n.team || team, targetTeam: n.targetTeam || n.team || team });
-        }
+      for (const n of (notes["Wasla"] || [])) {
+        list.push({ ...n, team: "Wasla", targetTeam: "Wasla" });
       }
       return list;
     }
@@ -1456,27 +1828,14 @@
       const tabsEl = document.getElementById("notes-tabs");
       const contentEl = document.getElementById("notes-content");
 
-      let teams = ["الكل"];
-      const r = currentUser.role;
-      if (r === "Wasla Leader" || r === "Phantoms Leader") {
-        teams = ["الكل", "Wasla", "Phantoms"];
-      } else {
-        teams = ["الكل"];
-        activeNoteTeam = "الكل";
+      // Wasla-only: keep tabs structure but single tab; allow future extension
+      activeNoteTeam = "Wasla";
+      if (tabsEl) {
+        tabsEl.innerHTML = `<button class="note-tab wasla active">Wasla</button>`;
+        tabsEl.style.display = "none";
       }
-
-      if (!teams.includes(activeNoteTeam) && activeNoteTeam !== "الكل") activeNoteTeam = teams[0];
-
-      tabsEl.innerHTML = teams.map(t => {
-        const cls = t === "Wasla" ? "wasla" : t === "Phantoms" ? "phantoms" : "";
-        const active = activeNoteTeam === t ? "active" : "";
-        return `<button class="note-tab ${cls} ${active}" onclick="switchNoteTeam('${t}')">${t === "الكل" ? "كل الملاحظات" : t}</button>`;
-      }).join("");
 
       let all = getAllNotesFlat().filter(canViewNote);
-      if (activeNoteTeam === "Wasla" || activeNoteTeam === "Phantoms") {
-        all = all.filter(n => (n.targetTeam || n.team) === activeNoteTeam);
-      }
       all.sort((a, b) => (b.date || "").localeCompare(a.date || "") || (b.id || 0) - (a.id || 0));
 
       const canWrite = canWriteNotes();
@@ -1490,7 +1849,7 @@
               <label><i class="fas fa-user"></i> إلى العضو</label>
               <select id="note-target" style="width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:12px;background:var(--card);color:var(--text);font-size:0.95rem">
                 <option value="">— اختر الشخص —</option>
-                ${targets.map(m => `<option value="${m.id}" data-team="${m.team}" data-name="${escapeHtml(m.fullName)}">${m.fullName} (${m.team})</option>`).join("")}
+                ${targets.map(m => `<option value="${m.id}" data-team="Wasla" data-name="${escapeHtml(m.fullName)}">${m.fullName} (Wasla)</option>`).join("")}
               </select>
             </div>
             <textarea id="new-note-text" placeholder="اكتب الملاحظة هنا..." oninput="noteDraftText=this.value"></textarea>
@@ -1505,25 +1864,22 @@
       } else {
         html += all.map(n => {
           const canEd = canEditNote(n);
-          const targetTeam = n.targetTeam || n.team || "Wasla";
-          const teamCls = targetTeam === "Wasla" ? "wasla-target" : "phantoms-target";
-          const badgeCls = targetTeam === "Wasla" ? "badge-wasla" : "badge-phantoms";
           return `
-          <div class="note-item" id="note-${targetTeam}-${n.id}">
+          <div class="note-item" id="note-Wasla-${n.id}">
             <div class="note-meta">
               <span><i class="fas fa-user-circle"></i> من: <strong>${escapeHtml(n.author || "")}</strong></span>
               <span><i class="fas fa-calendar-alt"></i> ${n.date || ""}</span>
             </div>
-            <div class="note-target-badge ${teamCls}">
+            <div class="note-target-badge wasla-target">
               <i class="fas fa-arrow-left"></i>
               <span>إلى: ${escapeHtml(n.targetName || "—")}</span>
-              <span class="badge ${badgeCls}" style="margin-right:6px">${targetTeam}</span>
+              <span class="badge badge-wasla" style="margin-right:6px">Wasla</span>
             </div>
-            <div class="note-text" id="note-text-${targetTeam}-${n.id}">${escapeHtml(n.text || "")}</div>
+            <div class="note-text" id="note-text-Wasla-${n.id}">${escapeHtml(n.text || "")}</div>
             ${canEd ? `
               <div class="note-actions">
-                <button class="btn btn-secondary btn-xs" onclick="editNote('${targetTeam}', ${n.id})"><i class="fas fa-edit"></i> تعديل</button>
-                <button class="btn btn-danger btn-xs" onclick="deleteNote('${targetTeam}', ${n.id})"><i class="fas fa-trash"></i> حذف</button>
+                <button class="btn btn-secondary btn-xs" onclick="editNote('Wasla', ${n.id})"><i class="fas fa-edit"></i> تعديل</button>
+                <button class="btn btn-danger btn-xs" onclick="deleteNote('Wasla', ${n.id})"><i class="fas fa-trash"></i> حذف</button>
               </div>` : ""}
           </div>`;
         }).join("");
@@ -1538,7 +1894,7 @@
       }
     }
 
-    function switchNoteTeam(team) { activeNoteTeam = team; renderNotes(); }
+    function switchNoteTeam(team) { activeNoteTeam = "Wasla"; renderNotes(); }
 
     function addNote() {
       if (!canWriteNotes()) return;
@@ -1550,17 +1906,37 @@
       const opt = sel.options[sel.selectedIndex];
       const targetId = parseInt(sel.value);
       const targetName = opt.getAttribute("data-name") || opt.textContent;
-      const targetTeam = opt.getAttribute("data-team") || "Wasla";
+
+      if (currentUser && currentUser.localOnly) {
+        if (!notes["Wasla"]) notes["Wasla"] = [];
+        const nextId = (notes["Wasla"].length > 0) ? Math.max(...notes["Wasla"].map(n => n.id || 0), 0) + 1 : 1;
+        notes["Wasla"].push({
+          id: nextId,
+          text,
+          author: currentUser.displayName,
+          authorRole: currentUser.role,
+          date: new Date().toISOString().slice(0, 10),
+          team: "Wasla",
+          targetTeam: "Wasla",
+          targetMemberId: targetId,
+          targetName
+        });
+        try { localStorage.setItem("tms_notes", JSON.stringify(notes)); } catch (_) {}
+        noteDraftText = ""; noteDraftTarget = "";
+        renderNotes();
+        showToast("تم إرسال الملاحظة إلى " + targetName);
+        return;
+      }
 
       (async () => {
         try {
           const payload = {
             text, author: currentUser.displayName, authorRole: currentUser.role,
-            team: targetTeam, targetTeam, targetMemberId: targetId, targetName
+            team: "Wasla", targetTeam: "Wasla", targetMemberId: targetId, targetName
           };
           const created = await dbInsertNote(payload);
-          if (!notes[targetTeam]) notes[targetTeam] = [];
-          notes[targetTeam].push(created);
+          if (!notes["Wasla"]) notes["Wasla"] = [];
+          notes["Wasla"].push(created);
           try { localStorage.setItem("tms_notes", JSON.stringify(notes)); } catch (_) {}
           noteDraftText = ""; noteDraftTarget = "";
           renderNotes();
@@ -1570,27 +1946,37 @@
     }
 
     function editNote(team, id) {
-      const note = (notes[team] || []).find(n => n.id === id);
+      const note = (notes["Wasla"] || []).find(n => n.id === id);
       if (!note || !canEditNote(note)) return;
-      const textEl = document.getElementById("note-text-" + team + "-" + id);
+      const textEl = document.getElementById("note-text-Wasla-" + id);
       if (!textEl) return;
       const current = note.text;
       textEl.innerHTML = `
-        <textarea id="edit-note-${team}-${id}" style="width:100%;min-height:80px;padding:12px;border-radius:12px;border:2px solid var(--border);background:var(--bg);color:var(--text);font-family:inherit;font-size:0.95rem;line-height:1.7">${escapeHtml(current)}</textarea>
+        <textarea id="edit-note-Wasla-${id}" style="width:100%;min-height:80px;padding:12px;border-radius:12px;border:2px solid var(--border);background:var(--bg);color:var(--text);font-family:inherit;font-size:0.95rem;line-height:1.7">${escapeHtml(current)}</textarea>
         <div style="margin-top:10px;display:flex;gap:10px">
-          <button class="btn btn-primary btn-sm" onclick="saveEditNote('${team}', ${id})">حفظ التغييرات</button>
+          <button class="btn btn-primary btn-sm" onclick="saveEditNote('Wasla', ${id})">حفظ التغييرات</button>
           <button class="btn btn-secondary btn-sm" onclick="renderNotes()">إلغاء</button>
         </div>`;
     }
 
     function saveEditNote(team, id) {
-      const el = document.getElementById("edit-note-" + team + "-" + id);
+      const el = document.getElementById("edit-note-Wasla-" + id);
       const text = el ? el.value.trim() : "";
       if (!text) return;
+
+      if (currentUser && currentUser.localOnly) {
+        const note = (notes["Wasla"] || []).find(n => n.id === id);
+        if (note) note.text = text;
+        try { localStorage.setItem("tms_notes", JSON.stringify(notes)); } catch (_) {}
+        renderNotes();
+        showToast("تم تحديث الملاحظة بنجاح");
+        return;
+      }
+
       (async () => {
         try {
           await dbUpdateNote(id, { text });
-          const note = (notes[team] || []).find(n => n.id === id);
+          const note = (notes["Wasla"] || []).find(n => n.id === id);
           if (note) note.text = text;
           try { localStorage.setItem("tms_notes", JSON.stringify(notes)); } catch (_) {}
           renderNotes();
@@ -1600,19 +1986,28 @@
     }
 
     function deleteNote(team, id) {
-      const note = (notes[team] || []).find(n => n.id === id);
+      const note = (notes["Wasla"] || []).find(n => n.id === id);
       if (!note || !canEditNote(note)) return;
       if (!confirm("هل تريد حذف هذه الملاحظة؟")) return;
+
+      if (currentUser && currentUser.localOnly) {
+        notes["Wasla"] = (notes["Wasla"] || []).filter(n => n.id !== id);
+        try { localStorage.setItem("tms_notes", JSON.stringify(notes)); } catch (_) {}
+        renderNotes();
+        showToast("تم حذف الملاحظة بنجاح");
+        return;
+      }
+
       (async () => {
         try {
           await dbDeleteNote(id);
-          notes[team] = (notes[team] || []).filter(n => n.id !== id);
+          notes["Wasla"] = (notes["Wasla"] || []).filter(n => n.id !== id);
           try { localStorage.setItem("tms_notes", JSON.stringify(notes)); } catch (_) {}
           renderNotes();
           showToast("تم حذف الملاحظة بنجاح");
         } catch (e) {
           const isNoSb = !getSupabase();
-          if (isNoSb) showToast("⚠️ Supabase مش متظبط!", true);
+          if (isNoSb) showToast("Supabase غير متصل", true);
           else showToast("فشل الحذف — " + (e.message || "مشكلة في السيرفر"), true);
         }
       })();
@@ -1658,7 +2053,7 @@
               currentUser = {
                 username: (prof && prof.display_name) || session.user.email, role,
                 displayName: (prof && prof.display_name) || session.user.email,
-                accountType: prof && prof.role === "wasla_leader" ? "wasla_leader" : prof && prof.role === "phantoms_leader" ? "phantoms_leader" : "normal",
+                accountType: prof && prof.role === "wasla_leader" ? "wasla_leader" : "normal",
                 userId: session.user.id, isGuest: false, localOnly: false
               };
               saveSession();
@@ -1673,9 +2068,10 @@
         const stored = localStorage.getItem("tms_session");
         if (stored) {
           const u = JSON.parse(stored);
-          if (u.isGuest || u.accountType === "guest") {
-            currentUser = u; loadSampleData(); showApp();
-            loadFromAPI().then(() => { renderDashboard(); renderMembersTable(); renderNotes(); renderRanking(); }).catch(() => {});
+          if (u && (u.localOnly || u.isGuest || u.accountType)) {
+            currentUser = u;
+            loadSampleData();
+            showApp();
             return;
           }
         }
@@ -1685,14 +2081,47 @@
     (function init() {
       const savedTheme = localStorage.getItem("tms_theme") || "light";
       document.documentElement.setAttribute("data-theme", savedTheme);
-      document.getElementById("theme-icon").className = savedTheme === "dark" ? "fas fa-sun" : "fas fa-moon";
+      const ic0 = savedTheme === "dark" ? "fas fa-sun" : "fas fa-moon";
+      const ti = document.getElementById("theme-icon"); if (ti) ti.className = ic0;
+      const li = document.getElementById("login-theme-icon"); if (li) li.className = ic0;
       const cw = document.getElementById("config-warn");
-      if (cw && (!SUPABASE_URL || SUPABASE_URL.includes("https://gmkfhaodjebttlmoehhx.supabase.co") || !SUPABASE_ANON_KEY || SUPABASE_ANON_KEY === "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdta2ZoYW9kamVidHRsbW9laGh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYxODA1MTEsImV4cCI6MjEwMTc1NjUxMX0.JWVvz7ECUjRMsaQqwX992SPPRJTDfPn7sCiLRd6Zpf0")) {
-        cw.style.display = "block";
-        cw.textContent = "⚠️ المفاتيح لسه PLACEHOLDER — افتح index.html وغيّر SUPABASE_URL و SUPABASE_ANON_KEY";
+      if (cw && (!SUPABASE_URL || SUPABASE_URL.includes("YOUR_PROJECT") || !SUPABASE_ANON_KEY || SUPABASE_ANON_KEY === "YOUR_ANON_KEY")) {
+        cw.style.display = "flex";
       }
+      // Password toggle
+      const pwToggle = document.getElementById('pw-toggle');
+      const pwInput  = document.getElementById('password');
+      const eyeShow  = document.getElementById('eye-show');
+      const eyeHide  = document.getElementById('eye-hide');
+      if (pwToggle && pwInput) {
+        pwToggle.addEventListener('click', () => {
+          const isHidden = pwInput.type === 'password';
+          pwInput.type = isHidden ? 'text' : 'password';
+          eyeShow.style.display = isHidden ? 'none' : '';
+          eyeHide.style.display = isHidden ? ''    : 'none';
+        });
+      }
+
+      // Login error display helper patch
+      const origLoginError = document.getElementById('login-error');
+      if (origLoginError) {
+        const observer = new MutationObserver(() => {
+          origLoginError.style.display = origLoginError.textContent.trim() ? 'block' : 'none';
+        });
+        observer.observe(origLoginError, { childList: true, characterData: true, subtree: true });
+      }
+
+      // Login button loading state
+      const loginForm = document.getElementById('login-form');
+      const loginBtn  = document.getElementById('login-submit-btn');
+      if (loginForm && loginBtn) {
+        loginForm.addEventListener('submit', () => {
+          loginBtn.classList.add('ls-loading');
+        }, { capture: true });
+      }
+
+      // Restore existing session
       restoreSession();
-      setInterval(refreshData, 30000);
     })();
   </script>
 </body>
