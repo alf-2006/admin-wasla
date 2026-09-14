@@ -934,6 +934,55 @@
       return notesArrayToBuckets((data || []).map(rowToNote));
     }
 
+    
+    async function dbFetchTasks() {
+      const sb = getSupabase();
+      if (!sb) return [];
+      const { data, error } = await sb.from("tasks").select("*").order("id", { ascending: false });
+      if (error) { console.warn("Supabase tasks fetch error:", error); return []; }
+      return data.map(rowToTask);
+    }
+
+    async function dbInsertTask(t) {
+      const sb = getSupabase();
+      if (!sb) throw new Error("Supabase not configured");
+      const { data, error } = await sb.from("tasks").insert(taskToRow(t)).select().single();
+      if (error) throw error;
+      return rowToTask(data);
+    }
+
+    async function dbUpdateTask(id, t) {
+      const sb = getSupabase();
+      if (!sb) throw new Error("Supabase not configured");
+      const { data, error } = await sb.from("tasks").update(taskToRow(t)).eq("id", id).select().single();
+      if (error) throw error;
+      return rowToTask(data);
+    }
+
+    function taskToRow(t) {
+      return {
+        id: t.id,
+        title: t.title,
+        description: t.description || "",
+        has_deadline: !!t.hasDeadline,
+        deadline_date: t.deadlineDate || null,
+        assigned_to: t.assignedTo,
+        tracking: t.tracking || {}
+      };
+    }
+
+    function rowToTask(r) {
+      return {
+        id: r.id,
+        title: r.title,
+        description: r.description || "",
+        hasDeadline: !!r.has_deadline,
+        deadlineDate: r.deadline_date || "",
+        assignedTo: r.assigned_to,
+        tracking: r.tracking || {}
+      };
+    }
+
     async function dbInsertMember(m) {
       const sb = getSupabase();
       if (!sb) throw new Error("Supabase not configured");
@@ -1009,8 +1058,9 @@
       if (!sb) { loadSampleData(); return false; }
       try {
         const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 10000));
-        const [m, n] = await Promise.race([Promise.all([dbFetchMembers(), dbFetchNotes()]), timeout]);
-        members = m; notes = n;
+        const [m, n, t] = await Promise.race([Promise.all([dbFetchMembers(), dbFetchNotes(), dbFetchTasks()]), timeout]);
+        members = m; notes = n; teamTasks = t || [];
+        try { localStorage.setItem("tms_tasks", JSON.stringify(teamTasks)); } catch (_) {}
         try { localStorage.setItem("tms_members", JSON.stringify(members)); localStorage.setItem("tms_notes", JSON.stringify(notes)); } catch (_) {}
         return true;
       } catch (e) {
@@ -1076,20 +1126,8 @@
 
       const finishLogin = () => { if (loginBtn) loginBtn.classList.remove("ls-loading"); };
       
-      const pwdHash = await hashPassword(password);
-      const isMalak = (username.toLowerCase().includes("malak") && pwdHash === SECURE_HASHES.malak) || (pwdHash === SECURE_HASHES.malak);
-      const isAdmin = (pwdHash === SECURE_HASHES.admin);
-
-      if (isAdmin || isMalak) {
-        const customName = isMalak ? "ملك محمد" : "Admin";
-        doLocalLogin(customName);
-        finishLogin();
-        return;
-      }
-
       const sb = getSupabase();
       if (sb) {
-         // Supabase logic remains the same
          const email = username.toLowerCase();
          try {
            const authPromise = sb.auth.signInWithPassword({ email, password });
@@ -2898,6 +2936,9 @@
       
       teamTasks.unshift(tsk);
       saveTasksToLocal();
+      if (getSupabase() && currentUser && !currentUser.localOnly) {
+         dbInsertTask(tsk).catch(e => console.warn("Task cloud sync failed:", e));
+      }
       closeCreateTaskModal();
       renderTasksDashboard();
       showToast("تم تكليف المهمة بنجاح للنظام!");
@@ -2997,6 +3038,9 @@
        if (!tsk.tracking[memberId]) tsk.tracking[memberId] = { status: "لم يبدأ", notes: [] };
        tsk.tracking[memberId].status = newStatus;
        saveTasksToLocal();
+       if (getSupabase() && currentUser && !currentUser.localOnly) {
+          dbUpdateTask(taskId, tsk).catch(e => console.warn("Task tracking update failed:", e));
+       }
        renderTrackDetailsModalList();
        renderTasksDashboard();
        showToast("تم تحديث حالة تسليم العضو بنجاح");
@@ -3014,8 +3058,10 @@
        
        const stamp = new Date().toLocaleString('ar-EG', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
        tsk.tracking[memberId].notes.push({ text: txt, date: stamp });
-       
        saveTasksToLocal();
+       if (getSupabase() && currentUser && !currentUser.localOnly) {
+          dbUpdateTask(taskId, tsk).catch(e => console.warn("Task note cloud sync failed:", e));
+       }
        renderTrackDetailsModalList();
     }
 
