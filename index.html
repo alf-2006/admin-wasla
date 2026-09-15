@@ -5,6 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Wasla System — نظام إدارة وصلة</title>
   <meta name="description" content="نظام إدارة فريق وصلة التقني — Code. Build. Innovate. Impact." />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="وصلة" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -113,7 +120,6 @@
             </div>
             <div class="ls-meta-row">
               <label class="ls-remember"><input type="checkbox" id="remember-me" /><span class="ls-checkbox"></span><span>تذكرني</span></label>
-              <a href="#" class="ls-forgot" target="_self">نسيت كلمة المرور؟</a>
             </div>
             <button type="submit" class="ls-btn" id="login-submit-btn">
               <span class="ls-btn-text">دخول</span>
@@ -773,35 +779,10 @@
       }).trim();
     }
 
-    // 2. Hash checking for Local Passwords (No Plaintext Backdoors)
-    // "admin123" hashed -> SHA-256
-    // "malak123" hashed -> SHA-256
-    const SECURE_HASHES = {
-       "admin": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9", 
-       "malak": "602bf2cb4ba6e680a3733075b11ae10714ed48a044edffeb92c815ec62e1ec73"
-    };
-
-    async function hashPassword(password) {
-      const msgUint8 = new TextEncoder().encode(password);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    }
-
-    // 3. Local Storage Tamper Protection (Basic Checksum)
+    // Local Storage Tamper Protection (Basic Checksum)
     function createSessionSignature(role) {
        return btoa("securesalt_" + role).split('').reverse().join('');
     }
-
-    const AUTH_ACCOUNTS = {
-      admin: { email: "admin@waslateam.com", role: "Admin", displayName: "Admin" },
-      malak: { email: "malak@waslateam.com", role: "Admin", displayName: "ملك محمد" }
-    };
-
-    const LOCAL_FALLBACK = {
-      admin: { password: "admin123", role: "Admin", displayName: "Admin" },
-      malak: { password: "malak123", role: "Admin", displayName: "ملك محمد" }
-    };
 
     const ROLE_FROM_DB = {
       admin: "Admin"
@@ -1059,10 +1040,17 @@
       if (!sb) { loadSampleData(); return false; }
       try {
         const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 10000));
-        const [m, n, t] = await Promise.race([Promise.all([dbFetchMembers(), dbFetchNotes(), dbFetchTasks()]), timeout]);
-        members = m; notes = n; teamTasks = t || [];
+        const results = await Promise.race([
+          Promise.allSettled([dbFetchMembers(), dbFetchNotes(), dbFetchTasks()]),
+          timeout
+        ]);
+        const [membersResult, notesResult, tasksResult] = results;
+        if (membersResult.status === "fulfilled") members = membersResult.value;
+        if (notesResult.status === "fulfilled") notes = notesResult.value;
+        if (tasksResult.status === "fulfilled") teamTasks = tasksResult.value || [];
         try { localStorage.setItem("tms_tasks", JSON.stringify(teamTasks)); } catch (_) {}
         try { localStorage.setItem("tms_members", JSON.stringify(members)); localStorage.setItem("tms_notes", JSON.stringify(notes)); } catch (_) {}
+        if (tasksResult.status === "rejected") console.info("Tasks table unavailable; using local task storage.");
         return true;
       } catch (e) {
         console.warn("Supabase load failed, using local/sample", e);
@@ -1099,23 +1087,7 @@
       } catch (e) { console.warn("refresh failed", e); }
     }
 
-    // ========== Auth ==========
-    function doLocalLogin(customName, preferredRole) {
-      currentUser = {
-        username: customName || "Admin",
-        role: "Admin",
-        displayName: customName || "Admin",
-        accountType: "admin",
-        userId: null,
-        isGuest: false,
-        localOnly: true,
-        signature: createSessionSignature("Admin") // 🛡️ Tamper verification
-      };
-      saveSession();
-      loadSampleData();
-      showApp();
-    }
-
+    // ========== Supabase Auth ==========
     document.getElementById("login-form").addEventListener("submit", async function (e) {
       e.preventDefault();
       const loginBtn = document.getElementById("login-submit-btn");
@@ -1296,7 +1268,47 @@
       });
     });
 
-    function toggleSidebar() { document.getElementById("sidebar").classList.toggle("open"); }
+    function toggleSidebar() {
+      const sidebar = document.getElementById("sidebar");
+      if (!sidebar) return;
+      const isOpen = sidebar.classList.toggle("open");
+      document.body.classList.toggle("sidebar-open", isOpen);
+    }
+    function closeSidebar() {
+      const sidebar = document.getElementById("sidebar");
+      if (sidebar) sidebar.classList.remove("open");
+      document.body.classList.remove("sidebar-open");
+    }
+
+    let deferredInstallPrompt = null;
+    function initPWA() {
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+      }
+      window.addEventListener("beforeinstallprompt", (event) => {
+        event.preventDefault();
+        deferredInstallPrompt = event;
+        if (!document.getElementById("pwa-install-btn")) {
+          const button = document.createElement("button");
+          button.id = "pwa-install-btn";
+          button.className = "pwa-install-btn";
+          button.type = "button";
+          button.innerHTML = '<i class="fas fa-download" aria-hidden="true"></i><span>تثبيت التطبيق</span>';
+          button.addEventListener("click", async () => {
+            if (!deferredInstallPrompt) return;
+            deferredInstallPrompt.prompt();
+            await deferredInstallPrompt.userChoice;
+            deferredInstallPrompt = null;
+            button.remove();
+          });
+          document.body.appendChild(button);
+        }
+      });
+      window.addEventListener("appinstalled", () => {
+        const button = document.getElementById("pwa-install-btn");
+        if (button) button.remove();
+      });
+    }
 
     function toggleTheme() {
       const html = document.documentElement;
@@ -3124,6 +3136,7 @@
       }
 
       // Restore existing session
+      initPWA();
       restoreSession();
     })();
   </script>
