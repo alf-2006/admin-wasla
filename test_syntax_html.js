@@ -4,52 +4,19 @@
        Wasla Team Management System
        ===================================================== */
 
-    
-    // ==========================================
-    // 🛡️ SECURITY MODULE (Blue Team Patches)
-    // ==========================================
-    
-    // 1. Data Sanitization (XSS Prevention)
-    function sanitizeInput(str) {
-      if (typeof str !== "string") return "";
-      return str.replace(/[&<>"'`=\/]/g, function(s) {
-        const entityMap = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '/': '&#x2F;', '`': '&#x60;', '=': '&#x3D;' };
-        return entityMap[s];
-      }).trim();
-    }
-
-    // 2. Hash checking for Local Passwords (No Plaintext Backdoors)
-    // "admin123" hashed -> SHA-256
-    // "malak123" hashed -> SHA-256
-    const SECURE_HASHES = {
-       "admin": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9", 
-       "malak": "602bf2cb4ba6e680a3733075b11ae10714ed48a044edffeb92c815ec62e1ec73"
-    };
-
-    async function hashPassword(password) {
-      const msgUint8 = new TextEncoder().encode(password);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    }
-
-    // 3. Local Storage Tamper Protection (Basic Checksum)
-    function createSessionSignature(role) {
-       return btoa("securesalt_" + role).split('').reverse().join('');
-    }
-
     const AUTH_ACCOUNTS = {
-      admin: { email: "admin@waslateam.com", role: "Admin", displayName: "Admin" },
-      malak: { email: "malak@waslateam.com", role: "Admin", displayName: "ملك محمد" }
+      wasla_leader: { email: "wasla@waslateam.com", role: "Wasla Leader", displayName: "أحمد عيد" },
+      normal: { email: "user@waslateam.com", role: "Normal User", displayName: "User" }
     };
 
     const LOCAL_FALLBACK = {
-      admin: { password: "admin123", role: "Admin", displayName: "Admin" },
-      malak: { password: "malak123", role: "Admin", displayName: "ملك محمد" }
+      wasla_leader: { password: "wasla123", role: "Wasla Leader", displayName: "أحمد عيد" },
+      normal: { password: "user123", role: "Normal User", displayName: "User" }
     };
 
     const ROLE_FROM_DB = {
-      admin: "Admin"
+      wasla_leader: "Wasla Leader",
+      user: "Normal User"
     };
 
     const SAMPLE_MEMBERS = [
@@ -179,55 +146,6 @@
       return notesArrayToBuckets((data || []).map(rowToNote));
     }
 
-    
-    async function dbFetchTasks() {
-      const sb = getSupabase();
-      if (!sb) return [];
-      const { data, error } = await sb.from("tasks").select("*").order("id", { ascending: false });
-      if (error) { console.warn("Supabase tasks fetch error:", error); return []; }
-      return data.map(rowToTask);
-    }
-
-    async function dbInsertTask(t) {
-      const sb = getSupabase();
-      if (!sb) throw new Error("Supabase not configured");
-      const { data, error } = await sb.from("tasks").insert(taskToRow(t)).select().single();
-      if (error) throw error;
-      return rowToTask(data);
-    }
-
-    async function dbUpdateTask(id, t) {
-      const sb = getSupabase();
-      if (!sb) throw new Error("Supabase not configured");
-      const { data, error } = await sb.from("tasks").update(taskToRow(t)).eq("id", id).select().single();
-      if (error) throw error;
-      return rowToTask(data);
-    }
-
-    function taskToRow(t) {
-      return {
-        id: t.id,
-        title: t.title,
-        description: t.description || "",
-        has_deadline: !!t.hasDeadline,
-        deadline_date: t.deadlineDate || null,
-        assigned_to: t.assignedTo,
-        tracking: t.tracking || {}
-      };
-    }
-
-    function rowToTask(r) {
-      return {
-        id: r.id,
-        title: r.title,
-        description: r.description || "",
-        hasDeadline: !!r.has_deadline,
-        deadlineDate: r.deadline_date || "",
-        assignedTo: r.assigned_to,
-        tracking: r.tracking || {}
-      };
-    }
-
     async function dbInsertMember(m) {
       const sb = getSupabase();
       if (!sb) throw new Error("Supabase not configured");
@@ -279,8 +197,6 @@
     }
 
     function loadSampleData() {
-      try { const ts = localStorage.getItem("tms_tasks"); teamTasks = ts ? JSON.parse(ts) : []; } catch(e) { teamTasks = []; }
-
       try {
         const sm = localStorage.getItem("tms_members");
         const sn = localStorage.getItem("tms_notes");
@@ -303,9 +219,8 @@
       if (!sb) { loadSampleData(); return false; }
       try {
         const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 10000));
-        const [m, n, t] = await Promise.race([Promise.all([dbFetchMembers(), dbFetchNotes(), dbFetchTasks()]), timeout]);
-        members = m; notes = n; teamTasks = t || [];
-        try { localStorage.setItem("tms_tasks", JSON.stringify(teamTasks)); } catch (_) {}
+        const [m, n] = await Promise.race([Promise.all([dbFetchMembers(), dbFetchNotes()]), timeout]);
+        members = m; notes = n;
         try { localStorage.setItem("tms_members", JSON.stringify(members)); localStorage.setItem("tms_notes", JSON.stringify(notes)); } catch (_) {}
         return true;
       } catch (e) {
@@ -344,16 +259,16 @@
     }
 
     // ========== Auth ==========
-    function doLocalLogin(customName, preferredRole) {
+    function doLocalLogin(accType, customDisplayName) {
+      const fb = LOCAL_FALLBACK[accType] || LOCAL_FALLBACK.wasla_leader;
       currentUser = {
-        username: customName || "Admin",
-        role: "Admin",
-        displayName: customName || "Admin",
-        accountType: "admin",
+        username: customDisplayName || fb.displayName,
+        role: fb.role,
+        displayName: customDisplayName || fb.displayName,
+        accountType: accType,
         userId: null,
         isGuest: false,
-        localOnly: true,
-        signature: createSessionSignature("Admin") // 🛡️ Tamper verification
+        localOnly: true
       };
       saveSession();
       loadSampleData();
@@ -366,56 +281,87 @@
       const errorEl = document.getElementById("login-error");
       if (errorEl) { errorEl.style.display = "none"; errorEl.textContent = ""; }
 
-      let username = sanitizeInput(document.getElementById("username").value || "");
-      let password = sanitizeInput(document.getElementById("password").value || "");
+      let username = (document.getElementById("username").value || "").trim();
+      let accountType = document.getElementById("account-type").value;
+      let password = (document.getElementById("password").value || "").trim();
 
-      const finishLogin = () => { if (loginBtn) loginBtn.classList.remove("ls-loading"); };
-      
-      const pwdHash = await hashPassword(password);
-      const isMalak = (username.toLowerCase().includes("malak") && pwdHash === SECURE_HASHES.malak) || (pwdHash === SECURE_HASHES.malak);
-      const isAdmin = (pwdHash === SECURE_HASHES.admin);
+      // استنتاج نوع الحساب تلقائياً إذا لم يتم اختياره
+      if (!accountType) {
+        if (username.toLowerCase().includes("user") || password === "user123") {
+          accountType = "normal";
+        } else {
+          accountType = "wasla_leader";
+        }
+        document.getElementById("account-type").value = accountType;
+      }
 
-      if (isAdmin || isMalak) {
-        const customName = isMalak ? "ملك محمد" : "Admin";
-        doLocalLogin(customName);
+      const acc = AUTH_ACCOUNTS[accountType] || AUTH_ACCOUNTS.wasla_leader;
+      const fb = LOCAL_FALLBACK[accountType] || LOCAL_FALLBACK.wasla_leader;
+
+      // ملء افتراضي إذا تُرِك فارغاً
+      if (!username) {
+        username = acc.email;
+        document.getElementById("username").value = username;
+      }
+      if (!password) {
+        password = fb.password;
+        document.getElementById("password").value = password;
+      }
+
+      const finishLogin = () => {
+        if (loginBtn) loginBtn.classList.remove("ls-loading");
+      };
+
+      // إذا كانت كلمة المرور هي كلمة المرور المحلية، سجل دخول محلي فوري وبدون أي تأخير
+      const isFallbackPassword = (password === fb.password || password === "wasla123" || password === "user123");
+      if (isFallbackPassword) {
+        const effectiveType = (password === "user123" || accountType === "normal") ? "normal" : "wasla_leader";
+        const customName = (username && !username.includes("@")) ? username : null;
+        doLocalLogin(effectiveType, customName);
         finishLogin();
         return;
       }
 
       const sb = getSupabase();
+
+      // محاولة الاتصال بـ Supabase إذا كانت كلمة مرور مخصصة
       if (sb) {
-         // Supabase logic remains the same
-         const email = username.toLowerCase();
-         try {
-           const authPromise = sb.auth.signInWithPassword({ email, password });
-           const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("NETWORK_TIMEOUT")), 2500));
-           const { data, error } = await Promise.race([authPromise, timeoutPromise]);
-           if (!error && data && data.user) {
-             currentUser = { username: username, role: "Admin", displayName: username, accountType: "admin", userId: data.user.id, localOnly: false, signature: createSessionSignature("Admin") };
-             saveSession(); loadSampleData(); showApp();
-             loadFromAPI().then(ok => { if (ok) { renderDashboard(); renderMembersTable(); renderNotes(); renderRanking(); } }).catch(() => {});
-             finishLogin(); return;
-           }
-         } catch (err) { console.warn("Supabase auth error"); }
+        const email = (username.includes("@") ? username : acc.email).toLowerCase();
+        try {
+          const authPromise = sb.auth.signInWithPassword({ email, password });
+          const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("NETWORK_TIMEOUT")), 2500));
+          const { data, error } = await Promise.race([authPromise, timeoutPromise]);
+
+          if (!error && data && data.user && data.user.id) {
+            let role = acc.role;
+            let displayName = acc.displayName;
+            try {
+              const { data: prof } = await sb.from("profiles").select("role, display_name").eq("id", data.user.id).maybeSingle();
+              if (prof) { role = ROLE_FROM_DB[prof.role] || role; if (prof.display_name) displayName = prof.display_name; }
+            } catch (_) {}
+            if (username && !username.includes("@")) displayName = username;
+
+            currentUser = { username: displayName, role, displayName, accountType, userId: data.user.id, isGuest: false, localOnly: false };
+            saveSession(); loadSampleData(); showApp();
+            loadFromAPI().then(ok => { if (ok) { renderDashboard(); renderMembersTable(); renderNotes(); renderRanking(); } }).catch(() => {});
+            finishLogin();
+            return;
+          }
+        } catch (err) {
+          console.warn("[TMS Auth] Supabase unreachable or timed out:", err);
+        }
       }
 
+      // في حال كلمة مرور خاطئة
       finishLogin();
-      if (errorEl) {
-         errorEl.innerHTML = `<div>بيانات الدخول غير صحيحة.</div>`;
-         errorEl.style.display = "block";
-      }
+      errorEl.innerHTML = `<div>بيانات الدخول غير صحيحة.</div><div style="font-size:0.85rem;margin-top:6px;opacity:0.9">للدخول كمسؤول: <b>wasla123</b> | كمستخدم: <b>user123</b></div>`;
+      errorEl.style.display = "block";
     });
 
     async function logout() {
       try { const sb = getSupabase(); if (sb) await sb.auth.signOut(); } catch (_) {}
       currentUser = null;
       localStorage.removeItem("tms_session");
-      // 🛡️ Secure Wipe: Remove PII when leaving!
-      localStorage.removeItem("tms_members");
-      localStorage.removeItem("tms_tasks");
-      localStorage.removeItem("tms_notes");
-      members = []; teamTasks = []; notes = {Wasla:[]};
-
       const app = document.getElementById("app");
       const login = document.getElementById("login-screen");
       if (app) { app.style.display = "none"; }
@@ -498,13 +444,26 @@
       return labels[role] || role;
     }
 
-    function isLeaderRole() { return true; }
+    function isLeaderRole() {
+      if (!currentUser) return false;
+      return currentUser.role === "Wasla Leader";
+    }
 
-    function canWriteNotes() { return true; }
+    function canWriteNotes() { return isLeaderRole(); }
 
-    function canViewNote(note) { return true; }
+    function canViewNote(note) {
+      if (!currentUser) return false;
+      const r = currentUser.role;
+      if (r === "Wasla Leader") return true;
+      if (r === "Normal User") return note.targetName === currentUser.displayName;
+      return false;
+    }
 
-    function canEditNote(note) { return true; }
+    function canEditNote(note) {
+      if (!currentUser) return false;
+      if (currentUser.role === "Wasla Leader") return true;
+      return false;
+    }
 
     function canEditNotes(team) { return canWriteNotes(); }
     function canViewNotes(team) { return isLeaderRole() || currentUser.role === "Normal User"; }
@@ -537,13 +496,12 @@
         updateNavConnection(page);
         document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
         document.getElementById("page-" + page).classList.add("active");
-        const titles = { dashboard: "لوحة التحكم", members: "الأعضاء", notes: "الملاحظات", ranking: "نظام الترتيب", "ai-assistant": "مساعد وصلة الذكي", tasks: "إدارة المهام" };
+        const titles = { dashboard: "لوحة التحكم", members: "الأعضاء", notes: "الملاحظات", ranking: "نظام الترتيب", "ai-assistant": "مساعد وصلة الذكي" };
         document.getElementById("page-title").textContent = titles[page] || "لوحة التحكم";
         if (page === "dashboard") renderDashboard();
         if (page === "members") renderMembersTable();
         if (page === "notes") renderNotes();
         if (page === "ranking") renderRanking();
-        if (page === "tasks") renderTasksDashboard();
         if (page === "ai-assistant") {
           const inp = document.getElementById("ai-prompt-input");
           if (inp) setTimeout(() => inp.focus(), 100);
@@ -629,9 +587,13 @@
       renderMembersTable();
     }
 
-    
+    function filterByTaskAndNavigate(taskStatus) {
+      navigateToMembers(taskStatus === "Late" ? "bonus-low" : null);
+    }
 
-    
+    function filterByCourseAndNavigate(courseStatus) {
+      navigateToMembers(null);
+    }
 
     function filterByAlexOrLapAndNavigate(type) {
       navigateToMembers(null);
@@ -752,7 +714,7 @@
         <div class="notif-item" onclick="openProfile(${m.id}); toggleNotificationsDropdown();">
           <div class="notif-item-icon"><i class="fas fa-clock"></i></div>
           <div class="notif-item-body">
-            <div class="notif-item-title">يحتاج متابعة: <strong>${m.fullName}</strong></div>
+            <div class="notif-item-title">مهمة متأخرة: <strong>${m.fullName}</strong></div>
             <div class="notif-item-time">الموعد النهائي: ${formatDate(m.deadline)}</div>
           </div>
         </div>
@@ -802,40 +764,22 @@
       // Tiered team instruments: one outcome, three actionable signals, then quiet supporting facts.
       const statsGrid = document.getElementById("stats-grid");
       if (statsGrid) {
-        const total = members.length;
-        const waslaCount = members.filter(m => m.team === "Wasla").length;
-        const alexCount = members.filter(m => m.canGoAlexandria).length;
-        const laptopCount = members.filter(m => { const d = m.device || ""; return d.includes("لاب") || d.includes("كمبيوتر") || d.includes("الاثنان") || d === "Laptop" || !!m.hasLaptop; }).length;
-        const readyTotalCount = members.filter(m => m.canGoAlexandria && (function(){const d = m.device || ""; return d.includes("لاب") || d.includes("كمبيوتر") || d.includes("الاثنان") || d === "Laptop" || !!m.hasLaptop;})()).length;
-        
-        const alexPct = waslaCount ? Math.round((alexCount / waslaCount) * 100) : 0;
-        const laptopPct = total ? Math.round((laptopCount / total) * 100) : 0;
-        const readyPct = waslaCount ? Math.round((readyTotalCount / waslaCount) * 100) : 0;
-
         statsGrid.innerHTML = `
-          <section class="metrics-hero clickable-kpi" onclick="filterByAlexOrLapAndNavigate('alex')" title="عرض الأعضاء المؤكدين للقاء">
-            <div class="metrics-hero-copy"><span>جاهزية الفريق</span><strong>${readyPct}<small>%</small></strong><p>نسبة الأعضاء الجاهزين للاجتماعات باللابتوب</p></div>
-            <div class="loop-progress" style="--progress:${readyPct}%"><div>${waslaIcon('check')}<span>${readyTotalCount} من ${waslaCount}</span></div></div>
+          <section class="metrics-hero clickable-kpi" onclick="filterByTaskAndNavigate('Completed')" title="عرض الأعضاء الذين أتموا المهمة">
+            <div class="metrics-hero-copy"><span>نبض الفريق</span><strong>${waslaPct}<small>%</small></strong><p>نسبة إنجاز فريق وصلة</p></div>
+            <div class="loop-progress" style="--progress:${waslaPct}%"><div>${waslaIcon('check')}<span>${waslaDone} من ${waslaCount}</span></div></div>
           </section>
           <div class="metrics-secondary">
-            <button class="metric-signal" onclick="filterByAlexOrLapAndNavigate('laptop')">
-              <span class="metric-signal-icon success">${waslaIcon('laptop')}</span>
-              <strong>${laptopCount}</strong><span>جاهزون باللاب</span>
-              <small>${laptopCount} من ${total} عضو</small>
-              <i><b style="width:${laptopPct}%"></b></i>
-            </button>
-            <button class="metric-signal" onclick="filterByAlexOrLapAndNavigate('alex')">
-              <span class="metric-signal-icon">${waslaIcon('pin')}</span>
-              <strong>${alexCount}</strong><span>مؤكدون للنزول</span>
-              <small>${alexCount} من ${total} عضو</small>
-              <i><b style="width:${alexPct}%"></b></i>
-            </button>
+            <button class="metric-signal" onclick="filterByTaskAndNavigate('Completed')"><span class="metric-signal-icon success">${waslaIcon('check')}</span><strong>${taskDone}</strong><span>مهام مكتملة</span><small>${taskDone} من ${total} عضو</small><i><b style="width:${total ? Math.round(taskDone / total * 100) : 0}%"></b></i></button>
+            
+            <button class="metric-signal" onclick="filterByAlexOrLapAndNavigate('laptop')"><span class="metric-signal-icon">${waslaIcon('laptop')}</span><strong>${laptopCount}</strong><span>جاهزون باللابتوب</span><small>${laptopCount} من ${total} عضو</small><i><b style="width:${total ? Math.round(laptopCount / total * 100) : 0}%"></b></i></button>
           </div>
           <section class="metrics-support" aria-label="تفاصيل تشغيلية">
-            <button onclick="navigateToMembers(null)">${waslaIcon('members')}<span>إجمالي الأعضاء</span><strong>${total}</strong></button>
-            <button onclick="filterByAlexOrLapAndNavigate('alex')">${waslaIcon('pin')}<span>الاجتماع (مؤكد)</span><strong>${alexCount}</strong></button>
-            <button class="is-alert" onclick="filterByAlexOrLapAndNavigate('no-alex')">${waslaIcon('alert')}<span>الاجتماع (متغيب)</span><strong>${total - alexCount}</strong></button>
-            <button onclick="filterByAlexOrLapAndNavigate('laptop')">${waslaIcon('laptop')}<span>لابتوب متاح</span><strong>${laptopCount}</strong></button>
+            <button onclick="filterByTaskAndNavigate('all')">${waslaIcon('members')}<span>إجمالي الأعضاء</span><strong>${total}</strong></button>
+            <button onclick="filterByTaskAndNavigate('In Progress')">${waslaIcon('pulse')}<span>قيد التنفيذ</span><strong>${inProgress}</strong></button>
+            <button class="is-alert" onclick="navigateToMembers('bonus-low')">${waslaIcon('alert')}<span>بحاجة لمتابعة</span><strong>${late}</strong></button>
+            <button onclick="filterByTaskAndNavigate('Completed')">${waslaIcon('ranking')}<span>مهام مكتملة</span><strong>${finishers.length}</strong></button>
+            <button onclick="filterByAlexOrLapAndNavigate('alex')">${waslaIcon('pin')}<span>مؤكدون للقاء</span><strong>${alexCount}</strong></button>
           </section>
         `;
       }
@@ -844,9 +788,9 @@
       const lTeam = document.getElementById("leader-team-count");
       if (lTeam) lTeam.textContent = waslaCount;
       const lDone = document.getElementById("leader-completed-count");
-      if (lDone) lDone.textContent = members.filter(m => { const d = m.device || ""; return d.includes("لاب") || d.includes("كمبيوتر") || d.includes("الاثنان") || d === "Laptop" || !!m.hasLaptop; }).length;
+      if (lDone) lDone.textContent = waslaDone;
       const lPct = document.getElementById("leader-progress-rate");
-      if (lPct) lPct.textContent = `${waslaCount ? Math.round((members.filter(m => m.canGoAlexandria && (function(){const d = m.device || ""; return d.includes("لاب") || d.includes("كمبيوتر") || d.includes("الاثنان") || d === "Laptop" || !!m.hasLaptop;})()).length / waslaCount) * 100) : 0}%`;
+      if (lPct) lPct.textContent = `${waslaPct}%`;
 
       // Progress Card
       const progressSec = document.getElementById("progress-section");
@@ -855,14 +799,14 @@
           <div class="progress-box">
             <div class="progress-pct-row">
               <span class="progress-pct-val">${waslaPct}%</span>
-              <span class="progress-pct-tag">معدل الجاهزية العام</span>
+              <span class="progress-pct-tag">معدل الإنجاز العام</span>
             </div>
             <div class="progress-bar-track">
               <div class="progress-bar-fill" style="width:${waslaPct}%"></div>
             </div>
             <div class="progress-meta-text">
               <i class="fas fa-circle-check text-purple"></i>
-              <span>${waslaDone} من ${waslaCount} أعضاء تم تقييمهم</span>
+              <span>${waslaDone} من ${waslaCount} أعضاء أكملوا المهمة</span>
             </div>
           </div>
         `;
@@ -886,7 +830,7 @@
                 <i class="fas fa-star" style="color:#f59e0b"></i>
               </div>
               <div class="winner-body">
-                <div class="winner-label">الأكثر تفاعلاً</div>
+                <div class="winner-label">الأكثر إنجازاً</div>
                 <div class="winner-name">${topMember.fullName}</div>
                 <div class="winner-date">
                   <i class="fas fa-coins text-amber"></i> إجمالي النقاط: <strong>${topMember.totalBonus || 0}</strong>
@@ -905,24 +849,19 @@
       }
 
       // Draw Charts, Needs Attention, and Notifications
-      drawDeviceChart();
+      drawTaskChart();
       renderNeedsAttention();
       renderNotifications();
     }
 
-    function drawDeviceChart() {
-      const canvas = document.getElementById("deviceChart");
+    function drawTaskChart() {
+      const canvas = document.getElementById("taskChart");
       if (!canvas) return;
       const ctx = canvas.getContext("2d");
-      const statuses = ["لاب توب", "كمبيوتر فقط", "الاثنان معاً", "تابلت", "هاتف فقط"];
-      const labels = ["لاب توب", "كمبيوتر", "معاً", "تابلت", "هاتف"];
-      const colors = ["#10B981", "#3B82F6", "#8B5CF6", "#F59E0B", "#EF4444"];
-      const counts = statuses.map(s => members.filter(m => m.device === s).length);
-      
-      // Fallback: If device is empty or undefined, count as Laptop
-      const undefinedCount = members.filter(m => !m.device).length;
-      counts[0] += undefinedCount;
-      
+      const statuses = ["Completed", "In Progress", "Late", "Not Started"];
+      const labels = ["مكتمل", "قيد التنفيذ", "متأخر", "لم يبدأ"];
+      const colors = ["#10B981", "#F59E0B", "#EF4444", "#94A3B8"];
+      const counts = statuses.map(s => members.filter(m => m.taskStatus === s).length);
       const total = counts.reduce((a, b) => a + b, 0) || 1;
 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -933,7 +872,6 @@
 
       let startAngle = -Math.PI / 2;
       counts.forEach((count, i) => {
-        if(count === 0) return;
         const sliceAngle = (count / total) * 2 * Math.PI;
         ctx.beginPath();
         ctx.arc(centerX, centerY, outerRadius, startAngle, startAngle + sliceAngle);
@@ -961,10 +899,10 @@
       // Center Label
       ctx.fillStyle = isDark ? "#9CA3AF" : "#6B7280";
       ctx.font = "500 13px 'IBM Plex Sans Arabic', sans-serif";
-      ctx.fillText("جهاز", centerX, centerY + 14);
+      ctx.fillText("مهمة", centerX, centerY + 14);
 
       // Custom Legend in HTML
-      const legendEl = document.getElementById("device-chart-legend");
+      const legendEl = document.getElementById("task-chart-legend");
       if (legendEl) {
         legendEl.innerHTML = labels.map((label, i) => `
           <div class="chart-legend-pill">
@@ -975,99 +913,8 @@
         `).join("");
       }
     }
+
     // ========== Members Table ==========
-    
-    // ========== Excel Export / Import ==========
-    function exportToExcel() {
-      // Prepare data
-      const dataToExport = members.map(m => ({
-        "الاسم الكامل": m.fullName,
-        "رقم التليفون": m.phone || "—",
-        "محافظة السكن": m.residence || "—",
-        "الجهاز المتاح": m.device || "—",
-        "النزول لإسكندرية": m.canGoAlexandria ? "يقدر ينزل" : "مش هينزل",
-        "حالة التفرغ": m.workStatus || "—",
-        "ظروف الشغل": m.workConditions || "—",
-        "نبذة / تعريف": m.bio || "—",
-        "ملاحظات الفريق": m.teamNotes || "—",
-        "نقاط البونص": (typeof getMemberTotalBonus === 'function') ? getMemberTotalBonus(m.id) : 0
-      }));
-
-      const ws = XLSX.utils.json_to_sheet(dataToExport);
-      ws['!dir'] = 'rtl'; // Right to left sheet
-
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Wasla Members");
-
-      XLSX.writeFile(wb, "Wasla_Team_Members.xlsx");
-      showToast("تم تصدير البيانات إلى ملف الإكسيل بنجاح!", false);
-    }
-
-    function importFromExcel(event) {
-      if (!isLeaderRole()) {
-        showToast("فقط قائد الفريق يمكنه استيراد البيانات!", true);
-        return;
-      }
-      
-      const file = event.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        try {
-          const data = new Uint8Array(e.target.result);
-          const workbook = XLSX.read(data, { type: 'array' });
-          const firstSheetName = workbook.SheetNames[0];
-          const worksheet = workbook.Sheets[firstSheetName];
-          const json = XLSX.utils.sheet_to_json(worksheet);
-          
-          let importCount = 0;
-          json.forEach(row => {
-            const name = row["الاسم الكامل"] || row["الاسم"] || row["FullName"];
-            if (!name) return;
-            
-            const existing = members.find(m => m.fullName === name);
-            if (!existing) {
-              const newId = (members.length > 0) ? Math.max(...members.map(m => m.id), 0) + 1 : 1;
-              const newM = {
-                id: newId,
-                fullName: name,
-                team: "Wasla",
-                phone: sanitizeInput(row["رقم التليفون"] || row["Phone"] || ""),
-                residence: sanitizeInput(row["محافظة السكن"] || row["السكن"] || ""),
-                device: String(row["الجهاز المتاح"] || row["الجهاز"] || "لاب توب"),
-                canGoAlexandria: [true, "يقدر ينزل", "نعم", "yes"].includes(row["النزول لإسكندرية"] || row["إسكندرية"]),
-                workStatus: String(row["حالة التفرغ"] || row["العمل"] || "شغال"),
-                workConditions: sanitizeInput(row["ظروف الشغل"] || ""),
-                bio: sanitizeInput(row["نبذة / تعريف"] || row["ملاحظات شخصية"] || ""),
-                teamNotes: String(row["ملاحظات الفريق"] || "")
-              };
-              members.push(newM);
-              
-              const sb = getSupabase();
-              if (sb && !currentUser.localOnly) {
-                dbInsertMember(newM).catch(() => {});
-              }
-              importCount++;
-            }
-          });
-          
-          if (currentUser && currentUser.localOnly) {
-             try { localStorage.setItem("tms_members", JSON.stringify(members)); } catch(e){}
-          }
-          
-          renderMembersTable();
-          renderDashboard();
-          showToast(`تم استيراد ${importCount} عضو جديد بنجاح!`, false);
-          document.getElementById('excel-import-file').value = '';
-        } catch (err) {
-          console.error(err);
-          showToast("حدث خطأ في قراءة ملف الإكسيل", true);
-        }
-      };
-      reader.readAsArrayBuffer(file);
-    }
-
     function getFilteredMembers() {
       members.forEach(m => {
         if (typeof m.totalBonus === 'undefined') {
@@ -1289,7 +1136,7 @@
       const isAdmin = currentUser && (currentUser.role === "Admin" || currentUser.role === "Wasla Leader");
       const courseAr = { "Completed": "مكتمل", "In Progress": "قيد التنفيذ", "Not Started": "لم يبدأ" }[m.courseStatus] || m.courseStatus;
       const taskAr = { "Completed": "مكتمل", "In Progress": "قيد التنفيذ", "Late": "متأخر", "Not Started": "لم يبدأ" }[m.taskStatus] || m.taskStatus;
-      const hasLap = (m.device || "").includes("لاب") || (m.device || "").includes("كمبيوتر") || (m.device || "").includes("الاثنان") || m.device === "Laptop" || !!m.hasLaptop;
+      const hasLap = m.hasLaptop !== undefined ? m.hasLaptop : true;
       const canAlex = m.canGoAlexandria !== undefined ? m.canGoAlexandria : false;
 
       document.getElementById("profile-body").innerHTML = `
@@ -1310,13 +1157,15 @@
             
           </div>
           <div style="background:var(--bg);border-radius:12px;padding:14px;border:1px solid var(--border)">
-            
+            <div style="font-size:0.72rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px">حالة المهمة</div>
+            <span class="badge ${m.taskStatus === 'Completed' ? 'badge-done' : m.taskStatus === 'Late' ? 'badge-late' : m.taskStatus === 'In Progress' ? 'badge-pending' : 'badge-late'}">${taskAr}</span>
           </div>
           <div style="background:var(--bg);border-radius:12px;padding:14px;border:1px solid var(--border)">
             
           </div>
           <div style="background:var(--bg);border-radius:12px;padding:14px;border:1px solid var(--border)">
-            
+            <div style="font-size:0.72rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px">تاريخ الإنهاء</div>
+            <div style="font-weight:600">${m.taskFinishDate || "—"}</div>
           </div>
           <div style="background:var(--bg);border-radius:12px;padding:14px;border:1px solid var(--border)">
             <div style="font-size:0.72rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px">معاه لاب توب؟</div>
@@ -1464,14 +1313,14 @@
             <div class="form-row" style="margin-bottom:12px">
               <div class="form-group" style="margin-bottom:0">
                 <label><i class="fas fa-user"></i> إلى العضو</label>
-                <select id="note-target" style="width:100%;height:44px;padding:0 14px;border:1px solid var(--border);border-radius:10px;background:var(--card);color:var(--text);font-size:0.95rem;font-family:inherit" onchange="noteDraftTarget=this.value">
+                <select id="note-target" style="width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:12px;background:var(--card);color:var(--text);font-size:0.95rem" onchange="noteDraftTarget=this.value">
                   <option value="">— اختر الشخص —</option>
                   ${targets.map(m => `<option value="${m.id}" data-team="Wasla" data-name="${escapeHtml(m.fullName)}">${m.fullName} (Wasla)</option>`).join("")}
                 </select>
               </div>
               <div class="form-group" style="margin-bottom:0">
                 <label><i class="fas fa-star" style="color:var(--warning)"></i> التقييم (بونص / خصم)</label>
-                <select id="note-bonus" style="width:100%;height:44px;padding:0 14px;border:1px solid var(--border);border-radius:10px;background:var(--card);color:var(--text);font-size:0.95rem;font-family:inherit">
+                <select id="note-bonus" style="width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:12px;background:var(--card);color:var(--text);font-size:0.95rem">
                   <option value="0">بدون تقييم (0)</option>
                   <optgroup label="بونص إيجابي">
                     <option value="+1">+1 نقطة</option>
@@ -1723,16 +1572,9 @@
         if (stored) {
           const u = JSON.parse(stored);
           if (u && (u.localOnly || u.isGuest || u.accountType)) {
-            
-            if (u.signature !== createSessionSignature(u.role)) {
-               console.warn("🛡️ SECURITY ALERT: Session Tampering Detected!");
-               logout();
-               return;
-            }
             currentUser = u;
             loadSampleData();
             showApp();
-
             return;
           }
         }
@@ -1749,7 +1591,7 @@
         const lap = m.hasLaptop ? "نعم" : "لا";
         const alex = m.canGoAlexandria ? "نعم يقدر" : "لا";
         const rnk = m.completionRank ? `#${m.completionRank}` : "غير محدد";
-        return `- الاسم: ${m.fullName} | لابتوب: ${lap} | سفر إسكندرية: ${alex} | سكن: ${m.residence || "غير محدد"} | ملاحظات: ${m.teamNotes || "لا توجد"}`;
+        return `- الاسم: ${m.fullName} | الكورس: ${m.courseStatus} | المهمة: ${m.taskStatus} | موعد التسليم: ${m.deadline || "غير محدد"} | تاريخ الإنجاز: ${m.taskFinishDate || "لم ينجز"} | الترتيب: ${rnk} | لابتوب: ${lap} | سفر إسكندرية: ${alex} | سكن: ${m.residence || "غير محدد"} | ملاحظات: ${m.teamNotes || "لا توجد"}`;
       }).join("\n");
 
       let notesSummary = "";
@@ -2050,276 +1892,6 @@
         console.error("Vault save error:", err);
         if (status) status.innerHTML = `<span style="color:var(--danger)">فشل الحفظ: ${err.message || "خطأ في الاتصال"}</span>`;
       }
-    }
-
-    
-    // ========== Advanced Task Management (ReasonKit Methodology) ==========
-    let teamTasks = [];
-
-    function saveTasksToLocal() {
-      if (currentUser && currentUser.localOnly) {
-         try { localStorage.setItem("tms_tasks", JSON.stringify(teamTasks)); } catch(e){}
-      }
-    }
-
-    function renderTasksDashboard() {
-      const g = document.getElementById("tasks-grid");
-      const empty = document.getElementById("tasks-empty-state");
-      if (!g || !empty) return;
-      
-      if (teamTasks.length === 0) {
-        g.style.display = "none";
-        empty.style.display = "block";
-      } else {
-        empty.style.display = "none";
-        g.style.display = "grid";
-        
-        g.innerHTML = teamTasks.map(t => {
-           let assignedCount = t.assignedTo === "ALL" ? members.length : t.assignedTo.length;
-           
-           // Analyze tracking statuses dynamically!
-           let completedCount = 0;
-           let inProgressCount = 0;
-           let lateCount = 0;
-           
-           const now = new Date();
-           const isDeadlinePassed = t.hasDeadline && (new Date(t.deadlineDate) < now);
-           
-           Object.values(t.tracking || {}).forEach(statusObj => {
-              if (statusObj.status === "مكتمل") completedCount++;
-              else if (statusObj.status === "قيد التنفيذ") inProgressCount++;
-              else if (isDeadlinePassed) lateCount++;
-           });
-           
-           const totalHandled = Object.keys(t.tracking || {}).length;
-           if (isDeadlinePassed) {
-              lateCount += (assignedCount - totalHandled); // Those who haven't started and missed deadline
-           }
-           
-           let pct = assignedCount > 0 ? Math.round((completedCount / assignedCount) * 100) : 0;
-           let strokeColor = pct === 100 ? "var(--success)" : "var(--wasla)";
-           if (isDeadlinePassed && pct < 100) strokeColor = "var(--danger)";
-           
-           let deadlineHtml = ``;
-           if (t.hasDeadline) {
-             const ds = new Date(t.deadlineDate).toLocaleString('ar-EG', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
-             deadlineHtml = `<div style="font-size:0.8rem; color:${isDeadlinePassed ? 'var(--danger)' : 'var(--text-muted)'}; margin-top:8px; font-weight:700;"><i class="fas ${isDeadlinePassed ? 'fa-exclamation-triangle' : 'fa-clock'}"></i> التسليم: ${ds}</div>`;
-           }
-           
-           return `
-             <div class="dash-card" style="padding:20px; display:flex; flex-direction:column; cursor:pointer; transition:var(--transition);" onclick="openTrackTaskModal(${t.id})" onmouseover="this.style.transform='translateY(-4px)';this.style.boxShadow='var(--shadow-lg)'" onmouseout="this.style.transform='none';this.style.boxShadow='var(--shadow-sm)'">
-               <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px;">
-                 <div>
-                   <h4 style="margin:0; font-size:1.15rem; font-weight:800; color:var(--text);">${escapeHtml(t.title)}</h4>
-                   ${deadlineHtml}
-                 </div>
-                 <div style="width:40px; height:40px; border-radius:50%; background:var(--bg); border:2px solid ${strokeColor}; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:0.8rem; color:${strokeColor}">
-                    ${pct}%
-                 </div>
-               </div>
-               <p style="font-size:0.9rem; color:var(--text-muted); margin-bottom:16px; flex:1;">${escapeHtml(t.description || "لا يوجد تفاصيل إضافية")}</p>
-               <div style="display:flex; gap:10px; border-top:1px solid var(--border); padding-top:14px;">
-                 <span class="badge badge-done" title="مكتمل">${completedCount}</span>
-                 <span class="badge badge-pending" title="قيد التنفيذ">${inProgressCount}</span>
-                 ${lateCount > 0 ? `<span class="badge badge-late" title="متأخر">${lateCount}</span>` : ""}
-                 <span style="margin-right:auto; font-size:0.8rem; color:var(--text-muted); font-weight:700;"><i class="fas fa-users"></i> المكلفين: ${assignedCount}</span>
-               </div>
-             </div>
-           `;
-        }).join("");
-      }
-    }
-
-    let customAssignContainer = null;
-    function openCreateTaskModal() {
-      if (!isLeaderRole()) return;
-      document.getElementById('task-create-modal').classList.add("show");
-      document.getElementById('task-create-form').reset();
-      document.getElementById('t-deadline-group').style.display = 'none';
-      
-      customAssignContainer = document.getElementById("t-custom-assignees");
-      customAssignContainer.style.display = "none";
-      customAssignContainer.innerHTML = members.map(m => `
-         <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:600; padding:6px; background:var(--card); border-radius:6px; border:1px solid var(--border-light)">
-           <input type="checkbox" name="task-assignees-selected" value="${m.id}" style="transform:scale(1.2);">
-           ${escapeHtml(m.fullName)} <small style="color:var(--text-muted)">(${m.device || 'لابتوب'})</small>
-         </label>
-      `).join("");
-    }
-    
-    function closeCreateTaskModal() {
-       document.getElementById('task-create-modal').classList.remove("show");
-    }
-
-    function toggleTaskDeadlineUI() {
-      const check = document.getElementById('t-has-deadline').checked;
-      document.getElementById('t-deadline-group').style.display = check ? 'block' : 'none';
-    }
-
-    function toggleTaskAssigneesUI() {
-      const type = document.getElementById('t-assign-type').value;
-      document.getElementById('t-custom-assignees').style.display = type === "custom" ? "flex" : "none";
-    }
-
-    function saveNewTask(e) {
-      e.preventDefault();
-      
-      const title = document.getElementById('t-title').value.trim();
-      const desc = document.getElementById('t-desc').value.trim();
-      const hasDeadline = document.getElementById('t-has-deadline').checked;
-      const deadlineDate = document.getElementById('t-deadline').value;
-      const assignType = document.getElementById('t-assign-type').value;
-      
-      if (!title) { showToast("برجاء إدخال اسم المهمة", true); return; }
-      if (hasDeadline && !deadlineDate) { showToast("برجاء تحديد وقت الانتهاء", true); return; }
-      
-      let assignedTo = "ALL";
-      if (assignType === "custom") {
-        const checkboxes = document.querySelectorAll('input[name="task-assignees-selected"]:checked');
-        assignedTo = Array.from(checkboxes).map(cb => parseInt(cb.value));
-        if (assignedTo.length === 0) { showToast("برجاء اختيار عضو واحد على الأقل", true); return; }
-      }
-      
-      const newId = teamTasks.length > 0 ? Math.max(...teamTasks.map(t => t.id)) + 1 : 1;
-      const tsk = {
-        id: newId,
-        title,
-        description: desc,
-        hasDeadline,
-        deadlineDate,
-        assignedTo,
-        tracking: {}
-      };
-      
-      teamTasks.unshift(tsk);
-      saveTasksToLocal();
-      if (getSupabase() && currentUser && !currentUser.localOnly) {
-         dbInsertTask(tsk).catch(e => console.warn("Task cloud sync failed:", e));
-      }
-      closeCreateTaskModal();
-      renderTasksDashboard();
-      showToast("تم تكليف المهمة بنجاح للنظام!");
-    }
-
-    let trackingTaskId = null;
-    function openTrackTaskModal(id) {
-       trackingTaskId = id;
-       const tsk = teamTasks.find(t => t.id === id);
-       if(!tsk) return;
-       
-       document.getElementById("task-track-modal").classList.add("show");
-       document.getElementById("tt-title").textContent = tsk.title;
-       document.getElementById("tt-desc").textContent = tsk.description || "بدون تفاصيل";
-       
-       const dl = document.getElementById("tt-deadline");
-       const now = new Date();
-       if (tsk.hasDeadline) {
-          const isPassed = new Date(tsk.deadlineDate) < now;
-          const ds = new Date(tsk.deadlineDate).toLocaleString('ar-EG', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
-          dl.innerHTML = `<i class="fas ${isPassed ? 'fa-exclamation-circle' : 'fa-stopwatch'}" style="color:${isPassed?'var(--danger)':'var(--text)'}"></i> <span style="color:${isPassed?'var(--danger)':'var(--text)'}">آخر موعد: ${ds}</span>`;
-       } else {
-          dl.innerHTML = `<i class="fas fa-infinity" style="color:var(--text-muted)"></i> <span style="color:var(--text-muted)">مهمة ممتدة بمرونة</span>`;
-       }
-       
-       renderTrackDetailsModalList();
-    }
-    
-    function closeTrackTaskModal() {
-       document.getElementById("task-track-modal").classList.remove("show");
-       trackingTaskId = null;
-    }
-    
-    // Auto-calculates what users should be visible and builds the UI list for tracking
-    function renderTrackDetailsModalList() {
-       if(!trackingTaskId) return;
-       const tsk = teamTasks.find(t => t.id === trackingTaskId);
-       if(!tsk) return;
-       
-       let targetMembers = members;
-       if (tsk.assignedTo !== "ALL") {
-          targetMembers = members.filter(m => tsk.assignedTo.includes(m.id));
-       }
-       
-       const lst = document.getElementById("tt-members-list");
-       const now = new Date();
-       const isDeadlinePassed = tsk.hasDeadline && (new Date(tsk.deadlineDate) < now);
-       
-       lst.innerHTML = targetMembers.map(m => {
-          let trackData = tsk.tracking[m.id] || { status: "لم يبدأ", notes: [] };
-          
-          let derivedStatus = trackData.status;
-          if (derivedStatus !== "مكتمل" && isDeadlinePassed) {
-             derivedStatus = "متأخر 🚨";
-          }
-          
-          const badgeClass = derivedStatus === "مكتمل" ? "badge-done" : (derivedStatus.includes("متأخر") ? "badge-late" : (derivedStatus==="قيد التنفيذ" ? "badge-pending" : ""));
-          
-          return `
-            <div style="background:var(--card); padding:16px; border-radius:12px; border:1px solid var(--border); box-shadow:var(--shadow-sm)">
-               <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px">
-                  <strong style="font-size:1.05rem; color:var(--text)">${escapeHtml(m.fullName)}</strong>
-                  <div style="display:flex; gap:10px; align-items:center;">
-                     <span class="badge ${badgeClass}" style="flex-shrink:0">${derivedStatus}</span>
-                     ${isLeaderRole() ? `
-                        <select onchange="updateMemberTaskStatus(${tsk.id}, ${m.id}, this.value)" style="padding:6px; border-radius:6px; border:1px solid var(--border); background:var(--bg); font-weight:700; cursor:pointer; font-family:inherit">
-                           <option value="" disabled selected>تحديث الحالة</option>
-                           <option value="لم يبدأ">لم يبدأ</option>
-                           <option value="قيد التنفيذ">قيد التنفيذ</option>
-                           <option value="مكتمل">مكتمل</option>
-                        </select>
-                     ` : ""}
-                  </div>
-               </div>
-               <div style="background:var(--bg); padding:10px; border-radius:8px;">
-                  ${trackData.notes.map(n => `
-                    <div style="font-size:0.85rem; color:var(--text); margin-bottom:6px; padding-bottom:6px; border-bottom:1px dashed var(--border-light)">
-                      <strong style="color:var(--wasla); font-size:0.75rem">${n.date}</strong><br>
-                      ${escapeHtml(n.text)}
-                    </div>
-                  `).join("")}
-                  ${isLeaderRole() ? `
-                    <div style="display:flex; gap:8px; margin-top:8px">
-                       <input type="text" id="t-note-input-${m.id}" placeholder="اكتب ملاحظة متابعة هنا ثم اضغط إرسال..." style="flex:1; padding:8px 12px; border:1px solid var(--border); border-radius:6px; background:var(--card); font-family:inherit; font-size:0.85rem;" onkeydown="if(event.key==='Enter') submitTaskNote(${tsk.id}, ${m.id})">
-                       <button class="btn btn-primary btn-sm" onclick="submitTaskNote(${tsk.id}, ${m.id})"><i class="fas fa-paper-plane"></i></button>
-                    </div>
-                  ` : ""}
-               </div>
-            </div>
-          `;
-       }).join("");
-    }
-
-    function updateMemberTaskStatus(taskId, memberId, newStatus) {
-       const tsk = teamTasks.find(t => t.id === taskId);
-       if(!tsk) return;
-       if (!tsk.tracking[memberId]) tsk.tracking[memberId] = { status: "لم يبدأ", notes: [] };
-       tsk.tracking[memberId].status = newStatus;
-       saveTasksToLocal();
-       if (getSupabase() && currentUser && !currentUser.localOnly) {
-          dbUpdateTask(taskId, tsk).catch(e => console.warn("Task tracking update failed:", e));
-       }
-       renderTrackDetailsModalList();
-       renderTasksDashboard();
-       showToast("تم تحديث حالة تسليم العضو بنجاح");
-    }
-    
-    function submitTaskNote(taskId, memberId) {
-       const inp = document.getElementById(`t-note-input-${memberId}`);
-       if(!inp) return;
-       const txt = inp.value.trim();
-       if(!txt) return;
-       
-       const tsk = teamTasks.find(t => t.id === taskId);
-       if(!tsk) return;
-       if (!tsk.tracking[memberId]) tsk.tracking[memberId] = { status: "لم يبدأ", notes: [] };
-       
-       const stamp = new Date().toLocaleString('ar-EG', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'});
-       tsk.tracking[memberId].notes.push({ text: txt, date: stamp });
-       saveTasksToLocal();
-       if (getSupabase() && currentUser && !currentUser.localOnly) {
-          dbUpdateTask(taskId, tsk).catch(e => console.warn("Task note cloud sync failed:", e));
-       }
-       renderTrackDetailsModalList();
     }
 
     (function init() {
