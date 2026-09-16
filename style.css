@@ -3143,13 +3143,7 @@ tr.clickable-row { cursor: pointer; }
 
 @media (max-width: 900px) {
   body.sidebar-open { overflow: hidden; }
-  body.sidebar-open::after {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: 100;
-    background: rgba(15, 23, 42, .46);
-  }
+  body.sidebar-open::after { display: none; }
   .sidebar { z-index: 110; width: min(86vw, 320px); }
   .main-content { min-width: 0; }
   .top-navbar { position: sticky; top: 0; z-index: 90; }
