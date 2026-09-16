@@ -3150,7 +3150,6 @@ tr.clickable-row { cursor: pointer; }
     inset: 0;
     z-index: 100;
     background: rgba(15, 23, 42, .46);
-    backdrop-filter: blur(2px);
   }
   .sidebar { z-index: 110; width: min(86vw, 320px); }
   .main-content { min-width: 0; }
