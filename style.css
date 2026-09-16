@@ -2227,7 +2227,6 @@ tr.clickable-row { cursor: pointer; }
   position: fixed;
   inset: 0;
   background: rgba(15, 10, 26, 0.65); /* أغمق قليلاً للتركيز */
-  backdrop-filter: blur(8px);
   display: none;
   align-items: center;
   justify-content: center;
@@ -2578,7 +2577,7 @@ tr.clickable-row { cursor: pointer; }
 .btn-logout:hover { background: rgba(243,244,246,.07); color: #fff; }
 
 .main-content { margin-right: 244px; background: var(--wasla-paper); }
-.top-navbar { min-height: 82px; padding: 16px var(--space-5); background: rgba(255,255,255,.88); backdrop-filter: blur(14px); border-color: #e2e5ea; box-shadow: none; }
+.top-navbar { min-height: 82px; padding: 16px var(--space-5); background: #fff; border-color: #e2e5ea; box-shadow: none; }
 .page-title-group .page-title { color: var(--wasla-navy); font-family: 'Cairo', sans-serif; font-size: 1.7rem; font-weight: 800; }
 .page-title-group .page-subtitle { color: var(--wasla-slate); margin-top: 4px; }
 .content-area { padding: var(--space-4) var(--space-5) var(--space-5); }
