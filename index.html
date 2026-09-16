@@ -1094,8 +1094,9 @@
       const errorEl = document.getElementById("login-error");
       if (errorEl) { errorEl.style.display = "none"; errorEl.textContent = ""; }
 
-      let username = sanitizeInput(document.getElementById("username").value || "");
-      let password = sanitizeInput(document.getElementById("password").value || "");
+      // لا نطبّق sanitizeInput على كلمة المرور؛ الرموز جزء صالح من كلمة المرور.
+      let username = (document.getElementById("username").value || "").trim().toLowerCase();
+      let password = document.getElementById("password").value || "";
 
       const finishLogin = () => { if (loginBtn) loginBtn.classList.remove("ls-loading"); };
       
@@ -1104,7 +1105,7 @@
          const email = username.toLowerCase();
          try {
            const authPromise = sb.auth.signInWithPassword({ email, password });
-           const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("NETWORK_TIMEOUT")), 2500));
+           const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("NETWORK_TIMEOUT")), 10000));
            const { data, error } = await Promise.race([authPromise, timeoutPromise]);
            if (!error && data && data.user) {
              currentUser = { username: username, role: "Admin", displayName: username, accountType: "admin", userId: data.user.id, localOnly: false, signature: createSessionSignature("Admin") };
@@ -1112,7 +1113,15 @@
              loadFromAPI().then(ok => { if (ok) { renderDashboard(); renderMembersTable(); renderNotes(); renderRanking(); } }).catch(() => {});
              finishLogin(); return;
            }
-         } catch (err) { console.warn("Supabase auth error"); }
+         } catch (err) {
+           console.error("Supabase auth error", err);
+           const message = err && err.message === "NETWORK_TIMEOUT"
+             ? "تعذر الاتصال بخدمة تسجيل الدخول. حاول مرة أخرى."
+             : "خدمة تسجيل الدخول تواجه خطأ مؤقتًا. حاول مرة أخرى لاحقًا.";
+           if (errorEl) { errorEl.innerHTML = `<div>${message}</div>`; errorEl.style.display = "block"; }
+           finishLogin();
+           return;
+         }
       }
 
       finishLogin();
