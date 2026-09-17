@@ -1327,33 +1327,136 @@
     }
 
     let deferredInstallPrompt = null;
+    let pwaInstallDismissed = false;
+    let pwaEngagementTimer = null;
+
     function initPWA() {
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
       }
+
+      // Check if user previously dismissed
+      pwaInstallDismissed = localStorage.getItem("pwa_dismissed") === "1";
+
       window.addEventListener("beforeinstallprompt", (event) => {
         event.preventDefault();
         deferredInstallPrompt = event;
-        if (!document.getElementById("pwa-install-btn")) {
-          const button = document.createElement("button");
-          button.id = "pwa-install-btn";
-          button.className = "pwa-install-btn";
-          button.type = "button";
-          button.innerHTML = '<i class="fas fa-download" aria-hidden="true"></i><span>تثبيت التطبيق</span>';
-          button.addEventListener("click", async () => {
-            if (!deferredInstallPrompt) return;
-            deferredInstallPrompt.prompt();
-            await deferredInstallPrompt.userChoice;
-            deferredInstallPrompt = null;
-            button.remove();
-          });
-          document.body.appendChild(button);
-        }
+        schedulePWABanner();
       });
+
       window.addEventListener("appinstalled", () => {
-        const button = document.getElementById("pwa-install-btn");
-        if (button) button.remove();
+        removePWAUI();
+        localStorage.removeItem("pwa_dismissed");
+        showPWASuccessToast();
       });
+    }
+
+    function schedulePWABanner() {
+      // Show banner after 25s of engagement if not dismissed before
+      if (pwaInstallDismissed) {
+        showPWAFab(); // just show the small FAB
+        return;
+      }
+      clearTimeout(pwaEngagementTimer);
+      pwaEngagementTimer = setTimeout(() => {
+        if (deferredInstallPrompt) showPWABanner();
+      }, 25000);
+    }
+
+    function showPWABanner() {
+      if (document.getElementById("pwa-banner")) return;
+
+      const banner = document.createElement("div");
+      banner.id = "pwa-banner";
+      banner.className = "pwa-banner";
+      banner.innerHTML = `
+        <div class="pwa-banner-icon">
+          <img src="icons/icon-192.png" alt="wasla" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <div class="pwa-banner-icon-fallback" style="display:none"><i class="fas fa-layer-group"></i></div>
+        </div>
+        <div class="pwa-banner-body">
+          <p class="pwa-banner-title">ثبّت لوحة التحكم</p>
+          <p class="pwa-banner-sub">وصول فوري من سطح المكتب — بدون متصفح</p>
+        </div>
+        <div class="pwa-banner-actions">
+          <button class="pwa-banner-install" id="pwa-banner-install-btn" type="button">تثبيت</button>
+          <button class="pwa-banner-dismiss" id="pwa-banner-dismiss-btn" type="button" aria-label="إغلاق">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      `;
+      document.body.appendChild(banner);
+      requestAnimationFrame(() => banner.classList.add("pwa-banner--visible"));
+
+      document.getElementById("pwa-banner-install-btn").addEventListener("click", triggerPWAInstall);
+      document.getElementById("pwa-banner-dismiss-btn").addEventListener("click", dismissPWABanner);
+    }
+
+    function showPWAFab() {
+      if (document.getElementById("pwa-fab")) return;
+      const fab = document.createElement("button");
+      fab.id = "pwa-fab";
+      fab.className = "pwa-fab";
+      fab.type = "button";
+      fab.title = "تثبيت التطبيق";
+      fab.innerHTML = '<i class="fas fa-download"></i>';
+      fab.addEventListener("click", () => {
+        removePWAFab();
+        pwaInstallDismissed = false;
+        showPWABanner();
+      });
+      document.body.appendChild(fab);
+      requestAnimationFrame(() => fab.classList.add("pwa-fab--visible"));
+    }
+
+    function dismissPWABanner() {
+      const banner = document.getElementById("pwa-banner");
+      if (banner) {
+        banner.classList.remove("pwa-banner--visible");
+        banner.classList.add("pwa-banner--hiding");
+        setTimeout(() => banner.remove(), 350);
+      }
+      localStorage.setItem("pwa_dismissed", "1");
+      pwaInstallDismissed = true;
+      setTimeout(showPWAFab, 400);
+    }
+
+    async function triggerPWAInstall() {
+      if (!deferredInstallPrompt) return;
+      const banner = document.getElementById("pwa-banner");
+      const btn = document.getElementById("pwa-banner-install-btn");
+      if (btn) { btn.textContent = "جاري..."; btn.disabled = true; }
+      deferredInstallPrompt.prompt();
+      const { outcome } = await deferredInstallPrompt.userChoice;
+      deferredInstallPrompt = null;
+      if (outcome === "accepted") {
+        removePWAUI();
+      } else {
+        if (btn) { btn.textContent = "تثبيت"; btn.disabled = false; }
+      }
+    }
+
+    function removePWAUI() {
+      const banner = document.getElementById("pwa-banner");
+      if (banner) { banner.classList.remove("pwa-banner--visible"); setTimeout(() => banner.remove(), 350); }
+      removePWAFab();
+    }
+
+    function removePWAFab() {
+      const fab = document.getElementById("pwa-fab");
+      if (fab) { fab.classList.remove("pwa-fab--visible"); setTimeout(() => fab.remove(), 300); }
+    }
+
+    function showPWASuccessToast() {
+      const toast = document.createElement("div");
+      toast.className = "pwa-toast";
+      toast.innerHTML = '<i class="fas fa-check-circle"></i> تم تثبيت التطبيق بنجاح';
+      document.body.appendChild(toast);
+      requestAnimationFrame(() => toast.classList.add("pwa-toast--visible"));
+      setTimeout(() => {
+        toast.classList.remove("pwa-toast--visible");
+        setTimeout(() => toast.remove(), 400);
+      }, 3500);
     }
 
     function toggleTheme() {
