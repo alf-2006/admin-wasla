@@ -50,6 +50,17 @@
   --ls-terms-color: rgba(20,17,15,0.35);
   --ls-terms-line: rgba(20,17,15,0.10);
   --ls-glow-opacity: 0.06;
+  /* Z-Index Scale */
+  --z-base: 1;
+  --z-dropdown: 50;
+  --z-sticky: 90;
+  --z-navbar: 90;
+  --z-sidebar: 110;
+  --z-overlay: 120;
+  --z-modal: 150;
+  --z-bottom-nav: 200;
+  --z-toast: 300;
+  --z-pwa: 9999;
 }
 
 [data-theme="dark"] {
@@ -3126,7 +3137,7 @@ tr.clickable-row { cursor: pointer; }
   position: fixed;
   inset-inline-start: 18px;
   bottom: max(18px, env(safe-area-inset-bottom));
-  z-index: 1200;
+  z-index: var(--z-pwa);
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -3157,9 +3168,9 @@ tr.clickable-row { cursor: pointer; }
     opacity: 1;
     pointer-events: auto;
   }
-  .sidebar { z-index: 110; width: min(86vw, 320px); }
+  .sidebar { z-index: var(--z-sidebar); width: min(86vw, 320px); }
   .main-content { min-width: 0; }
-  .top-navbar { position: sticky; top: 0; z-index: 90; }
+  .top-navbar { position: sticky; top: 0; z-index: var(--z-navbar); }
   .content-area { overflow-x: hidden; }
   .table-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .table-wrapper table { min-width: 680px; }
@@ -3212,7 +3223,7 @@ tr.clickable-row { cursor: pointer; }
   bottom: 24px;
   left: 50%;
   transform: translateX(-50%) translateY(120px);
-  z-index: 9999;
+  z-index: var(--z-pwa);
   display: flex;
   align-items: center;
   gap: 14px;
@@ -3347,7 +3358,7 @@ tr.clickable-row { cursor: pointer; }
   position: fixed;
   bottom: 24px;
   left: 24px;
-  z-index: 9998;
+  z-index: var(--z-pwa);
   width: 44px;
   height: 44px;
   border-radius: 50%;
@@ -3387,7 +3398,7 @@ tr.clickable-row { cursor: pointer; }
   bottom: 88px;
   left: 50%;
   transform: translateX(-50%) translateY(20px);
-  z-index: 10000;
+  z-index: var(--z-toast);
   background: #16a34a;
   color: #fff;
   padding: 10px 20px;
@@ -3447,7 +3458,7 @@ tr.clickable-row { cursor: pointer; }
     bottom: 0;
     left: 0;
     right: 0;
-    z-index: 200;
+    z-index: var(--z-bottom-nav);
     background: var(--bg-elevated, #ffffff);
     border-top: 1px solid var(--border, rgba(0,0,0,0.08));
     padding-bottom: env(safe-area-inset-bottom, 0px);
