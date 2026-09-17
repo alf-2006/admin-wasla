@@ -18,7 +18,6 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <base target="_blank">
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 </head>
 <body>
@@ -103,7 +102,7 @@
               <label for="username">البريد الإلكتروني</label>
               <div class="ls-input-wrap ls-input-wrap--email">
                 <span class="ls-fi-left"><svg class="form-line-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="13" rx="1.5"/><path d="m4.5 7 7.5 5.5L19.5 7"/></svg></span>
-                <input type="email" id="username" placeholder="admin@waslateam.com" autocomplete="username" required dir="ltr" />
+                <input type="email" id="username" placeholder="admin@wasla.com" autocomplete="username" required dir="ltr" />
               </div>
             </div>
             
@@ -1094,39 +1093,75 @@
       const errorEl = document.getElementById("login-error");
       if (errorEl) { errorEl.style.display = "none"; errorEl.textContent = ""; }
 
-      // لا نطبّق sanitizeInput على كلمة المرور؛ الرموز جزء صالح من كلمة المرور.
-      let username = (document.getElementById("username").value || "").trim().toLowerCase();
-      let password = document.getElementById("password").value || "";
+      const rawUsername = (document.getElementById("username").value || "").trim();
+      const password = document.getElementById("password").value || "";
+
+      if (!rawUsername || !password) {
+        if (loginBtn) loginBtn.classList.remove("ls-loading");
+        if (errorEl) {
+          errorEl.innerHTML = `<div>يرجى إدخال البريد الإلكتروني وكلمة المرور.</div>`;
+          errorEl.style.display = "block";
+        }
+        return;
+      }
+
+      // Shorthand username support (e.g. "admin" -> "admin@wasla.com")
+      let email = rawUsername.toLowerCase();
+      if (!email.includes("@")) {
+        email = email + "@wasla.com";
+      }
 
       const finishLogin = () => { if (loginBtn) loginBtn.classList.remove("ls-loading"); };
+      let loginErrorMsg = "بيانات الدخول غير صحيحة. يرجى التأكد من البريد وكلمة المرور.";
       
       const sb = getSupabase();
       if (sb) {
-         const email = username.toLowerCase();
          try {
            const authPromise = sb.auth.signInWithPassword({ email, password });
-           const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("NETWORK_TIMEOUT")), 10000));
+           const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("NETWORK_TIMEOUT")), 15000));
            const { data, error } = await Promise.race([authPromise, timeoutPromise]);
-           if (!error && data && data.user) {
-             currentUser = { username: username, role: "Admin", displayName: username, accountType: "admin", userId: data.user.id, localOnly: false, signature: createSessionSignature("Admin") };
-             saveSession(); loadSampleData(); showApp();
+           if (error) {
+             console.warn("Supabase auth response error:", error);
+             if (error.message && error.message.toLowerCase().includes("rate limit")) {
+               loginErrorMsg = "تم تجاوز الحد المسموح به من المحاولات، يرجى الانتظار قليلاً.";
+             } else {
+               loginErrorMsg = "بيانات الدخول غير صحيحة. يرجى التأكد من البريد وكلمة المرور.";
+             }
+           } else if (data && data.user) {
+             const meta = data.user.user_metadata || {};
+             const dispName = meta.displayName || rawUsername;
+             const role = meta.role || "Admin";
+             currentUser = {
+               username: email,
+               role: role,
+               displayName: dispName,
+               accountType: "admin",
+               userId: data.user.id,
+               localOnly: false,
+               signature: createSessionSignature(role)
+             };
+             saveSession();
+             loadSampleData();
+             showApp();
              loadFromAPI().then(ok => { if (ok) { renderDashboard(); renderMembersTable(); renderNotes(); renderRanking(); } }).catch(() => {});
-             finishLogin(); return;
+             finishLogin();
+             return;
            }
          } catch (err) {
-           console.error("Supabase auth error", err);
-           const message = err && err.message === "NETWORK_TIMEOUT"
-             ? "تعذر الاتصال بخدمة تسجيل الدخول. حاول مرة أخرى."
-             : "خدمة تسجيل الدخول تواجه خطأ مؤقتًا. حاول مرة أخرى لاحقًا.";
-           if (errorEl) { errorEl.innerHTML = `<div>${message}</div>`; errorEl.style.display = "block"; }
-           finishLogin();
-           return;
+           console.warn("Supabase auth exception:", err);
+           if (err && err.message === "NETWORK_TIMEOUT") {
+             loginErrorMsg = "تعذر الاتصال بالخادم (انتهت مهلة الانتظار). يرجى التحقق من اتصال الإنترنت.";
+           } else {
+             loginErrorMsg = "حدث خطأ أثناء الاتصال بالخادم. يرجى المحاولة لاحقاً.";
+           }
          }
+      } else {
+        loginErrorMsg = "خدمة Supabase غير مهيأة أو غير متصلة.";
       }
 
       finishLogin();
       if (errorEl) {
-         errorEl.innerHTML = `<div>بيانات الدخول غير صحيحة.</div>`;
+         errorEl.innerHTML = `<div>${loginErrorMsg}</div>`;
          errorEl.style.display = "block";
       }
     });
@@ -1210,8 +1245,9 @@
       const avatarEl = document.getElementById("user-avatar");
       avatarEl.className = "user-avatar";
       if (accountType && accountType.includes('wasla')) avatarEl.classList.add('wasla');
-      const isAdmin = role === "Wasla Leader";
-      document.getElementById("btn-add-member").style.display = isAdmin ? "inline-flex" : "none";
+      const isAdmin = role === "Wasla Leader" || role === "Admin";
+      const addBtn = document.getElementById("btn-add-member");
+      if (addBtn) addBtn.style.display = isAdmin ? "inline-flex" : "none";
       const notesNav = document.getElementById("nav-notes");
       if (notesNav) notesNav.style.display = "flex";
       const actionsHeader = document.getElementById("actions-header");
@@ -1219,7 +1255,7 @@
     }
 
     function getRoleLabel(role) {
-      const labels = { "Wasla Leader": "قائد Wasla", "Normal User": "مستخدم" };
+      const labels = { "Wasla Leader": "قائد الفريق", "Admin": "مدير النظام", "Normal User": "مستخدم" };
       return labels[role] || role;
     }
 
@@ -1238,6 +1274,7 @@
     const navConnectionPaths = {
       dashboard: "M58 18C25 18 24 83 48 95",
       members: "M58 18C25 18 24 83 48 95c22 11 20 50-2 61",
+      tasks: "M58 18C25 18 24 83 48 95c22 11 20 50-2 61",
       ranking: "M58 18C25 18 24 83 48 95c22 11 20 50-2 61-25 13-24 56 2 68",
       notes: "M58 18C25 18 24 83 48 95c22 11 20 50-2 61-25 13-24 56 2 68 25 12 24 55 0 68",
       "ai-assistant": "M58 18C25 18 24 83 48 95c22 11 20 50-2 61-25 13-24 56 2 68 25 12 24 55 0 68-23 12-23 54 5 58"
@@ -1796,7 +1833,7 @@
               const newId = (members.length > 0) ? Math.max(...members.map(m => m.id), 0) + 1 : 1;
               const newM = {
                 id: newId,
-                fullName: name,
+                fullName: sanitizeInput(name),
                 team: "Wasla",
                 phone: sanitizeInput(row["رقم التليفون"] || row["Phone"] || ""),
                 residence: sanitizeInput(row["محافظة السكن"] || row["السكن"] || ""),
@@ -1805,7 +1842,7 @@
                 workStatus: String(row["حالة التفرغ"] || row["العمل"] || "شغال"),
                 workConditions: sanitizeInput(row["ظروف الشغل"] || ""),
                 bio: sanitizeInput(row["نبذة / تعريف"] || row["ملاحظات شخصية"] || ""),
-                teamNotes: String(row["ملاحظات الفريق"] || "")
+                teamNotes: sanitizeInput(row["ملاحظات الفريق"] || "")
               };
               members.push(newM);
               
@@ -2434,7 +2471,12 @@
 
     function escapeHtml(str) {
       if (!str) return "";
-      return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
     }
 
     function showToast(msg, isError = false) {
@@ -2447,7 +2489,16 @@
     }
 
     function enterAsGuest() {
-      currentUser = { username: "زائر", role: "Normal User", displayName: "زائر", accountType: "guest", userId: null, isGuest: true };
+      currentUser = {
+        username: "زائر",
+        role: "Normal User",
+        displayName: "زائر",
+        accountType: "guest",
+        userId: null,
+        isGuest: true,
+        localOnly: true,
+        signature: createSessionSignature("Normal User")
+      };
       saveSession(); loadSampleData(); showApp();
       loadFromAPI().then(ok => { if (ok && currentUser) { renderDashboard(); renderMembersTable(); renderNotes(); renderRanking(); } }).catch(() => {});
     }
@@ -2465,15 +2516,20 @@
               currentUser.userId = session.user.id;
               currentUser.isGuest = false;
               currentUser.localOnly = false;
+              currentUser.signature = createSessionSignature(currentUser.role || "Admin");
             } else {
-              const { data: prof, error: profError } = await sb.from("profiles").select("role, display_name").eq("id", session.user.id).maybeSingle();
-              if (profError) console.warn("[TMS] Profile fetch error:", profError);
-              const role = prof ? (ROLE_FROM_DB[prof.role] || "Normal User") : "Normal User";
+              const meta = session.user.user_metadata || {};
+              const role = meta.role || "Admin";
+              const dispName = meta.displayName || session.user.email;
               currentUser = {
-                username: (prof && prof.display_name) || session.user.email, role,
-                displayName: (prof && prof.display_name) || session.user.email,
-                accountType: prof && prof.role === "wasla_leader" ? "wasla_leader" : "normal",
-                userId: session.user.id, isGuest: false, localOnly: false
+                username: session.user.email,
+                role: role,
+                displayName: dispName,
+                accountType: "admin",
+                userId: session.user.id,
+                isGuest: false,
+                localOnly: false,
+                signature: createSessionSignature(role)
               };
               saveSession();
             }
@@ -2488,8 +2544,7 @@
         if (stored) {
           const u = JSON.parse(stored);
           if (u && (u.localOnly || u.isGuest || u.accountType)) {
-            
-            if (u.signature !== createSessionSignature(u.role)) {
+            if (u.signature !== createSessionSignature(u.role || "Normal User")) {
                console.warn("🛡️ SECURITY ALERT: Session Tampering Detected!");
                logout();
                return;
@@ -2497,7 +2552,6 @@
             currentUser = u;
             loadSampleData();
             showApp();
-
             return;
           }
         }
