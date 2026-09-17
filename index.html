@@ -137,6 +137,8 @@
 
   <!-- ========== MAIN APP ========== -->
   <div id="app">
+    <!-- Sidebar Backdrop -->
+    <div class="sidebar-backdrop" id="sidebar-backdrop" aria-hidden="true"></div>
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
@@ -1325,6 +1327,17 @@
       if (sidebar) sidebar.classList.remove("open");
       document.body.classList.remove("sidebar-open");
     }
+    // Wire backdrop click to close sidebar
+    (function() {
+      const backdrop = document.getElementById("sidebar-backdrop");
+      if (backdrop) {
+        backdrop.addEventListener("click", closeSidebar);
+        backdrop.addEventListener("touchend", function(e) {
+          e.preventDefault();
+          closeSidebar();
+        }, { passive: false });
+      }
+    })();
 
     let deferredInstallPrompt = null;
     let pwaInstallDismissed = false;
