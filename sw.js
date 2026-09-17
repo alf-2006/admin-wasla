@@ -1,4 +1,4 @@
-const CACHE_NAME = "wasla-admin-v3";
+const CACHE_NAME = "wasla-admin-v4";
 const APP_SHELL = [
   "/",
   "/index.html",
