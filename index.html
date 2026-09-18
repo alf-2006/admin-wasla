@@ -269,82 +269,111 @@
       <div class="content-area">
         <!-- Dashboard Page -->
         <div class="page active" id="page-dashboard">
+
+          <!-- Quick Actions Bar -->
+          <div class="quick-actions-bar">
+            <button class="btn btn-primary" onclick="openMemberModal()">
+              <i class="fas fa-user-plus"></i> إضافة عضو جديد
+            </button>
+            <button class="btn btn-primary" onclick="openCreateTaskModal()">
+              <i class="fas fa-tasks"></i> تكليف مهمة جديدة
+            </button>
+            <button class="btn btn-secondary" onclick="navigateToPage('notes'); setTimeout(() => document.getElementById('new-note-text').focus(), 300)">
+              <i class="fas fa-pen"></i> كتابة ملاحظة
+            </button>
+          </div>
+
           <!-- 8 KPI Metrics Grid -->
           <div class="stats-grid" id="stats-grid"></div>
 
-          <!-- Middle Row: Team Leader + Progress -->
-          <div class="dashboard-mid-row">
-            <!-- Team Leader Card -->
-            <div class="dash-card leader-section-card">
+          <!-- Command Center Grid -->
+          <div class="command-center-grid">
+
+            <!-- Tasks Analytics -->
+            <div class="dash-card command-card">
               <div class="dash-card-header">
                 <div class="dash-card-title">
-                  <i class="fas fa-crown text-purple"></i>
-                  <span>قائد الفريق</span>
+                  <i class="fas fa-chart-pie text-purple"></i>
+                  <span>حالة المهام (Tasks)</span>
                 </div>
-                <button class="btn-text-action" onclick="navigateToPage('ranking')">
-                  عرض الترتيب الكامل
-                </button>
+                <button class="btn-text-action" onclick="navigateToPage('tasks')">إدارة المهام</button>
               </div>
-              <div class="dash-card-body">
-                <div class="leader-row-card" onclick="openProfileByName('أحمد عيد')">
-                  <div class="leader-main-info">
-                    <div class="leader-avatar-wrap">
-                      <div class="leader-avatar">أ</div>
-                      <span class="leader-crown-badge" title="قائد الفريق"><i class="fas fa-crown"></i></span>
-                    </div>
-                    <div class="leader-details">
-                      <div class="leader-name">أحمد عيد</div>
-                      <div class="leader-role">قائد فريق Wasla</div>
-                    </div>
-                  </div>
-                  <div class="leader-stats-pills">
-                    <div class="leader-stat-col">
-                      <span class="leader-stat-val" id="leader-team-count">16</span>
-                      <span class="leader-stat-lbl">أعضاء الفريق</span>
-                    </div>
-                    <div class="leader-stat-divider"></div>
-                    <div class="leader-stat-col">
-                      <span class="leader-stat-val" id="leader-completed-count">4</span>
-                      <span class="leader-stat-lbl">معهم لابتوب</span>
-                    </div>
-                    <div class="leader-stat-divider"></div>
-                    <div class="leader-stat-col">
-                      <span class="leader-stat-val" id="leader-progress-rate">25%</span>
-                      <span class="leader-stat-lbl">جاهزية مشتركة</span>
-                    </div>
-                  </div>
-                </div>
+              <div class="dash-card-body" style="display:flex; align-items:center; justify-content:center; position:relative; min-height: 250px;">
+                <canvas id="tasksChart"></canvas>
               </div>
             </div>
 
-            <!-- Progress Card -->
-            <div class="dash-card progress-section-card">
+            <!-- Top Ranking & Notes Summary -->
+            <div class="dash-card command-card">
               <div class="dash-card-header">
                 <div class="dash-card-title">
-                  <i class="fas fa-chart-line text-purple"></i>
-                  <span>مؤشرات الجاهزية</span>
+                  <i class="fas fa-trophy text-amber"></i>
+                  <span>أعلى 3 أعضاء (نظام الترتيب)</span>
+                </div>
+                <button class="btn-text-action" onclick="navigateToPage('ranking')">عرض الترتيب</button>
+              </div>
+              <div class="dash-card-body" id="top-rankings-widget">
+                <!-- Injected via JS -->
+              </div>
+            </div>
+
+            <!-- Device/Readiness Stats -->
+            <div class="dash-card command-card">
+              <div class="dash-card-header">
+                <div class="dash-card-title">
+                  <i class="fas fa-laptop text-purple"></i>
+                  <span>جاهزية الأجهزة</span>
                 </div>
               </div>
-              <div class="dash-card-body" id="progress-section"></div>
+              <div class="dash-card-body chart-card-body">
+                <div class="canvas-wrap" style="position:relative; height:180px; width:100%; display:flex; justify-content:center;">
+                  <canvas id="deviceChart"></canvas>
+                </div>
+                <div id="device-chart-legend" class="custom-chart-legend" style="margin-top: 16px;"></div>
+              </div>
             </div>
+
+            <!-- Recent Activity Timeline -->
+            <div class="dash-card command-card">
+              <div class="dash-card-header">
+                <div class="dash-card-title">
+                  <i class="fas fa-history text-purple"></i>
+                  <span>أحدث النشاطات</span>
+                </div>
+              </div>
+              <div class="dash-card-body" id="recent-activity-feed" style="max-height: 320px; overflow-y: auto; padding-right: 8px;">
+                <!-- Injected via JS -->
+              </div>
+            </div>
+
           </div>
 
-          <!-- Team Members Preview -->
-          <div class="dash-card members-panel-card">
+
+            <!-- Performance Trends Over Time -->
+            <div class="dash-card command-card" style="grid-column: 1 / -1;">
+              <div class="dash-card-header">
+                <div class="dash-card-title">
+                  <i class="fas fa-chart-area text-purple"></i>
+                  <span>أداء الفريق بمرور الوقت (نقاط بونص)</span>
+                </div>
+              </div>
+              <div class="dash-card-body chart-card-body">
+                <div class="canvas-wrap" style="position:relative; height:240px; width:100%; display:flex; justify-content:center;">
+                  <canvas id="trendsChart"></canvas>
+                </div>
+              </div>
+            </div>
+
+          <!-- Bottom Row: Team Members Preview (collapsible) -->
+          <div class="dash-card members-panel-card" style="margin-top: 24px;">
             <div class="dash-card-header members-header-row">
               <div class="dash-card-title">
                 <i class="fas fa-users text-purple"></i>
-                <span>أعضاء وصلة</span>
-                <span class="count-pill" id="members-count-badge">16 عضو</span>
+                <span>نظرة سريعة: أعضاء وصلة</span>
+                <span class="count-pill" id="members-count-badge">0 عضو</span>
               </div>
               <div class="members-header-actions">
-                <div class="panel-search-box">
-                  <i class="fas fa-search"></i>
-                  <input type="text" id="member-preview-search" placeholder="بحث عن عضو ..." oninput="filterMemberPreview(this.value)" />
-                </div>
-                <button class="btn-text-action" onclick="navigateToPage('members')">
-                  عرض جميع الأعضاء
-                </button>
+                <button class="btn-text-action" onclick="navigateToPage('members')">عرض الجدول الكامل</button>
               </div>
             </div>
             <div class="dash-card-body">
@@ -352,54 +381,9 @@
             </div>
           </div>
 
-          <!-- Bottom Analytics Row -->
-          <div class="dashboard-analytics-row">
-            <!-- Chart 1: Task Status Donut -->
-            <div class="dash-card chart-card">
-              <div class="dash-card-header">
-                <div class="dash-card-title">
-                  <i class="fas fa-laptop text-purple"></i>
-                  <span>إحصائية الأجهزة</span>
-                </div>
-              </div>
-              <div class="dash-card-body chart-card-body">
-                <div class="canvas-wrap">
-                  <canvas id="deviceChart" width="220" height="220"></canvas>
-                </div>
-                <div id="device-chart-legend" class="custom-chart-legend"></div>
-              </div>
-            </div>
-
-            <!-- Card 2: Needs Attention Card (Late Members) -->
-            <div class="dash-card attention-card">
-              <div class="dash-card-header">
-                <div class="dash-card-title">
-                  <i class="fas fa-triangle-exclamation text-red"></i>
-                  <span>أعضاء بحاجة لمتابعة</span>
-                  <span class="count-pill badge-late-pill" id="attention-count-badge">0</span>
-                </div>
-                <button class="btn-text-action" onclick="navigateToMembers('bonus-low')">
-                  عرض في الجدول
-                </button>
-              </div>
-              <div class="dash-card-body attention-card-body" id="needs-attention-content"></div>
-            </div>
-
-            <!-- Card 3: Top Completion Achievement Card -->
-            <div class="dash-card achievement-card">
-              <div class="dash-card-header">
-                <div class="dash-card-title">
-                  <i class="fas fa-award text-amber"></i>
-                  <span>نجم الفريق</span>
-                </div>
-              </div>
-              <div class="dash-card-body" id="first-finisher"></div>
-            </div>
-          </div>
-
           <!-- Minimal Footer -->
           <footer class="dashboard-footer">
-            <div class="footer-copy">Wasla System © 2026</div>
+            <div class="footer-copy">Wasla Command Center © 2026</div>
             <div class="footer-note">
               <i class="fas fa-users"></i>
               <span>العمل الجماعي يصنع المستقبل</span>
@@ -1648,9 +1632,9 @@
         const initial = (m.fullName || "ع").trim().charAt(0);
         const sConf = statusConfig[m.taskStatus] || { cls: "not-started", title: m.taskStatus || "لم يبدأ" };
         return `
-          <div class="member-chip-card" onclick="openProfile(${m.id})" title="${m.fullName} — ${sConf.title}">
+          <div class="member-chip-card" onclick="openProfile(${m.id})" title="${escapeHtml(m.fullName)} — ${sConf.title}">
             <div class="member-chip-avatar">${initial}</div>
-            <div class="member-chip-name">${m.fullName}</div>
+            <div class="member-chip-name">${escapeHtml(m.fullName)}</div>
             <span class="chip-status-dot ${sConf.cls}" title="${sConf.title}"></span>
           </div>
         `;
@@ -1692,7 +1676,7 @@
               <div class="attention-info">
                 <div class="attention-avatar" ${m.gender==='أنثى'?'style="background:#fce7f3;color:#be185d"':''}>${m.fullName.charAt(0)}</div>
                 <div class="attention-texts">
-                  <span class="attention-name">${m.fullName}</span>
+                  <span class="attention-name">${escapeHtml(m.fullName)}</span>
                   <span class="attention-deadline" style="color:var(--danger)">
                     <i class="fas fa-arrow-trend-down"></i> نقاط: ${m.totalBonus || 0}
                   </span>
@@ -1731,7 +1715,7 @@
         <div class="notif-item" onclick="openProfile(${m.id}); toggleNotificationsDropdown();">
           <div class="notif-item-icon"><i class="fas fa-clock"></i></div>
           <div class="notif-item-body">
-            <div class="notif-item-title">يحتاج متابعة: <strong>${m.fullName}</strong></div>
+            <div class="notif-item-title">يحتاج متابعة: <strong>${escapeHtml(m.fullName)}</strong></div>
             <div class="notif-item-time">الموعد النهائي: ${formatDate(m.deadline)}</div>
           </div>
         </div>
@@ -1762,39 +1746,30 @@
     };
 
     // ========== Dashboard ==========
+
+    let tasksChartInstance = null;
+    let deviceChartInstance = null;
+
     function renderDashboard() {
-      // توحيد مصدر النقاط: نفس حساب جدول الأعضاء والترتيب
+      // 1. Calculate General KPI metrics
       members.forEach(m => m.totalBonus = getMemberTotalBonus(m.id));
       const total = members.length;
-      const courseDone = members.filter(m => m.courseStatus === "Completed").length;
-      const taskDone = members.filter(m => m.taskStatus === "Completed").length;
-      const late = members.filter(m => m.taskStatus === "Not Started" || m.taskStatus === "Late").length;
-      const alexCount = members.filter(m => m.canGoAlexandria).length;
-      const laptopCount = members.filter(m => m.hasLaptop).length;
-      const inProgress = members.filter(m => m.taskStatus === "In Progress").length;
       const waslaCount = members.filter(m => m.team === "Wasla").length;
-      const waslaDone = members.filter(m => m.team === "Wasla" && m.taskStatus === "Completed").length;
-      const waslaPct = waslaCount ? Math.round((waslaDone / waslaCount) * 100) : 0;
-      const finishers = members.filter(m => m.taskFinishDate).sort((a, b) => new Date(a.taskFinishDate) - new Date(b.taskFinishDate));
-      const first = finishers[0];
+      const alexCount = members.filter(m => m.canGoAlexandria).length;
+      const laptopCount = members.filter(m => { const d = m.device || ""; return d.includes("لاب") || d.includes("كمبيوتر") || d.includes("الاثنان") || d === "Laptop" || !!m.hasLaptop; }).length;
+      const readyTotalCount = members.filter(m => m.canGoAlexandria && (function(){const d = m.device || ""; return d.includes("لاب") || d.includes("كمبيوتر") || d.includes("الاثنان") || d === "Laptop" || !!m.hasLaptop;})()).length;
 
-      // Tiered team instruments: one outcome, three actionable signals, then quiet supporting facts.
+      const alexPct = total ? Math.round((alexCount / total) * 100) : 0;
+      const laptopPct = total ? Math.round((laptopCount / total) * 100) : 0;
+      const readyPct = total ? Math.round((readyTotalCount / total) * 100) : 0;
+
+      // Render KPI Grid
       const statsGrid = document.getElementById("stats-grid");
       if (statsGrid) {
-        const total = members.length;
-        const waslaCount = members.filter(m => m.team === "Wasla").length;
-        const alexCount = members.filter(m => m.canGoAlexandria).length;
-        const laptopCount = members.filter(m => { const d = m.device || ""; return d.includes("لاب") || d.includes("كمبيوتر") || d.includes("الاثنان") || d === "Laptop" || !!m.hasLaptop; }).length;
-        const readyTotalCount = members.filter(m => m.canGoAlexandria && (function(){const d = m.device || ""; return d.includes("لاب") || d.includes("كمبيوتر") || d.includes("الاثنان") || d === "Laptop" || !!m.hasLaptop;})()).length;
-        
-        const alexPct = waslaCount ? Math.round((alexCount / waslaCount) * 100) : 0;
-        const laptopPct = total ? Math.round((laptopCount / total) * 100) : 0;
-        const readyPct = waslaCount ? Math.round((readyTotalCount / waslaCount) * 100) : 0;
-
         statsGrid.innerHTML = `
           <section class="metrics-hero clickable-kpi" onclick="filterByAlexOrLapAndNavigate('alex')" title="عرض الأعضاء المؤكدين للقاء">
-            <div class="metrics-hero-copy"><span>جاهزية الفريق</span><strong>${readyPct}<small>%</small></strong><p>نسبة الأعضاء الجاهزين للاجتماعات باللابتوب</p></div>
-            <div class="loop-progress" style="--progress:${readyPct}%"><div>${waslaIcon('check')}<span>${readyTotalCount} من ${waslaCount}</span></div></div>
+            <div class="metrics-hero-copy"><span>جاهزية الفريق</span><strong>${readyPct}<small>%</small></strong><p>نسبة الجاهزين (لابتوب + نزول للاجتماع)</p></div>
+            <div class="loop-progress" style="--progress:${readyPct}%"><div>${waslaIcon('check')}<span>${readyTotalCount} من ${total}</span></div></div>
           </section>
           <div class="metrics-secondary">
             <button class="metric-signal" onclick="filterByAlexOrLapAndNavigate('laptop')">
@@ -1810,86 +1785,277 @@
               <i><b style="width:${alexPct}%"></b></i>
             </button>
           </div>
-          <section class="metrics-support" aria-label="تفاصيل تشغيلية">
-            <button onclick="navigateToMembers(null)">${waslaIcon('members')}<span>إجمالي الأعضاء</span><strong>${total}</strong></button>
-            <button onclick="filterByAlexOrLapAndNavigate('alex')">${waslaIcon('pin')}<span>الاجتماع (مؤكد)</span><strong>${alexCount}</strong></button>
-            <button class="is-alert" onclick="filterByAlexOrLapAndNavigate('no-alex')">${waslaIcon('alert')}<span>الاجتماع (متغيب)</span><strong>${total - alexCount}</strong></button>
-            <button onclick="filterByAlexOrLapAndNavigate('laptop')">${waslaIcon('laptop')}<span>لابتوب متاح</span><strong>${laptopCount}</strong></button>
-          </section>
         `;
       }
 
-      // Update Leader Card Authentic Stats
-      const lTeam = document.getElementById("leader-team-count");
-      if (lTeam) lTeam.textContent = waslaCount;
-      const lDone = document.getElementById("leader-completed-count");
-      if (lDone) lDone.textContent = members.filter(m => { const d = m.device || ""; return d.includes("لاب") || d.includes("كمبيوتر") || d.includes("الاثنان") || d === "Laptop" || !!m.hasLaptop; }).length;
-      const lPct = document.getElementById("leader-progress-rate");
-      if (lPct) lPct.textContent = `${waslaCount ? Math.round((members.filter(m => m.canGoAlexandria && (function(){const d = m.device || ""; return d.includes("لاب") || d.includes("كمبيوتر") || d.includes("الاثنان") || d === "Laptop" || !!m.hasLaptop;})()).length / waslaCount) * 100) : 0}%`;
-
-      // Progress Card
-      const progressSec = document.getElementById("progress-section");
-      if (progressSec) {
-        progressSec.innerHTML = `
-          <div class="progress-box">
-            <div class="progress-pct-row">
-              <span class="progress-pct-val">${waslaPct}%</span>
-              <span class="progress-pct-tag">معدل الجاهزية العام</span>
-            </div>
-            <div class="progress-bar-track">
-              <div class="progress-bar-fill" style="width:${waslaPct}%"></div>
-            </div>
-            <div class="progress-meta-text">
-              <i class="fas fa-circle-check text-purple"></i>
-              <span>${waslaDone} من ${waslaCount} أعضاء تم تقييمهم</span>
-            </div>
-          </div>
-        `;
-      }
-
-      // Team Members Panel
-      const waslaMembers = members.filter(m => m.team === "Wasla");
+      // Render Team Members Preview
       const countBadge = document.getElementById("members-count-badge");
-      if (countBadge) countBadge.textContent = `${waslaMembers.length} عضو`;
-      renderMembersChips(waslaMembers);
+      if (countBadge) countBadge.textContent = `${total} عضو`;
+      renderMembersChips(members);
 
-      // Top Member (Highest Bonus) Card
-      const firstFinisherEl = document.getElementById("first-finisher");
-      if (firstFinisherEl) {
-        const sortedMembers = [...members].sort((a,b) => (b.totalBonus || 0) - (a.totalBonus || 0));
-        const topMember = sortedMembers.length > 0 && (sortedMembers[0].totalBonus || 0) > 0 ? sortedMembers[0] : null;
-        if (topMember) {
-          firstFinisherEl.innerHTML = `
-            <div class="achievement-winner-card" onclick="openProfile(${topMember.id})" title="عرض الملف الشخصي">
-              <div class="winner-trophy-badge">
-                <i class="fas fa-star" style="color:#f59e0b"></i>
-              </div>
-              <div class="winner-body">
-                <div class="winner-label">الأكثر تفاعلاً</div>
-                <div class="winner-name">${topMember.fullName}</div>
-                <div class="winner-date">
-                  <i class="fas fa-coins text-amber"></i> إجمالي النقاط: <strong>${topMember.totalBonus || 0}</strong>
-                </div>
-              </div>
-            </div>
-          `;
-        } else {
-          firstFinisherEl.innerHTML = `
-            <div class="empty-state-sm">
-              <i class="fas fa-medal"></i>
-              <p>لم يتم تسجيل نقاط إيجابية بعد</p>
-            </div>
-          `;
-        }
+      // Render Top 3 Ranking
+      renderTopRankingsWidget();
+
+      // Render Recent Activity Feed
+      renderRecentActivityFeed();
+
+      // Draw Charts
+      drawDeviceChartNew();
+      drawTasksChart();
+      drawTrendsChart();
+    }
+
+    function renderTopRankingsWidget() {
+      const el = document.getElementById("top-rankings-widget");
+      if (!el) return;
+
+      let sorted = [...members].filter(m => m.totalBonus > 0).sort((a,b) => b.totalBonus - a.totalBonus).slice(0, 3);
+
+      if (sorted.length === 0) {
+        el.innerHTML = `<div class="empty-state-sm"><i class="fas fa-medal"></i><p>لم يتم تسجيل نقاط بونص بعد</p></div>`;
+        return;
       }
 
-      // Draw Charts, Needs Attention, and Notifications
-      drawDeviceChart();
-      renderNeedsAttention();
-      renderNotifications();
+      el.innerHTML = sorted.map((m, i) => {
+        const posClass = i === 0 ? "gold" : i === 1 ? "silver" : "bronze";
+        const bgGradient = i === 0 ? 'linear-gradient(135deg,#f59e0b,#fbbf24)' : i === 1 ? 'linear-gradient(135deg,#94a3b8,#cbd5e1)' : 'linear-gradient(135deg,#b45309,#d97706)';
+        return `
+          <div class="rank-item" onclick="openProfile(${m.id})" style="display:flex;align-items:center;gap:14px;padding:12px;background:var(--bg);border-radius:12px;border:1px solid var(--border);margin-bottom:10px;cursor:pointer;">
+            <div class="rank-position ${posClass}" style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.95rem;flex-shrink:0;background:${bgGradient};color:white">${i + 1}</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:700;font-size:0.95rem">${escapeHtml(m.fullName)}</div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:center;padding:4px 10px;border-radius:8px;background:var(--card);border:2px dashed var(--wasla-energy);color:var(--wasla-energy);">
+              <span style="font-size:1rem;font-weight:900;">+${m.totalBonus}</span>
+            </div>
+          </div>`;
+      }).join("");
+    }
+
+    function renderRecentActivityFeed() {
+      const el = document.getElementById("recent-activity-feed");
+      if (!el) return;
+
+      let activities = [];
+
+      // Add recent notes to activity
+      if (notes.Wasla) {
+        notes.Wasla.forEach(n => {
+           activities.push({
+             type: 'note',
+             date: new Date(n.date || Date.now()),
+             html: `<div class="activity-icon note"><i class="fas fa-sticky-note"></i></div>
+                    <div class="activity-content">
+                      <strong>${escapeHtml(n.author)}</strong> أضاف ملاحظة لـ <strong>${escapeHtml(n.targetName || 'عضو')}</strong>
+                      <div class="activity-meta">${n.date}</div>
+                    </div>`
+           });
+        });
+      }
+
+      // Add task creations to activity
+      teamTasks.forEach(t => {
+         activities.push({
+           type: 'task',
+           date: new Date(), // Simulating recent if creation date missing
+           html: `<div class="activity-icon task"><i class="fas fa-tasks"></i></div>
+                  <div class="activity-content">
+                    تم تكليف مهمة جديدة: <strong>${escapeHtml(t.title)}</strong>
+                    <div class="activity-meta">المهام</div>
+                  </div>`
+         });
+      });
+
+      // Add members creation (simulated)
+      if (members.length > 0) {
+         const newestMember = members[members.length - 1];
+         activities.push({
+           type: 'member',
+           date: new Date(),
+           html: `<div class="activity-icon member"><i class="fas fa-user-plus"></i></div>
+                  <div class="activity-content">
+                    انضمام عضو جديد: <strong>${escapeHtml(newestMember.fullName)}</strong>
+                    <div class="activity-meta">الأعضاء</div>
+                  </div>`
+         });
+      }
+
+      activities.sort((a,b) => b.date - a.date);
+      activities = activities.slice(0, 6); // Keep top 6
+
+      if(activities.length === 0) {
+        el.innerHTML = `<div class="empty-state-sm"><p>لا يوجد نشاطات مسجلة</p></div>`;
+        return;
+      }
+
+      el.innerHTML = `<div class="activity-timeline">
+        ${activities.map(a => `
+          <div class="activity-item">
+            ${a.html}
+          </div>
+        `).join("")}
+      </div>`;
+    }
+
+    function drawTasksChart() {
+      const canvas = document.getElementById("tasksChart");
+      if (!canvas || !window.Chart) return;
+
+      let completed = 0, inProgress = 0, late = 0, notStarted = 0;
+      const now = new Date();
+
+      teamTasks.forEach(t => {
+         let assignedCount = t.assignedTo === "ALL" ? members.length : t.assignedTo.length;
+         const isPassed = t.hasDeadline && (new Date(t.deadlineDate) < now);
+
+         let handledCount = 0;
+         Object.values(t.tracking || {}).forEach(statusObj => {
+            handledCount++;
+            if (statusObj.status === "مكتمل") completed++;
+            else if (statusObj.status === "قيد التنفيذ") inProgress++;
+            else if (isPassed) late++;
+            else notStarted++;
+         });
+
+         // Account for those who haven't started
+         if (assignedCount > handledCount) {
+            const rem = assignedCount - handledCount;
+            if (isPassed) late += rem;
+            else notStarted += rem;
+         }
+      });
+
+      // If no tasks, show dummy data for visual aesthetics
+      if (completed===0 && inProgress===0 && late===0 && notStarted===0) {
+        notStarted = 1;
+      }
+
+      const ctx = canvas.getContext('2d');
+      if (tasksChartInstance) tasksChartInstance.destroy();
+
+      tasksChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['مكتمل', 'قيد التنفيذ', 'متأخر', 'لم يبدأ'],
+          datasets: [{
+            data: [completed, inProgress, late, notStarted],
+            backgroundColor: ['#10B981', '#3B82F6', '#EF4444', '#9CA3AF'],
+            borderWidth: 0,
+            hoverOffset: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '70%',
+          plugins: {
+            legend: { position: 'bottom', labels: { font: { family: 'IBM Plex Sans Arabic' } } }
+          }
+        }
+      });
+    }
+
+
+    let trendsChartInstance = null;
+    function drawTrendsChart() {
+      const canvas = document.getElementById("trendsChart");
+      if (!canvas || !window.Chart) return;
+
+      // Aggregate notes by date to show bonus points over time
+      const dateMap = {};
+      if (notes.Wasla) {
+        notes.Wasla.forEach(n => {
+           if (n.date) {
+             if (!dateMap[n.date]) dateMap[n.date] = 0;
+             const bMatch = (n.text || "").match(/\[B:([+-]?\d+)\]/);
+             if (bMatch) {
+               dateMap[n.date] += parseInt(bMatch[1]);
+             }
+           }
+        });
+      }
+
+      // Sort dates chronologically
+      const sortedDates = Object.keys(dateMap).sort((a,b) => new Date(a) - new Date(b));
+      // Just take the last 7 days of activity
+      const recentDates = sortedDates.slice(-7);
+      const dataPoints = recentDates.map(d => dateMap[d]);
+
+      // Provide fallback data if empty
+      const finalLabels = recentDates.length > 0 ? recentDates : ['لا توجد بيانات'];
+      const finalData = recentDates.length > 0 ? dataPoints : [0];
+
+      const ctx = canvas.getContext('2d');
+      if (trendsChartInstance) trendsChartInstance.destroy();
+
+      trendsChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: finalLabels,
+          datasets: [{
+            label: 'إجمالي البونص اليومي',
+            data: finalData,
+            borderColor: '#8B5CF6',
+            backgroundColor: 'rgba(139, 92, 246, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { ticks: { stepSize: 1, font: { family: 'IBM Plex Sans Arabic' } } },
+            x: { ticks: { font: { family: 'IBM Plex Sans Arabic' } } }
+          }
+        }
+      });
+    }
+
+    function drawDeviceChartNew() {
+      const canvas = document.getElementById("deviceChart");
+      if (!canvas || !window.Chart) return;
+
+      const counts = [
+        members.filter(m => m.device === "لاب توب").length,
+        members.filter(m => m.device === "كمبيوتر فقط").length,
+        members.filter(m => m.device === "الاثنان معاً").length,
+        members.filter(m => m.device === "تابلت" || m.device === "هاتف فقط").length
+      ];
+
+      // Fallback
+      counts[0] += members.filter(m => !m.device).length;
+
+      const ctx = canvas.getContext('2d');
+      if (deviceChartInstance) deviceChartInstance.destroy();
+
+      deviceChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['لاب توب', 'كمبيوتر', 'الاثنين معاً', 'هاتف/تابلت'],
+          datasets: [{
+            label: 'الأجهزة',
+            data: counts,
+            backgroundColor: ['#10B981', '#3B82F6', '#8B5CF6', '#F59E0B'],
+            borderRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, ticks: { stepSize: 1, font: { family: 'IBM Plex Sans Arabic' } } },
+            x: { ticks: { font: { family: 'IBM Plex Sans Arabic' } } }
+          }
+        }
+      });
     }
 
     function drawDeviceChart() {
+
       const canvas = document.getElementById("deviceChart");
       if (!canvas) return;
       const ctx = canvas.getContext("2d");
@@ -2112,7 +2278,7 @@
           
           return `
             <tr class="clickable-row" onclick="openProfile(${m.id})" style="cursor:pointer" title="اضغط لعرض البروفايل">
-              <td><strong>${m.fullName}</strong></td>
+              <td><strong>${escapeHtml(m.fullName)}</strong></td>
               <td dir="ltr" style="text-align:right; font-family:monospace; font-size:1.05rem; letter-spacing:0.5px">${mPhone}</td>
               <td><span class="badge ${mDevice.includes('لاب') || mDevice.includes('كمبيوتر') || mDevice.includes('الاثنان') ? 'badge-done' : 'badge-pending'}">${mDevice}</span></td>
               <td><span class="badge ${canAlex ? 'badge-done' : 'badge-late'}">${canAlex ? 'يقدر ينزل' : 'مش هينزل'}</span></td>
@@ -2277,7 +2443,7 @@
         <div style="display:flex;align-items:center;gap:18px;margin-bottom:22px;padding-bottom:18px;border-bottom:1px solid var(--border)">
           <div style="width:68px;height:68px;border-radius:16px;display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:1.7rem;background:linear-gradient(135deg,var(--wasla),var(--wasla-light))">${m.fullName.charAt(0)}</div>
           <div>
-            <h3 style="font-size:1.3rem;font-weight:800;margin-bottom:4px">${m.fullName}</h3>
+            <h3 style="font-size:1.3rem;font-weight:800;margin-bottom:4px">${escapeHtml(m.fullName)}</h3>
             <span class="badge badge-wasla">${m.team}</span>
             ${m.completionRank ? `<span style="margin-right:10px;color:var(--warning);font-weight:700">#${m.completionRank}</span>` : ""}
           </div>
@@ -2397,7 +2563,7 @@
           <div class="rank-item" onclick="openProfile(${m.id})" style="display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--bg);border-radius:12px;border:1px solid var(--border);margin-bottom:10px;cursor:pointer;transition:all 0.25s">
             <div class="rank-position ${posClass}" style="width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.95rem;flex-shrink:0;background:${pos===1?'linear-gradient(135deg,#f59e0b,#fbbf24)':pos===2?'linear-gradient(135deg,#94a3b8,#cbd5e1)':pos===3?'linear-gradient(135deg,#b45309,#d97706)':'var(--border)'};color:${pos<=3?'white':'var(--text-muted)'}">${pos}</div>
             <div style="flex:1;min-width:0">
-              <div style="font-weight:700;font-size:0.98rem">${m.fullName}</div>
+              <div style="font-weight:700;font-size:0.98rem">${escapeHtml(m.fullName)}</div>
               <div style="font-size:0.8rem;color:var(--text-muted);font-weight:600;margin-top:2px">
                 <span class="badge badge-wasla">${m.team}</span>
                 ${m.taskFinishDate ? ' أنهى في ' + m.taskFinishDate : ''}
@@ -2451,7 +2617,7 @@
                 <label><i class="fas fa-user"></i> إلى العضو</label>
                 <select id="note-target" style="width:100%;height:44px;padding:0 14px;border:1px solid var(--border);border-radius:10px;background:var(--card);color:var(--text);font-size:0.95rem;font-family:inherit" onchange="noteDraftTarget=this.value">
                   <option value="">— اختر الشخص —</option>
-                  ${targets.map(m => `<option value="${m.id}" data-team="Wasla" data-name="${escapeHtml(m.fullName)}">${m.fullName} (Wasla)</option>`).join("")}
+                  ${targets.map(m => `<option value="${m.id}" data-team="Wasla" data-name="${escapeHtml(m.fullName)}">${escapeHtml(m.fullName)} (Wasla)</option>`).join("")}
                 </select>
               </div>
               <div class="form-group" style="margin-bottom:0">
@@ -2751,12 +2917,12 @@
         const lap = m.hasLaptop ? "نعم" : "لا";
         const alex = m.canGoAlexandria ? "نعم يقدر" : "لا";
         const rnk = m.completionRank ? `#${m.completionRank}` : "غير محدد";
-        return `- الاسم: ${m.fullName} | لابتوب: ${lap} | سفر إسكندرية: ${alex} | سكن: ${m.residence || "غير محدد"} | ملاحظات: ${m.teamNotes || "لا توجد"}`;
+        return `- الاسم: ${escapeHtml(m.fullName)} | لابتوب: ${lap} | سفر إسكندرية: ${alex} | سكن: ${m.residence || "غير محدد"} | ملاحظات: ${m.teamNotes || "لا توجد"}`;
       }).join("\n");
 
       let notesSummary = "";
       if (notes && notes.Wasla && notes.Wasla.length > 0) {
-        notesSummary = notes.Wasla.map(n => `- [${n.date}] كاتب الملاحظة: ${n.author} (${n.authorRole || "عضو"}): "${n.text}"`).join("\n");
+        notesSummary = notes.Wasla.map(n => `- [${n.date}] كاتب الملاحظة: ${escapeHtml(n.author)} (${n.authorRole || "عضو"}): "${n.text}"`).join("\n");
       } else {
         notesSummary = "لا توجد ملاحظات مسجلة حالياً.";
       }
@@ -2854,7 +3020,7 @@
           renderMembersTable();
           renderDashboard();
           renderRanking();
-          showToast(`تم تحديث بيانات العضو ${m.fullName}`);
+          showToast(`تم تحديث بيانات العضو ${escapeHtml(m.fullName)}`);
         }
       } else if (action.type === "add_member" && action.member) {
         const item = action.member;
