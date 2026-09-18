@@ -3679,3 +3679,45 @@ input:focus, select:focus, textarea:focus {
 .mbn-item.active {
   color: var(--wasla-energy);
 }
+
+/* Fix table cells squishing on mobile */
+.table-wrapper table th, .table-wrapper table td {
+  white-space: nowrap !important;
+  vertical-align: middle;
+}
+
+/* Give enough padding to pagination so it does not overlap with PWA FAB */
+.pagination {
+  padding-bottom: 24px;
+}
+@media (max-width: 900px) {
+  .pagination {
+    padding-bottom: 80px; /* Leave space for bottom nav and FAB */
+  }
+}
+
+/* Improve Table Header and Controls on Mobile */
+@media (max-width: 900px) {
+  .section-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 16px;
+  }
+
+  .section-header > div {
+    width: 100%;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr; /* Split export/import buttons nicely */
+    gap: 8px;
+  }
+
+  #btn-add-member {
+    grid-column: 1 / -1; /* Add member takes full width */
+    justify-content: center;
+  }
+
+  .table-controls {
+    gap: 12px !important;
+    margin-bottom: 16px;
+  }
+}
