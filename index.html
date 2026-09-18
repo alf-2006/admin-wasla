@@ -19,6 +19,7 @@
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.9/purify.min.js"></script>
 </head>
 <body>
 
@@ -805,8 +806,11 @@
     // 1. Data Sanitization (XSS Prevention)
     function sanitizeInput(str) {
       if (typeof str !== "string") return "";
-      return str.replace(/[&<>"'`=\/]/g, function(s) {
+      return window.DOMPurify ? window.DOMPurify.sanitize(str.trim()) : str.replace(/[&<>"'`=\/]/g, function(s) {
         const entityMap = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '/': '&#x2F;', '`': '&#x60;', '=': '&#x3D;' };
+        return entityMap[s];
+      }).trim();
+    };
         return entityMap[s];
       }).trim();
     }
@@ -1126,13 +1130,13 @@
       const errorEl = document.getElementById("login-error");
       if (errorEl) { errorEl.style.display = "none"; errorEl.textContent = ""; }
 
-      const rawUsername = (document.getElementById("username").value || "").trim();
-      const password = document.getElementById("password").value || "";
+      const rawUsername = (document.getElementById('username')?.value || "").trim();
+      const password = document.getElementById('password')?.value || "";
 
       if (!rawUsername || !password) {
         if (loginBtn) loginBtn.classList.remove("ls-loading");
         if (errorEl) {
-          errorEl.innerHTML = `<div>يرجى إدخال البريد الإلكتروني وكلمة المرور.</div>`;
+          errorEl.textContent = 'يرجى إدخال البريد الإلكتروني وكلمة المرور.'; errorEl.style.display = 'block';
           errorEl.style.display = "block";
         }
         return;
@@ -1194,7 +1198,7 @@
 
       finishLogin();
       if (errorEl) {
-         errorEl.innerHTML = `<div>${loginErrorMsg}</div>`;
+         errorEl.textContent = '${loginErrorMsg}'; errorEl.style.display = 'block';
          errorEl.style.display = "block";
       }
     });
@@ -2143,7 +2147,7 @@
 
     // ========== Member CRUD ==========
     function openMemberModal(id = null) {
-      if (!isLeaderRole()) return;
+      if (!isLeaderRole()) { if(typeof reenableBtn !== "undefined") reenableBtn(); return; }
       document.getElementById("member-modal").classList.add("show");
       if (id) {
         const m = members.find(x => x.id === id);
@@ -2169,8 +2173,19 @@
 
     function closeMemberModal() { document.getElementById("member-modal").classList.remove("show"); }
 
-    function saveMember() {
-      if (!isLeaderRole()) return;
+    function saveMember(event) {
+      const btn = document.querySelector('#member-modal .btn-primary');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+      }
+      const reenableBtn = () => {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = 'حفظ';
+        }
+      };
+      if (!isLeaderRole()) { if(typeof reenableBtn !== "undefined") reenableBtn(); return; }
       const id = document.getElementById("member-id").value;
       const data = {
         fullName: document.getElementById("m-fullname").value.trim(),
@@ -2183,8 +2198,17 @@
         workConditions: (document.getElementById("m-work-notes") || {}).value ? document.getElementById("m-work-notes").value.trim() : "",
         teamNotes: (document.getElementById("m-notes") || {}).value ? document.getElementById("m-notes").value.trim() : ""
       };
-      if (!data.fullName) { showToast("الاسم مطلوب", true); return; }
-      if (currentUser.isGuest) { showToast("الزوار لا يمكنهم التعديل", true); return; }
+      if (!data.fullName || data.fullName.trim().length < 3) {
+        showToast("الاسم يجب أن يكون 3 أحرف على الأقل", true);
+        if(typeof reenableBtn !== "undefined") reenableBtn();
+        return;
+      }
+      if (data.phone && !/^[0-9\-\+]{8,15}$/.test(data.phone.trim())) {
+        showToast("رقم الهاتف غير صالح", true);
+        if(typeof reenableBtn !== "undefined") reenableBtn();
+        return;
+      }
+      if (currentUser.isGuest) { showToast("الزوار لا يمكنهم التعديل", true); if(typeof reenableBtn !== "undefined") reenableBtn(); return; }
 
       if (currentUser.localOnly) {
         if (id) {
@@ -2196,8 +2220,7 @@
           showToast("تم إضافة العضو (محلي)");
         }
         try { localStorage.setItem("tms_members", JSON.stringify(members)); } catch (_) {}
-        closeMemberModal(); renderMembersTable(); renderDashboard(); renderRanking();
-        return;
+        closeMemberModal(); renderMembersTable(); renderDashboard(); renderRanking(); if(typeof reenableBtn !== "undefined") reenableBtn(); return;
       }
 
       (async () => {
@@ -2216,7 +2239,7 @@
             showToast("تم إضافة العضو بنجاح");
           }
           try { localStorage.setItem("tms_members", JSON.stringify(members)); } catch (_) {}
-          closeMemberModal(); renderMembersTable(); renderDashboard(); renderRanking();
+          closeMemberModal(); renderMembersTable(); renderDashboard(); renderRanking(); if(typeof reenableBtn !== "undefined") reenableBtn();
         } catch (e) {
           const msg = e.message || "";
           const code = e.code || "";
@@ -2232,7 +2255,7 @@
     }
 
     function openDeleteModal(id) {
-      if (!isLeaderRole()) return;
+      if (!isLeaderRole()) { if(typeof reenableBtn !== "undefined") reenableBtn(); return; }
       deleteId = id;
       document.getElementById("delete-modal").classList.add("show");
     }
@@ -2530,13 +2553,24 @@
 
     function switchNoteTeam(team) { activeNoteTeam = "Wasla"; renderNotes(); }
 
-    function addNote() {
-      if (!canWriteNotes()) return;
+    function addNote(event) {
+      const btn = document.querySelector('.add-note-form .btn-primary');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...';
+      }
+      const reenableBtn = () => {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fas fa-paper-plane"></i> إرسال الملاحظة';
+        }
+      };
+      if (!canWriteNotes()) { if(typeof reenableBtn !== "undefined") reenableBtn(); return; }
       const textEl = document.getElementById("new-note-text");
       const text = (textEl && textEl.value || "").trim();
       const sel = document.getElementById("note-target");
-      if (!sel || !sel.value) { showToast("اختر الشخص المستهدف أولاً", true); return; }
-      if (!text) { showToast("اكتب الملاحظة أولاً", true); return; }
+      if (!sel || !sel.value) { showToast("اختر الشخص المستهدف أولاً", true); if(typeof reenableBtn !== "undefined") reenableBtn(); return; }
+      if (!text) { showToast("اكتب الملاحظة أولاً", true); if(typeof reenableBtn !== "undefined") reenableBtn(); return; }
       const opt = sel.options[sel.selectedIndex];
       const targetId = parseInt(sel.value);
       const targetName = opt.getAttribute("data-name") || opt.textContent;
@@ -2561,8 +2595,7 @@
         try { localStorage.setItem("tms_notes", JSON.stringify(notes)); } catch (_) {}
         noteDraftText = ""; noteDraftTarget = "";
         renderNotes();
-        showToast("تم إرسال الملاحظة إلى " + targetName);
-        return;
+        showToast("تم إرسال الملاحظة إلى " + targetName); if(typeof reenableBtn !== "undefined") reenableBtn(); return;
       }
 
       (async () => {
@@ -2578,7 +2611,8 @@
           noteDraftText = ""; noteDraftTarget = "";
           renderNotes();
           showToast("تم إرسال الملاحظة إلى " + targetName);
-        } catch (e) { showToast("فشل إضافة الملاحظة", true); console.error(e); }
+          if(typeof reenableBtn !== "undefined") reenableBtn();
+        } catch (e) { showToast("فشل إضافة الملاحظة", true); console.error(e); if(typeof reenableBtn !== "undefined") reenableBtn(); }
       })();
     }
 
@@ -2652,12 +2686,9 @@
 
     function escapeHtml(str) {
       if (!str) return "";
-      return String(str)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#39;");
+      return window.DOMPurify ? window.DOMPurify.sanitize(String(str)) : String(str).replace(/[&<>"']/g, function(m) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+      });
     }
 
     function showToast(msg, isError = false) {
@@ -2921,10 +2952,10 @@
       content.className = "ai-msg-content";
 
       if (isHtml) {
-        content.innerHTML = `<div class="ai-msg-text">${text}</div>`;
+        content.innerHTML = `<div class="ai-msg-text">${window.DOMPurify ? window.DOMPurify.sanitize(text) : escapeHtml(text)}</div>`;
       } else {
         const formatted = formatAiText(text);
-        content.innerHTML = `<div class="ai-msg-text">${formatted}</div>`;
+        content.innerHTML = `<div class="ai-msg-text">${window.DOMPurify ? window.DOMPurify.sanitize(formatted) : escapeHtml(formatted)}</div>`;
       }
 
       if (sender === "bot") {
@@ -3131,7 +3162,7 @@
 
     let customAssignContainer = null;
     function openCreateTaskModal() {
-      if (!isLeaderRole()) return;
+      if (!isLeaderRole()) { if(typeof reenableBtn !== "undefined") reenableBtn(); return; }
       document.getElementById('task-create-modal').classList.add("show");
       document.getElementById('task-create-form').reset();
       document.getElementById('t-deadline-group').style.display = 'none';
@@ -3161,6 +3192,18 @@
     }
 
     function saveNewTask(e) {
+      if (e) e.preventDefault();
+      const btn = document.querySelector('#task-create-modal .btn-primary');
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+      }
+      const reenableBtn = () => {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fas fa-check"></i> حفظ المهمة';
+        }
+      };
       e.preventDefault();
       
       const title = document.getElementById('t-title').value.trim();
@@ -3169,14 +3212,18 @@
       const deadlineDate = document.getElementById('t-deadline').value;
       const assignType = document.getElementById('t-assign-type').value;
       
-      if (!title) { showToast("برجاء إدخال اسم المهمة", true); return; }
-      if (hasDeadline && !deadlineDate) { showToast("برجاء تحديد وقت الانتهاء", true); return; }
+      if (!title || title.trim().length < 3) {
+        showToast("اسم المهمة يجب أن يكون 3 أحرف على الأقل", true);
+        if(typeof reenableBtn !== "undefined") reenableBtn();
+        return;
+      }
+      if (hasDeadline && !deadlineDate) { showToast("برجاء تحديد وقت الانتهاء", true); if(typeof reenableBtn !== "undefined") reenableBtn(); return; }
       
       let assignedTo = "ALL";
       if (assignType === "custom") {
         const checkboxes = document.querySelectorAll('input[name="task-assignees-selected"]:checked');
         assignedTo = Array.from(checkboxes).map(cb => parseInt(cb.value));
-        if (assignedTo.length === 0) { showToast("برجاء اختيار عضو واحد على الأقل", true); return; }
+        if (assignedTo.length === 0) { showToast("برجاء اختيار عضو واحد على الأقل", true); if(typeof reenableBtn !== "undefined") reenableBtn(); return; }
       }
       
       const newId = teamTasks.length > 0 ? Math.max(...teamTasks.map(t => t.id)) + 1 : 1;
@@ -3193,11 +3240,22 @@
       teamTasks.unshift(tsk);
       saveTasksToLocal();
       if (getSupabase() && currentUser && !currentUser.localOnly) {
-         dbInsertTask(tsk).catch(e => console.warn("Task cloud sync failed:", e));
+         dbInsertTask(tsk).then(() => {
+            closeCreateTaskModal();
+            renderTasksDashboard();
+            showToast("تم تكليف المهمة بنجاح للنظام!");
+         }).catch(e => {
+            console.warn("Task cloud sync failed:", e);
+            showToast("فشل حفظ المهمة: " + (e.message || ""), true);
+         }).finally(() => {
+            if(typeof reenableBtn !== "undefined") reenableBtn();
+         });
+      } else {
+         closeCreateTaskModal();
+         renderTasksDashboard();
+         showToast("تم تكليف المهمة بنجاح للنظام!");
+         if(typeof reenableBtn !== "undefined") reenableBtn();
       }
-      closeCreateTaskModal();
-      renderTasksDashboard();
-      showToast("تم تكليف المهمة بنجاح للنظام!");
     }
 
     let trackingTaskId = null;
