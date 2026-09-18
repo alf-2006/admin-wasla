@@ -19,6 +19,8 @@
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.9/purify.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
@@ -330,6 +332,21 @@
                   <canvas id="deviceChart"></canvas>
                 </div>
                 <div id="device-chart-legend" class="custom-chart-legend" style="margin-top: 16px;"></div>
+              </div>
+            </div>
+
+
+            <!-- Needs Attention Widget -->
+            <div class="dash-card attention-card command-card">
+              <div class="dash-card-header">
+                <div class="dash-card-title">
+                  <i class="fas fa-triangle-exclamation text-red"></i>
+                  <span>أعضاء بحاجة لمتابعة</span>
+                  <span class="count-pill badge-late-pill" id="attention-count-badge">0</span>
+                </div>
+                <button class="btn-text-action" onclick="navigateToMembers('bonus-low')">عرض الجدول</button>
+              </div>
+              <div class="dash-card-body attention-card-body" id="needs-attention-content" style="max-height: 250px; overflow-y: auto;">
               </div>
             </div>
 
@@ -1798,6 +1815,7 @@
 
       // Render Recent Activity Feed
       renderRecentActivityFeed();
+      renderNeedsAttention();
 
       // Draw Charts
       drawDeviceChartNew();
@@ -1839,7 +1857,7 @@
       let activities = [];
 
       // Add recent notes to activity
-      if (notes.Wasla) {
+      if (notes && notes.Wasla) {
         notes.Wasla.forEach(n => {
            activities.push({
              type: 'note',
@@ -1963,7 +1981,7 @@
 
       // Aggregate notes by date to show bonus points over time
       const dateMap = {};
-      if (notes.Wasla) {
+      if (notes && notes.Wasla) {
         notes.Wasla.forEach(n => {
            if (n.date) {
              if (!dateMap[n.date]) dateMap[n.date] = 0;
@@ -2054,73 +2072,6 @@
       });
     }
 
-    function drawDeviceChart() {
-
-      const canvas = document.getElementById("deviceChart");
-      if (!canvas) return;
-      const ctx = canvas.getContext("2d");
-      const statuses = ["لاب توب", "كمبيوتر فقط", "الاثنان معاً", "تابلت", "هاتف فقط"];
-      const labels = ["لاب توب", "كمبيوتر", "معاً", "تابلت", "هاتف"];
-      const colors = ["#10B981", "#3B82F6", "#8B5CF6", "#F59E0B", "#EF4444"];
-      const counts = statuses.map(s => members.filter(m => m.device === s).length);
-      
-      // Fallback: If device is empty or undefined, count as Laptop
-      const undefinedCount = members.filter(m => !m.device).length;
-      counts[0] += undefinedCount;
-      
-      const total = counts.reduce((a, b) => a + b, 0) || 1;
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const centerX = canvas.width / 2;
-      const centerY = canvas.height / 2;
-      const outerRadius = Math.min(centerX, centerY) - 12;
-      const innerRadius = outerRadius * 0.68;
-
-      let startAngle = -Math.PI / 2;
-      counts.forEach((count, i) => {
-        if(count === 0) return;
-        const sliceAngle = (count / total) * 2 * Math.PI;
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, outerRadius, startAngle, startAngle + sliceAngle);
-        ctx.arc(centerX, centerY, innerRadius, startAngle + sliceAngle, startAngle, true);
-        ctx.closePath();
-        ctx.fillStyle = colors[i];
-        ctx.fill();
-        startAngle += sliceAngle;
-      });
-
-      // Center donut background
-      const isDark = document.documentElement.getAttribute("data-theme") === "dark";
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, innerRadius - 0.5, 0, 2 * Math.PI);
-      ctx.fillStyle = isDark ? "#111827" : "#FFFFFF";
-      ctx.fill();
-
-      // Center Number
-      ctx.fillStyle = isDark ? "#F9FAFB" : "#111827";
-      ctx.font = "700 24px 'IBM Plex Sans Arabic', sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(`${total}`, centerX, centerY - 8);
-
-      // Center Label
-      ctx.fillStyle = isDark ? "#9CA3AF" : "#6B7280";
-      ctx.font = "500 13px 'IBM Plex Sans Arabic', sans-serif";
-      ctx.fillText("جهاز", centerX, centerY + 14);
-
-      // Custom Legend in HTML
-      const legendEl = document.getElementById("device-chart-legend");
-      if (legendEl) {
-        legendEl.innerHTML = labels.map((label, i) => `
-          <div class="chart-legend-pill">
-            <span class="clp-dot" style="background-color: ${colors[i]}"></span>
-            <span class="clp-label">${label}</span>
-            <span class="clp-count">${counts[i]}</span>
-          </div>
-        `).join("");
-      }
-    }
-    // ========== Members Table ==========
     
     // ========== Excel Export / Import ==========
     function exportToExcel() {
@@ -2212,6 +2163,7 @@
       };
       reader.readAsArrayBuffer(file);
     }
+
 
     function getFilteredMembers() {
       members.forEach(m => {
