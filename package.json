@@ -1,0 +1,25 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "description": "> 💡 **ملاحظة:** هذا الملف مصمم ليكون `README.md` للمستودع وعلى شكل منشور (Post) جاهز للنسخ المباشر على منصة **LinkedIn**.",
+  "main": "sw.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/alf-2006/admin-wasla.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/alf-2006/admin-wasla/issues"
+  },
+  "homepage": "https://github.com/alf-2006/admin-wasla#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "http-server": "^14.1.1"
+  }
+}
