@@ -67,6 +67,28 @@ ON public.notes FOR ALL TO authenticated USING (true);
 CREATE POLICY "Full access to tasks for authenticated users" 
 ON public.tasks FOR ALL TO authenticated USING (true);
 
+-- 5. صلاحيات مساعد وصلة الذكي (Wasla AI Assistant)
+-- الـ AI يستخدم Service Role Key أو مستخدم خاص به للوصول الكامل
+-- لضمان عمله بكفاءة على كل الجداول
+-- (أ) لو كان AI user عادي: سياقات authenticated السابقة تغطيه تلقائياً
+-- (ب) لو كان Edge Function يستخدم service role: RLS يتم تجاوزها تلقائياً
+--     لأن service_role key يتجاوز RLS افتراضياً في Supabase
+
+-- 6. RPC function لحفظ مفتاح Groq API في Vault
+-- (يجب تنفيذها كـ migration في Supabase Dashboard)
+CREATE OR REPLACE FUNCTION public.set_groq_key(p_key TEXT)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  -- يُحفظ المفتاح في Vault مشفراً (يفترض وجود vault.ext_
+  INSERT INTO vault.decrypted_secrets (name, secret)
+  VALUES ('groq_api_key', p_key)
+  ON CONFLICT (name) DO UPDATE SET secret = vault.secret('groq_api_key', p_key);
+END;
+$$;
+
 -- (اختياري) السماح بالمشاهدة المجهولة في حال أردت أن يقوم الزوار بالقراءة فقط:
 -- CREATE POLICY "Enable read access for all users" ON public.members FOR SELECT USING (true);
 -- CREATE POLICY "Enable read access for all users" ON public.tasks FOR SELECT USING (true);

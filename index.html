@@ -1147,12 +1147,12 @@
            } else if (data && data.user) {
              const meta = data.user.user_metadata || {};
              const dispName = meta.displayName || rawUsername;
-             const role = meta.role || "Admin";
+             const role = meta.role || (meta.is_ai ? "Wasla AI Assistant" : "Admin");
              currentUser = {
                username: email,
                role: role,
                displayName: dispName,
-               accountType: "admin",
+               accountType: meta.is_ai ? "wasla_ai" : "admin",
                userId: data.user.id,
                localOnly: false,
                signature: createSessionSignature(role)
@@ -1272,21 +1272,79 @@
     }
 
     function getRoleLabel(role) {
-      const labels = { "Wasla Leader": "قائد الفريق", "Admin": "مدير النظام", "Normal User": "مستخدم" };
+      const labels = { "Wasla Leader": "قائد الفريق", "Admin": "مدير النظام", "Wasla AI Assistant": "مساعد وصلة الذكي", "Normal User": "مستخدم" };
       return labels[role] || role;
     }
 
-    function isLeaderRole() { return true; }
+    /* ===== Role-Based Permissions Model ===== */
+    const ROLE_PERMISSIONS = {
+      "Admin": {
+        canReadAllData: true,
+        canManageMembers: true,
+        canManageTasks: true,
+        canManageNotes: true,
+        canDeleteNotes: true,
+        canDeleteMembers: true
+      },
+      "Wasla Leader": {
+        canReadAllData: true,
+        canManageMembers: true,
+        canManageTasks: true,
+        canManageNotes: true,
+        canDeleteNotes: false,
+        canDeleteMembers: false
+      },
+      "Wasla AI Assistant": {
+        canReadAllData: true,
+        canManageMembers: true,
+        canManageTasks: true,
+        canManageNotes: true,
+        canDeleteNotes: false,
+        canDeleteMembers: true
+      },
+      "Normal User": {
+        canReadAllData: false,
+        canManageMembers: false,
+        canManageTasks: false,
+        canManageNotes: false,
+        canDeleteNotes: false,
+        canDeleteMembers: false
+      }
+    };
 
-    function canWriteNotes() { return true; }
+    function getRolePermissions(role) {
+      return ROLE_PERMISSIONS[role] || ROLE_PERMISSIONS["Normal User"];
+    }
 
-    function canViewNote(note) { return true; }
+    function isLeaderRole() {
+      return currentUser && (currentUser.role === "Admin" || currentUser.role === "Wasla Leader" || currentUser.role === "Wasla AI Assistant");
+    }
 
-    function canEditNote(note) { return true; }
+    function canWriteNotes() {
+      return currentUser && getRolePermissions(currentUser.role).canManageNotes;
+    }
 
+    function canViewNote(note) { return !!currentUser; }
+    function canEditNote(note) { return canWriteNotes(); }
     function canEditNotes(team) { return canWriteNotes(); }
-    function canViewNotes(team) { return isLeaderRole() || currentUser.role === "Normal User"; }
+    function canViewNotes(team) { return !!currentUser; }
     function getVisibleTeam() { return null; }
+
+    function canManageMembers() {
+      return currentUser && getRolePermissions(currentUser.role).canManageMembers;
+    }
+
+    function canDeleteMembers() {
+      return currentUser && getRolePermissions(currentUser.role).canDeleteMembers;
+    }
+
+    function canManageTasks() {
+      return currentUser && getRolePermissions(currentUser.role).canManageTasks;
+    }
+
+    function canReadAllData() {
+      return currentUser && getRolePermissions(currentUser.role).canReadAllData;
+    }
 
     const navConnectionPaths = {
       dashboard: "M58 18C25 18 24 83 48 95",
@@ -2433,7 +2491,7 @@
     function openProfile(id) {
       const m = members.find(x => x.id === id);
       if (!m) return;
-      const isAdmin = currentUser && (currentUser.role === "Admin" || currentUser.role === "Wasla Leader");
+      const isAdmin = currentUser && (currentUser.role === "Admin" || currentUser.role === "Wasla Leader" || currentUser.role === "Wasla AI Assistant");
       const courseAr = { "Completed": "مكتمل", "In Progress": "قيد التنفيذ", "Not Started": "لم يبدأ" }[m.courseStatus] || m.courseStatus;
       const taskAr = { "Completed": "مكتمل", "In Progress": "قيد التنفيذ", "Late": "متأخر", "Not Started": "لم يبدأ" }[m.taskStatus] || m.taskStatus;
       const hasLap = (m.device || "").includes("لاب") || (m.device || "").includes("كمبيوتر") || (m.device || "").includes("الاثنان") || m.device === "Laptop" || !!m.hasLaptop;
@@ -2868,13 +2926,13 @@
               currentUser.signature = createSessionSignature(currentUser.role || "Admin");
             } else {
               const meta = session.user.user_metadata || {};
-              const role = meta.role || "Admin";
+              const role = meta.role || (meta.is_ai ? "Wasla AI Assistant" : "Admin");
               const dispName = meta.displayName || session.user.email;
               currentUser = {
                 username: session.user.email,
                 role: role,
                 displayName: dispName,
-                accountType: "admin",
+                accountType: meta.is_ai ? "wasla_ai" : "admin",
                 userId: session.user.id,
                 isGuest: false,
                 localOnly: false,
@@ -2927,7 +2985,47 @@
         notesSummary = "لا توجد ملاحظات مسجلة حالياً.";
       }
 
-      return `[قائمة أعضاء فريق وصلة (${activeMembers.length} عضو)]:\n${memSummary}\n\n[ملاحظات الفريق]:\n${notesSummary}`;
+      // المهام وتتبعها
+      let tasksSummary = "لا توجد مهام مُسندة حالياً.";
+      if (teamTasks && teamTasks.length > 0) {
+        const now = new Date();
+        tasksSummary = teamTasks.map(t => {
+          const assignedCount = t.assignedTo === "ALL" ? activeMembers.length : (Array.isArray(t.assignedTo) ? t.assignedTo.length : 0);
+          const tracking = t.tracking || {};
+          const completedCount = Object.values(tracking).filter(s => s && s.status === "مكتمل").length;
+          const inProgressCount = Object.values(tracking).filter(s => s && s.status === "قيد التنفيذ").length;
+          const isDeadlinePassed = t.hasDeadline && (new Date(t.deadlineDate) < now);
+          const totalHandled = Object.keys(tracking).length;
+          const lateCount = isDeadlinePassed ? (assignedCount - completedCount) : 0;
+
+          let lines = `- المهمة #${t.id}: "${t.title}" | الوصف: ${t.description || "لا يوجد"} | المكلفين: ${assignedCount}`;
+          if (t.hasDeadline) lines += ` | الموعد: ${t.deadlineDate}${isDeadlinePassed ? " (متأخر)" : ""}`;
+          lines += ` | مكتمل: ${completedCount}/${assignedCount} | قيد التنفيذ: ${inProgressCount}`;
+          if (lateCount > 0) lines += ` | متأخرون: ${lateCount}`;
+
+          const lateOrPending = activeMembers.filter(m => t.assignedTo === "ALL" || (Array.isArray(t.assignedTo) && t.assignedTo.includes(m.id)))
+            .filter(m => !tracking[m.id] || (tracking[m.id].status !== "مكتمل"))
+            .map(m => m.fullName);
+          if (lateOrPending.length > 0) lines += ` | لم يكمل بعد: ${lateOrPending.join("، ")}`;
+
+          return lines;
+        }).join("\n");
+      }
+
+      // إحصائيات حية
+      const total = activeMembers.length;
+      const alexCount = activeMembers.filter(m => m.canGoAlexandria).length;
+      const laptopCount = activeMembers.filter(m => m.hasLaptop).length;
+      const readyCount = activeMembers.filter(m => m.canGoAlexandria && m.hasLaptop).length;
+      const stats = [
+        `[إحصائيات حية]:`,
+        `- إجمالي الأعضاء: ${total}`,
+        `- يمتلك لابتوب: ${laptopCount} (${total ? Math.round((laptopCount/total)*100) : 0}%)`,
+        `- يؤكد النزول للإسكندرية: ${alexCount} (${total ? Math.round((alexCount/total)*100) : 0}%)`,
+        `- جاهز تماماً (لابتوب + نزول): ${readyCount} (${total ? Math.round((readyCount/total)*100) : 0}%)`
+      ].join("\n");
+
+      return `[قائمة أعضاء فريق وصلة (${activeMembers.length} عضو)]:\n${memSummary}\n\n[المهام وتتبعها]:\n${tasksSummary}\n\n[ملاحظات الفريق]:\n${notesSummary}\n\n${stats}\n\n[صلاحياتي]:\n- أملك صلاحية كاملة للقراءة على جميع البيانات.\n- أملك صلاحية إضافة/تعديل/حذف الأعضاء.\n- أملك صلاحية إدارة المهام وتحديث حالاتها.\n- أملك صلاحية إضافة الملاحظات.\n- يمكنك طلب تنفيذ أي من هذه الإجراءات مباشرة وسأنفذه فوراً.`;
     }
 
     async function handleAiSubmit(e) {
@@ -2995,6 +3093,7 @@
       if (!action || !action.type) return;
 
       if (action.type === "update_member" && action.name) {
+        if (!canManageMembers()) { showToast("⚠️ الذكاء الاصطناعي غير مخول لتعديل الأعضاء", true); return; }
         const queryName = action.name.trim().toLowerCase();
         let m = members.find(x => x.fullName.trim().toLowerCase() === queryName);
         if (!m) m = members.find(x => x.fullName.toLowerCase().includes(queryName) || queryName.includes(x.fullName.toLowerCase()));
@@ -3023,6 +3122,7 @@
           showToast(`تم تحديث بيانات العضو ${escapeHtml(m.fullName)}`);
         }
       } else if (action.type === "add_member" && action.member) {
+        if (!canManageMembers()) { showToast("⚠️ الذكاء الاصطناعي غير مخول لإضافة الأعضاء", true); return; }
         const item = action.member;
         const newM = normalizeMember({
           id: Date.now(),
@@ -3052,6 +3152,7 @@
         renderRanking();
         showToast(`تمت إضافة العضو ${newM.fullName} بنجاح`);
       } else if (action.type === "add_note" && action.text) {
+        if (!canWriteNotes()) { showToast("⚠️ الذكاء الاصطناعي غير مخول لإضافة الملاحظات", true); return; }
         const newNote = {
           id: Date.now(),
           text: action.text,
@@ -3071,6 +3172,28 @@
 
         renderNotes();
         showToast("تمت إضافة الملاحظة بنجاح");
+      } else if (action.type === "delete_member" && action.name) {
+        if (!canDeleteMembers()) { showToast("⚠️ الذكاء الاصطناعي غير مخول لحذف الأعضاء", true); return; }
+        const queryName = String(action.name).trim().toLowerCase();
+        let m = members.find(x => x.fullName.trim().toLowerCase() === queryName);
+        if (!m) m = members.find(x => x.fullName.toLowerCase().includes(queryName) || queryName.includes(x.fullName.toLowerCase()));
+
+        if (m) {
+          const memberId = m.id;
+          const memberName = m.fullName;
+          members = members.filter(x => x.id !== memberId);
+          try { localStorage.setItem("tms_members", JSON.stringify(members)); } catch (_) {}
+
+          try {
+            const sb = getSupabase();
+            if (sb && !currentUser.localOnly) dbDeleteMember(memberId).catch(err => console.warn("Supabase member delete error:", err));
+          } catch (_) {}
+
+          renderMembersTable();
+          renderDashboard();
+          renderRanking();
+          showToast(`تم حذف العضو ${escapeHtml(memberName)} بنجاح`);
+        }
       }
     }
 
