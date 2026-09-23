@@ -1,4 +1,4 @@
-const CACHE_NAME = "wasla-admin-v4";
+const CACHE_NAME = "wasla-admin-v5";
 const APP_SHELL = [
   "/",
   "/index.html",
@@ -6,7 +6,12 @@ const APP_SHELL = [
   "/wasla-logo.png",
   "/manifest.json",
   "/icons/icon-192.png",
-  "/icons/icon-512.png"
+  "/icons/icon-512.png",
+  "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2",
+  "https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js",
+  "https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js",
+  "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap",
+  "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
 ];
 
 self.addEventListener("install", (event) => {
