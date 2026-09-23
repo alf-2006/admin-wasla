@@ -831,11 +831,13 @@
     ];
 
     const SAMPLE_NOTES = [
-      { id: 101, text: "أحمد عيد أنهى مهمته مبكراً [B:+3]", author: "قائد الفريق", authorRole: "Wasla Leader", date: new Date(Date.now() - 0*86400000).toISOString().slice(0,10), team: "Wasla", targetTeam: "Wasla" },
-      { id: 102, text: "ياسمين حسن تأخرت في التسليم [B:-1]", author: "قائد الفريق", authorRole: "Wasla Leader", date: new Date(Date.now() - 1*86400000).toISOString().slice(0,10), team: "Wasla", targetTeam: "Wasla" },
-      { id: 103, text: "ملك محمد أنهت مراجعة الكود [B:+2]", author: "قائد الفريق", authorRole: "Wasla Leader", date: new Date(Date.now() - 2*86400000).toISOString().slice(0,10), team: "Wasla", targetTeam: "Wasla" },
-      { id: 104, text: "اجتماع الاستعداد للإسكندرية يوم الجمعة", author: "أحمد عيد", authorRole: "Wasla Leader", date: new Date(Date.now() - 3*86400000).toISOString().slice(0,10), team: "Wasla", targetTeam: "Wasla" },
-      { id: 105, text: "أحمد عشري يحتاج متابعة لعدم امتلاكه جهاز [B:-2]", author: "قائد الفريق", authorRole: "Wasla Leader", date: new Date(Date.now() - 4*86400000).toISOString().slice(0,10), team: "Wasla", targetTeam: "Wasla" }
+      { id: 101, text: "أنهى مهمته مبكراً [B:+3]", author: "قائد الفريق", authorRole: "Wasla Leader", date: new Date(Date.now() - 0*86400000).toISOString().slice(0,10), team: "Wasla", targetTeam: "Wasla", targetMemberId: 1, targetName: "أحمد عيد" },
+      { id: 102, text: "تأخرت في التسليم [B:-1]", author: "قائد الفريق", authorRole: "Wasla Leader", date: new Date(Date.now() - 1*86400000).toISOString().slice(0,10), team: "Wasla", targetTeam: "Wasla", targetMemberId: 5, targetName: "ياسمين حسن" },
+      { id: 103, text: "أنهت مراجعة الكود [B:+2]", author: "قائد الفريق", authorRole: "Wasla Leader", date: new Date(Date.now() - 2*86400000).toISOString().slice(0,10), team: "Wasla", targetTeam: "Wasla", targetMemberId: 2, targetName: "ملك محمد" },
+      { id: 104, text: "اجتماع الاستعداد للإسكندرية يوم الجمعة", author: "أحمد عيد", authorRole: "Wasla Leader", date: new Date(Date.now() - 3*86400000).toISOString().slice(0,10), team: "Wasla", targetTeam: "Wasla", targetMemberId: null, targetName: null },
+      { id: 105, text: "يحتاج متابعة لعدم امتلاكه جهاز [B:-2]", author: "قائد الفريق", authorRole: "Wasla Leader", date: new Date(Date.now() - 4*86400000).toISOString().slice(0,10), team: "Wasla", targetTeam: "Wasla", targetMemberId: 7, targetName: "أحمد عشري" },
+      { id: 106, text: "أداء متميز في الديزاين [B:+2]", author: "قائد الفريق", authorRole: "Wasla Leader", date: new Date(Date.now() - 1*86400000).toISOString().slice(0,10), team: "Wasla", targetTeam: "Wasla", targetMemberId: 9, targetName: "منة الله" },
+      { id: 107, text: "حل مشكلة الـ dashboard [B:+4]", author: "قائد الفريق", authorRole: "Wasla Leader", date: new Date(Date.now() - 2*86400000).toISOString().slice(0,10), team: "Wasla", targetTeam: "Wasla", targetMemberId: 6, targetName: "عمر" }
     ];
 
     let currentUser = null;
@@ -2294,11 +2296,8 @@
     }
 
     function getFilteredMembers() {
-      members.forEach(m => {
-        if (typeof m.totalBonus === 'undefined') {
-           m.totalBonus = (typeof getMemberTotalBonus === 'function') ? getMemberTotalBonus(m.id) : 0;
-        }
-      });
+      // احسب البونص دائماً قبل أي فرز/فلترة (كان يُحتسب مرة واحدة فقط ويبقى stale)
+      members.forEach(m => { m.totalBonus = getMemberTotalBonus(m.id); });
       let list = [...members];
       const search = document.getElementById("search-input").value.trim().toLowerCase();
       const deviceEl = document.getElementById("filter-device");
@@ -3175,6 +3174,14 @@
         showToast(`تمت إضافة العضو ${newM.fullName} بنجاح`);
       } else if (action.type === "add_note" && action.text) {
         if (!canWriteNotes()) { showToast("⚠️ الذكاء الاصطناعي غير مخول لإضافة الملاحظات", true); return; }
+        // ربط العضو المستهدف بنقاط البونص إن وُجد في النص
+        let targetId = null, targetName = null;
+        if (action.targetName) {
+          const qn = String(action.targetName).trim().toLowerCase();
+          const tm = members.find(x => x.fullName.trim().toLowerCase() === qn) ||
+                     members.find(x => x.fullName.toLowerCase().includes(qn) || qn.includes(x.fullName.toLowerCase()));
+          if (tm) { targetId = tm.id; targetName = tm.fullName; }
+        }
         const newNote = {
           id: Date.now(),
           text: action.text,
@@ -3182,7 +3189,9 @@
           authorRole: currentUser ? currentUser.role : "Wasla Leader",
           date: new Date().toISOString().slice(0, 10),
           team: "Wasla",
-          targetTeam: "Wasla"
+          targetTeam: "Wasla",
+          targetMemberId: targetId,
+          targetName: targetName
         };
         if (!notes.Wasla) notes.Wasla = [];
         notes.Wasla.unshift(newNote);
