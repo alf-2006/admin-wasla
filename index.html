@@ -1092,13 +1092,14 @@
     }
 
     function normalizeMember(x) {
+      const device = x.device || "Laptop";
       return {
         id: x.id, fullName: x.fullName || "", team: "Wasla",
         completionRank: x.completionRank || 0, teamNotes: x.teamNotes || "",
-        hasLaptop: x.hasLaptop !== undefined ? !!x.hasLaptop : true,
+        hasLaptop: x.hasLaptop !== undefined ? !!x.hasLaptop : /لاب|الاثنين|الاثنان|laptop/i.test(device),
         canGoAlexandria: x.canGoAlexandria !== undefined ? !!x.canGoAlexandria : false,
         residence: x.residence || "", workConditions: x.workConditions || "", bio: x.bio || "",
-        phone: x.phone || "", device: x.device || "Laptop", gender: x.gender || "ذكر",
+        phone: x.phone || "", device: device, gender: x.gender || "ذكر",
         meetingAttendance: x.meetingAttendance || "Yes", workStatus: x.workStatus || "مستمر"
       };
     }
@@ -2256,19 +2257,20 @@
             const existing = members.find(m => m.fullName === name);
             if (!existing) {
               const newId = (members.length > 0) ? Math.max(...members.map(m => m.id), 0) + 1 : 1;
-              const newM = {
+              const newM = normalizeMember({
                 id: newId,
                 fullName: sanitizeInput(name),
                 team: "Wasla",
                 phone: sanitizeInput(row["رقم التليفون"] || row["Phone"] || ""),
                 residence: sanitizeInput(row["محافظة السكن"] || row["السكن"] || ""),
                 device: String(row["الجهاز المتاح"] || row["الجهاز"] || "لاب توب"),
+                hasLaptop: [true, "يقدر ينزل", "نعم", "yes"].includes(row["الجهاز المتاح"] || row["الجهاز"]) || /لاب|الاثنان|laptop/i.test(String(row["الجهاز المتاح"] || row["الجهاز"] || "")),
                 canGoAlexandria: [true, "يقدر ينزل", "نعم", "yes"].includes(row["النزول لإسكندرية"] || row["إسكندرية"]),
                 workStatus: String(row["حالة التفرغ"] || row["العمل"] || "شغال"),
                 workConditions: sanitizeInput(row["ظروف الشغل"] || ""),
                 bio: sanitizeInput(row["نبذة / تعريف"] || row["ملاحظات شخصية"] || ""),
                 teamNotes: sanitizeInput(row["ملاحظات الفريق"] || "")
-              };
+              });
               members.push(newM);
               
               const sb = getSupabase();
@@ -2282,9 +2284,10 @@
           if (currentUser && currentUser.localOnly) {
              try { localStorage.setItem("tms_members", JSON.stringify(members)); } catch(e){}
           }
-          
+
           renderMembersTable();
           renderDashboard();
+          renderRanking();
           showToast(`تم استيراد ${importCount} عضو جديد بنجاح!`, false);
           document.getElementById('excel-import-file').value = '';
         } catch (err) {
@@ -2419,13 +2422,15 @@
     function saveMember() {
       if (!isLeaderRole()) return;
       const id = document.getElementById("member-id").value;
+      const deviceVal = (document.getElementById("m-device") || {}).value || "لاب توب";
       const data = {
         fullName: document.getElementById("m-fullname").value.trim(),
         team: "Wasla",
         phone: (document.getElementById("m-phone") || {}).value ? document.getElementById("m-phone").value.trim() : "",
         canGoAlexandria: (document.getElementById("m-alex") || {}).value === "true",
         residence: (document.getElementById("m-residence") || {}).value ? document.getElementById("m-residence").value.trim() : "",
-        device: (document.getElementById("m-device") || {}).value || "لاب توب",
+        device: deviceVal,
+        hasLaptop: /لاب|الاثنين|الاثنان|laptop/i.test(deviceVal),
         workStatus: (document.getElementById("m-work") || {}).value || "شغال",
         workConditions: (document.getElementById("m-work-notes") || {}).value ? document.getElementById("m-work-notes").value.trim() : "",
         teamNotes: (document.getElementById("m-notes") || {}).value ? document.getElementById("m-notes").value.trim() : ""
