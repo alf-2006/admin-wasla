@@ -515,7 +515,7 @@
                 </div>
                 <div class="ai-header-text">
                   <h2>مساعد وصلة الذكي (Wasla AI)</h2>
-                  <p>تحليل فوري واستعلام ذكي محصور حصرياً في بيانات وأداء فريق وصلة عبر Groq</p>
+                  <p>تحليل فوري واستعلام ذكي محصور حصرياً في بيانات وأداء فريق وصلة (مدعوم بواسطة Google Gemini)</p>
                 </div>
               </div>
               <div class="ai-header-actions">
@@ -523,7 +523,7 @@
                   <span class="ai-status-dot"></span>
                   متصل ببيانات الفريق
                 </span>
-                <button type="button" class="btn-text-action" onclick="openGroqKeyModal()" title="إعداد مفتاح Groq API في Supabase">
+                <button type="button" class="btn-text-action" onclick="openGroqKeyModal()" title="إعداد مفتاح Gemini API في Supabase">
                   <i class="fas fa-key"></i>
                   إعدادات المفتاح
                 </button>
@@ -580,11 +580,11 @@
     </div>
   </div>
 
-  <!-- Groq API Key Modal -->
+  <!-- AI API Key Modal -->
   <div class="modal-overlay" id="groq-key-modal">
     <div class="modal" style="max-width:480px">
       <div class="modal-header">
-        <h3><i class="fas fa-shield-alt text-purple"></i> إعداد مفتاح Groq API في Supabase</h3>
+        <h3><i class="fas fa-shield-alt text-purple"></i> إعداد مفتاح Gemini API في Supabase</h3>
         <button type="button" class="modal-close" onclick="closeGroqKeyModal()"><i class="fas fa-times"></i></button>
       </div>
       <div class="modal-body">
@@ -592,8 +592,8 @@
           يتم حفظ المفتاح بشكل مشفر ومخفي تماماً في <strong>Supabase Vault</strong> على خوادم السيرفر، ولا يمكن للمتصفح أو كود الواجهة الأمامية الوصول إليه نهائياً.
         </p>
         <div class="form-group">
-          <label>مفتاح Groq API (يبدأ بـ gsk_...)</label>
-          <input type="password" id="groq-key-input" placeholder="gsk_..." style="direction:ltr;text-align:left;font-family:monospace" />
+          <label>مفتاح Gemini API (يبدأ بـ AIzaSy...)</label>
+          <input type="password" id="groq-key-input" placeholder="AIzaSy..." style="direction:ltr;text-align:left;font-family:monospace" />
         </div>
         <div id="groq-key-status" style="font-size:0.9rem;margin-top:8px"></div>
       </div>
@@ -3090,8 +3090,8 @@
             const errBody = await error.context.json().catch(() => null);
             if (errBody && errBody.error) errorMsg = errBody.error;
           }
-          if (errorMsg.includes("غير مُعدّ") || errorMsg.includes("Groq API")) {
-            appendAiMessage(`${errorMsg} <br><button type="button" class="btn btn-primary" style="margin-top:10px;font-size:0.85rem;padding:6px 14px;" onclick="openGroqKeyModal()">إعداد مفتاح Groq API الآن</button>`, "bot", true);
+          if (errorMsg.includes("غير مُعدّ") || errorMsg.includes("API")) {
+            appendAiMessage(`${errorMsg} <br><button type="button" class="btn btn-primary" style="margin-top:10px;font-size:0.85rem;padding:6px 14px;" onclick="openGroqKeyModal()">إعداد مفتاح Gemini API الآن</button>`, "bot", true);
           } else {
             appendAiMessage(`عذراً: ${errorMsg}`, "bot", true);
           }
@@ -3368,7 +3368,7 @@
         if (error) throw error;
 
         if (status) status.innerHTML = `<span style="color:var(--success);font-weight:600"><i class="fas fa-check-circle"></i> تم حفظ المفتاح بنجاح وأمان في Supabase Vault!</span>`;
-        showToast("تم تحديث مفتاح Groq بنجاح في Supabase");
+        showToast("تم تحديث مفتاح Gemini بنجاح في Supabase");
         input.value = "";
         setTimeout(() => {
           closeGroqKeyModal();
