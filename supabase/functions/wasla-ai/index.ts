@@ -45,33 +45,29 @@ serve(async (req) => {
 3. إذا كان المستخدم يطلب تسجيل، إضافة، أو تدمير، أو تعديل حالة مهمة، قم بإصدار إجراء Action JSON بصيغة صالحة داخل ردك بالإضافة للنص العادي.
 
 أنواع الأكشنات المدعومة:
-- لتعديل عضو (إذا ذُكر اسمه): \`\`\`json { "action": { "type": "update_member", "name": "اسم الشخص", "patch": {"hasLaptop": false, ...} } } \`\`\`
+- لتعديل عضو (إذا ذُكر اسمه): \`\`\`json { "action": { "type": "update_member", "name": "اسم الشخص", "patch": {"hasLaptop": false, "canGoAlexandria": true} } } \`\`\`
 - لحذف/تدمير عضو: \`\`\`json { "action": { "type": "delete_member", "name": "اسم الشخص" } } \`\`\`
 - لإضافة ملاحظة: \`\`\`json { "action": { "type": "add_note", "text": "نص الملاحظة", "targetName": "اسم المستهدف إن وُجد" } } \`\`\`
 
 السياق المتوفر:
 ${context}`;
 
-    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${groqKey}`, {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${groqKey}`,
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "llama3-70b-8192", // Use the preferred logic model
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: question }
-        ],
-        temperature: 0.1,
+        system_instruction: { parts: [{ text: systemPrompt }] },
+        contents: [{ parts: [{ text: question }] }],
+        generationConfig: { temperature: 0.1 }
       })
     })
 
     const aiRes = await res.json()
-    if (!res.ok) throw new Error(aiRes.error?.message || "Groq API error")
+    if (!res.ok) throw new Error(aiRes.error?.message || "Google AI error")
 
-    const reply = aiRes.choices[0].message.content
+    const reply = aiRes.candidates[0].content.parts[0].text
     
     // Extract potential JSON action from the markdown block
     let action = null

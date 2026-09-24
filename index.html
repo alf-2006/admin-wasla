@@ -264,6 +264,11 @@
           <button class="action-icon-btn theme-toggle" onclick="toggleTheme()" title="تبديل الوضع" aria-label="تبديل الوضع">
             <i class="fas fa-moon" id="theme-icon"></i>
           </button>
+          
+          <!-- زر خروج خاص بالموبايل يظهر في شريط التنقل العلوي -->
+          <button class="action-icon-btn text-danger" onclick="logout()" title="تسجيل الخروج" aria-label="تسجيل الخروج" style="color: #E11D48; border: 1px solid rgba(225, 29, 72, 0.2); background: rgba(225, 29, 72, 0.05); margin-inline-start: 4px;">
+            <i class="fas fa-sign-out-alt"></i>
+          </button>
         </div>
       </header>
 
@@ -343,6 +348,33 @@
                 </div>
               </div>
               <div class="dash-card-body" id="recent-activity-feed" style="max-height: 320px; overflow-y: auto; padding-right: 8px;">
+                <!-- Injected via JS -->
+              </div>
+            </div>
+
+            <!-- 🚨 رادار المتابعة: أقل بونص -->
+            <div class="dash-card command-card" style="border: 1px solid rgba(225, 29, 72, 0.2);">
+              <div class="dash-card-header">
+                <div class="dash-card-title">
+                  <i class="fas fa-arrow-trend-down" style="color: #E11D48;"></i>
+                  <span style="color: #E11D48; font-weight: 800;">مؤشر الخطر (أقل بونص)</span>
+                </div>
+              </div>
+              <div class="dash-card-body" id="lowest-rankings-widget">
+                <!-- Injected via JS -->
+              </div>
+            </div>
+
+            <!-- 🚨 رادار المتابعة: متأخرون عن مهامهم -->
+            <div class="dash-card command-card" style="border: 1px solid rgba(245, 158, 11, 0.2);">
+              <div class="dash-card-header">
+                <div class="dash-card-title">
+                  <i class="fas fa-user-clock" style="color: #F59E0B;"></i>
+                  <span style="font-weight: 800;">متأخرون عن آخر مهمة</span>
+                </div>
+                <button class="btn-text-action" onclick="navigateToPage('tasks')">عرض المهمة</button>
+              </div>
+              <div class="dash-card-body" id="latest-task-late-widget">
                 <!-- Injected via JS -->
               </div>
             </div>
@@ -1869,8 +1901,12 @@
       if (countBadge) countBadge.textContent = `${total} عضو`;
       renderMembersChips(members);
 
-      // Render Top 3 Ranking
+      // Render Top 3 Ranking & Lowest Ranking
       renderTopRankingsWidget();
+      renderLowestRankingsWidget();
+
+      // Render Late tasks radar
+      renderLatestTaskLateWidget();
 
       // Render Recent Activity Feed
       renderRecentActivityFeed();
@@ -1906,6 +1942,86 @@
             </div>
           </div>`;
       }).join("");
+    }
+
+    function renderLowestRankingsWidget() {
+      const el = document.getElementById("lowest-rankings-widget");
+      if (!el) return;
+
+      let sorted = [...members].filter(m => m.totalBonus < 0).sort((a,b) => a.totalBonus - b.totalBonus);
+
+      if (sorted.length === 0) {
+        el.innerHTML = '<div class="empty-state-sm" style="opacity:0.7"><i class="fas fa-check-circle" style="color:var(--success);font-size:2rem;margin-bottom:10px"></i><p>لا يوجد أعضاء في نطاق الخطر (تحت الصفر)</p></div>';
+        return;
+      }
+
+      el.innerHTML = sorted.slice(0, 4).map(m => {
+        return `
+          <div class="clickable-row" onclick="openProfile(${m.id})" style="display:flex; justify-content:space-between; padding:12px 10px; border-bottom:1px dashed var(--border-light); border-radius:8px">
+            <div style="display:flex; gap:12px; align-items:center;">
+              <div style="width:34px; height:34px; border-radius:50%; background: #FFE4E6; color:#E11D48; display:flex; align-items:center; justify-content:center; font-weight:800; border: 1px solid #FECDD3">${m.fullName.charAt(0)}</div>
+              <strong style="color:var(--text); font-size:0.95rem">${escapeHtml(m.fullName)}</strong>
+            </div>
+            <span class="badge" style="background:#FFE4E6; color:#E11D48; border:1px solid #FECDD3; font-weight:800">${m.totalBonus}</span>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderLatestTaskLateWidget() {
+      const el = document.getElementById("latest-task-late-widget");
+      if (!el) return;
+      
+      if (!teamTasks || teamTasks.length === 0) {
+        el.innerHTML = '<div class="empty-state-sm" style="opacity:0.7"><p>لا توجد مهام مُسندة</p></div>';
+        return;
+      }
+      
+      // الحصول على آخر مهمة تم إنشاؤها (الأعلى ID)
+      const latestTask = [...teamTasks].sort((a, b) => b.id - a.id)[0];
+      const now = new Date();
+      const isPassed = latestTask.hasDeadline && (new Date(latestTask.deadlineDate) < now);
+      
+      let targetMembers = members;
+      if (latestTask.assignedTo !== "ALL") {
+        targetMembers = members.filter(m => Array.isArray(latestTask.assignedTo) && latestTask.assignedTo.includes(m.id));
+      }
+      
+      let lateOrPending = targetMembers.filter(m => {
+        const track = latestTask.tracking[m.id];
+        if (!track) return true; 
+        if (track.status !== "مكتمل") return true; 
+        return false;
+      });
+      
+      if (lateOrPending.length === 0) {
+        el.innerHTML = `
+          <div style="text-align:center; padding:20px; opacity:0.8">
+            <i class="fas fa-star text-warning" style="font-size:2.5rem; margin-bottom:12px;"></i>
+            <h6 style="font-weight:800; font-size:1.05rem">الفريق أتم المهمة بنجاح!</h6>
+            <span style="color:var(--text-muted); font-size:0.85rem">${escapeHtml(latestTask.title)}</span>
+          </div>`;
+        return;
+      }
+      
+      let html = `<div style="margin-bottom:12px; font-size:0.9rem; color:var(--text-muted); line-height:1.4"><strong>المهمة النشطة:</strong> ${escapeHtml(latestTask.title)}</div>`;
+      
+      html += lateOrPending.slice(0, 5).map(m => {
+        const track = latestTask.tracking[m.id];
+        const statusText = !track || track.status === "لم يبدأ" ? "لم يبدأ" : track.status;
+        const badgeCls = (isPassed && statusText !== "مكتمل") ? "badge-late" : "badge-pending";
+        return `
+          <div class="clickable-row" onclick="navigateToPage('tasks')" style="display:flex; justify-content:space-between; padding:10px 8px; border-bottom:1px dashed var(--border-light); border-radius:8px">
+            <div style="display:flex; align-items:center; gap:10px"><i class="fas fa-user-circle" style="color:var(--text-muted); font-size:1.2rem"></i> <span style="font-weight:600; font-size:0.95rem">${escapeHtml(m.fullName)}</span></div>
+            <span class="badge ${badgeCls}">${statusText}</span>
+          </div>
+        `;
+      }).join("");
+
+      if (lateOrPending.length > 5) {
+        html += `<div style="text-align:center; font-size:0.85rem; font-weight:700; margin-top:10px; cursor:pointer; color:var(--wasla);" onclick="navigateToPage('tasks')">عرض ${lateOrPending.length - 5} أعضاء آخرين...</div>`;
+      }
+      el.innerHTML = html;
     }
 
     function renderRecentActivityFeed() {
@@ -3070,48 +3186,92 @@
 
       try {
         const sb = getSupabase();
-        if (!sb) {
-          removeAiLoading(loadingId);
-          appendAiMessage("تنبيه: قاعدة بيانات Supabase غير متصلة حالياً. تأكد من إعدادات الاتصال.", "bot", true);
-          return;
+        const context = getSystemDataContext();
+        
+        let aiAnswer = null;
+        let aiAction = null;
+
+        // Try Supabase Edge Function first
+        let edgeFailed = false;
+        if (sb && !currentUser.localOnly) {
+          const { data, error } = await sb.functions.invoke("wasla-ai", {
+            body: { question, context }
+          });
+          if (!error && data && (data.answer || data.action)) {
+            aiAnswer = data.answer;
+            aiAction = data.action;
+          } else {
+            edgeFailed = true;
+          }
+        } else {
+          edgeFailed = true;
         }
 
-        const context = getSystemDataContext();
-        const { data, error } = await sb.functions.invoke("wasla-ai", {
-          body: { question, context }
-        });
+        // Fallback to direct Gemini API call if Edge Function fails or localOnly
+        if (edgeFailed) {
+          // جلب المفتاح المحفوظ محلياً (من شاشة الإعدادات)
+          const fallbackKey = localStorage.getItem("tms_gemini_key");
+          
+          if (!fallbackKey || fallbackKey.startsWith("AIzaSy...")) {
+            throw new Error("المساعد غير مُعدّ. يرجى إعداد مفتاح Gemini API.");
+          }
+
+          const systemPrompt = `أنت "مساعد وصلة الذكي"، خبير في إدارة فريق "وصلة" وتحليل أدائهم وجاهزيتهم.
+أمامك سياق حي لبيانات الأعضاء، المهام، الملاحظات، والإحصائيات.
+
+تعليماتك الصارمة:
+1. الرد باللغة العربية بأسلوب احترافي وعملي.
+2. إذا كان السؤال عن إحصائيات عامة، لخصها من سياق البيانات أمامك مدعومة بالأرقام المتوفرة.
+3. إذا كان المستخدم يطلب تسجيل، إضافة، أو تدمير، أو تعديل حالة مهمة، قم بإصدار إجراء Action JSON بصيغة صالحة داخل ردك.
+
+أنواع الأكشنات المدعومة:
+- لتعديل عضو: \`\`\`json { "action": { "type": "update_member", "name": "اسم الشخص", "patch": {"hasLaptop": false} } } \`\`\`
+- لحذف/تدمير عضو: \`\`\`json { "action": { "type": "delete_member", "name": "اسم الشخص" } } \`\`\`
+- لإضافة ملاحظة: \`\`\`json { "action": { "type": "add_note", "text": "نص الملاحظة", "targetName": "اسم المستهدف إن وُجد" } } \`\`\`
+
+السياق المتوفر:
+${context}`;
+
+          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${fallbackKey}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              system_instruction: { parts: [{ text: systemPrompt }] },
+              contents: [{ parts: [{ text: question }] }],
+              generationConfig: { temperature: 0.1 }
+            })
+          });
+
+          const resData = await res.json();
+          if (!res.ok) throw new Error(resData.error?.message || "Google AI error");
+
+          const reply = resData.candidates[0].content.parts[0].text;
+          
+          // Extract JSON
+          const match = reply.match(/```json\s*(\{[\s\S]*?\})\s*```/);
+          if (match) {
+            try { aiAction = JSON.parse(match[1]).action; } catch(e){}
+          }
+          aiAnswer = reply.replace(/```json\s*(\{[\s\S]*?\})\s*```/g, '').trim();
+        }
 
         removeAiLoading(loadingId);
 
-        if (error) {
-          console.error("wasla-ai function error:", error);
-          let errorMsg = error.message || "حدث خطأ أثناء التواصل مع خادم الذكاء الاصطناعي.";
-          if (error.context && error.context.json) {
-            const errBody = await error.context.json().catch(() => null);
-            if (errBody && errBody.error) errorMsg = errBody.error;
-          }
-          if (errorMsg.includes("غير مُعدّ") || errorMsg.includes("API")) {
-            appendAiMessage(`${errorMsg} <br><button type="button" class="btn btn-primary" style="margin-top:10px;font-size:0.85rem;padding:6px 14px;" onclick="openGroqKeyModal()">إعداد مفتاح Gemini API الآن</button>`, "bot", true);
-          } else {
-            appendAiMessage(`عذراً: ${errorMsg}`, "bot", true);
-          }
-          return;
-        }
-
-        if (data && data.answer) {
-          appendAiMessage(data.answer, "bot");
-          if (data.action) {
-            executeAiAction(data.action);
-          }
-        } else if (data && data.error) {
-          appendAiMessage(`تنبيه: ${data.error}`, "bot", true);
+        if (aiAnswer) {
+          appendAiMessage(aiAnswer, "bot");
+          if (aiAction) executeAiAction(aiAction);
         } else {
           appendAiMessage("لم يصل رد صالح من المساعد.", "bot", true);
         }
       } catch (err) {
         console.error("AI invoke error:", err);
         removeAiLoading(loadingId);
-        appendAiMessage("تعذر إرسال السؤال إلى خادم المساعد. تحقق من الاتصال بالإنترنت.", "bot", true);
+        const errorMsg = err.message || "حدث خطأ غير متوقع.";
+        if (errorMsg.includes("مُعدّ") || errorMsg.includes("API")) {
+          appendAiMessage(`${errorMsg} <br><button type="button" class="btn btn-primary" style="margin-top:10px;font-size:0.85rem;padding:6px 14px;" onclick="openGroqKeyModal()">إعداد مفتاح Gemini API الآن</button>`, "bot", true);
+        } else {
+          appendAiMessage("تعذر إرسال السؤال إلى خادم المساعد. تحقق من الاتصال بالإنترنت.", "bot", true);
+        }
       }
     }
 
@@ -3358,24 +3518,26 @@
         return;
       }
 
-      if (status) status.innerHTML = `<span style="color:var(--text-secondary)">جاري الحفظ المشفر في Supabase Vault...</span>`;
+      if (status) status.innerHTML = `<span style="color:var(--text-secondary)">جاري الحفظ المشفر...</span>`;
 
       try {
+        localStorage.setItem("tms_gemini_key", key); // الحفظ محلياً لدعم الـ Fallback المباشر
+
         const sb = getSupabase();
-        if (!sb) throw new Error("Supabase غير متصل");
+        if (sb && !currentUser.localOnly) {
+          const { error } = await sb.rpc("set_groq_key", { p_key: key });
+          if (error) console.warn("Supabase Vault save skipped or failed:", error);
+        }
 
-        const { error } = await sb.rpc("set_groq_key", { p_key: key });
-        if (error) throw error;
-
-        if (status) status.innerHTML = `<span style="color:var(--success);font-weight:600"><i class="fas fa-check-circle"></i> تم حفظ المفتاح بنجاح وأمان في Supabase Vault!</span>`;
-        showToast("تم تحديث مفتاح Gemini بنجاح في Supabase");
+        if (status) status.innerHTML = `<span style="color:var(--success);font-weight:600"><i class="fas fa-check-circle"></i> تم حفظ المفتاح بنجاح!</span>`;
+        showToast("تم تحديث مفتاح Gemini بنجاح");
         input.value = "";
         setTimeout(() => {
           closeGroqKeyModal();
         }, 1500);
       } catch (err) {
         console.error("Vault save error:", err);
-        if (status) status.innerHTML = `<span style="color:var(--danger)">فشل الحفظ: ${err.message || "خطأ في الاتصال"}</span>`;
+        if (status) status.innerHTML = `<span style="color:var(--danger)">فشل الحفظ: ${err.message || "خطأ"}</span>`;
       }
     }
 
