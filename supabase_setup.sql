@@ -89,6 +89,19 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION public.get_groq_key_from_vault()
+RETURNS TEXT
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_secret TEXT;
+BEGIN
+  SELECT secret INTO v_secret FROM vault.decrypted_secrets WHERE name = 'groq_api_key';
+  RETURN v_secret;
+END;
+$$;
+
 -- (اختياري) السماح بالمشاهدة المجهولة في حال أردت أن يقوم الزوار بالقراءة فقط:
 -- CREATE POLICY "Enable read access for all users" ON public.members FOR SELECT USING (true);
 -- CREATE POLICY "Enable read access for all users" ON public.tasks FOR SELECT USING (true);
