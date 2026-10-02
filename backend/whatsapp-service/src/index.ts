@@ -4,6 +4,7 @@ import { config } from './config.js';
 import { authMiddleware } from './middleware/auth.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { whatsappRouter } from './routes/whatsapp.js';
+import { pushRouter } from './routes/push.js';
 
 export const app = express();
 
@@ -26,17 +27,13 @@ app.use(
 // JSON body parser with size limit
 app.use(express.json({ limit: '1mb' }));
 
-// Health check endpoint (public, unauthenticated)
+// Public Routes
 app.get('/health', (_req, res) => {
-  res.json({
-    status: 'ok',
-    service: 'wasla-whatsapp-service',
-    isMock: true,
-    configured: true,
-    port: config.port,
-    timestamp: new Date().toISOString(),
-  });
+  res.json({ status: 'ok', service: 'wasla-whatsapp-service' });
 });
+
+// Push endpoints (they manage their own auth inside, or public key retrieval)
+app.use(pushRouter);
 
 // Auth middleware protecting all WhatsApp routes
 app.use(authMiddleware);

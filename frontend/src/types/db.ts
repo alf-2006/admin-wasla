@@ -91,6 +91,7 @@ export interface Database {
     Functions: {
       lookup_member_by_email: { Args: { p_email: string }; Returns: MemberLookupRow[] };
       approve_task_submission: { Args: { p_task_id: number; p_member_id: number; p_bonus?: number }; Returns: ApproveTaskResult };
+      save_push_subscription: { Args: { p_member_id: number; p_email: string; p_subscription: Record<string, any> }; Returns: boolean };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;

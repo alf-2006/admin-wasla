@@ -6,15 +6,14 @@ import { VitePWA } from 'vite-plugin-pwa'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), tailwindcss(), VitePWA({
+    strategies: 'injectManifest',
+    srcDir: 'src',
+    filename: 'sw.ts',
     registerType: 'autoUpdate',
     includeAssets: ['wasla-logo.png', 'icons/icon-192.png', 'icons/icon-512.png'],
     manifest: false,
-    workbox: {
-      navigateFallback: '/index.html',
-      runtimeCaching: [
-        { urlPattern: /^https:\/\/[^/]+\.supabase\.co\//, handler: 'NetworkOnly' },
-        { urlPattern: ({ request }) => request.mode === 'navigate', handler: 'NetworkFirst' },
-      ],
-    },
+    injectManifest: {
+      maximumFileSizeToCacheInBytes: 3000000,
+    }
   })],
 })
