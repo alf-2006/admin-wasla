@@ -1,0 +1,75 @@
+import { useState } from 'react';
+import { Cloud, QrCode, ShieldAlert } from 'lucide-react';
+import WhatsAppCloudPage from './WhatsAppCloudPage';
+import WhatsAppQRPage from './WhatsAppQRPage';
+
+type TabKey = 'qr' | 'cloud';
+
+export default function WhatsAppTasksPage() {
+  const [activeTab, setActiveTab] = useState<TabKey>('qr');
+
+  return (
+    <div className="grid gap-6" dir="rtl">
+      {/* Policy and Ban Risk Disclaimer Banner */}
+      <section
+        role="alert"
+        aria-label="تنبيه سياسات واتساب والأمان"
+        className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/20 dark:text-amber-200"
+      >
+        <div className="flex items-start gap-3">
+          <ShieldAlert className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" size={20} aria-hidden="true" />
+          <div className="text-sm leading-6">
+            <h2 className="text-base font-bold">تنبيه سياسات واتساب ومخاطر حظر الحسابات</h2>
+            <p className="mt-1">
+              طريقة ربط QR عبر مكتبات الويب (مثل Baileys) غير رسمية وغير معتمدة من Meta، واستخدامها في الإرسال المؤتمت قد يعرّض رقم الهاتف للحظر والإيقاف النهائي بموجب سياسات WhatsApp Business.
+            </p>
+            <p className="mt-1">
+              هذا التبويب مخصص كنموذج تجريبي معزول للاختبار الإداري الداخلي فقط. في حال الرغبة في إرسال إشعارات موثوقة للإنتاج الفعلي، يُرجى استخدام تبويب <strong>الربط السحابي المعتمد (Meta Cloud API)</strong>.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Tab Navigation */}
+      <div className="flex gap-2 overflow-x-auto border-b border-[var(--border)]" role="tablist" aria-label="أنماط ربط واتساب">
+        <button
+          type="button"
+          role="tab"
+          id="tab-qr"
+          aria-selected={activeTab === 'qr'}
+          aria-controls="panel-qr"
+          onClick={() => setActiveTab('qr')}
+          className={`flex min-h-[44px] items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-bold transition-colors ${
+            activeTab === 'qr'
+              ? 'border-[var(--primary)] text-[var(--primary)]'
+              : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text)]'
+          }`}
+        >
+          <QrCode size={18} aria-hidden="true" />
+          <span>الربط التجريبي عبر QR (Baileys Mock)</span>
+        </button>
+        <button
+          type="button"
+          role="tab"
+          id="tab-cloud"
+          aria-selected={activeTab === 'cloud'}
+          aria-controls="panel-cloud"
+          onClick={() => setActiveTab('cloud')}
+          className={`flex min-h-[44px] items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-bold transition-colors ${
+            activeTab === 'cloud'
+              ? 'border-[var(--primary)] text-[var(--primary)]'
+              : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text)]'
+          }`}
+        >
+          <Cloud size={18} aria-hidden="true" />
+          <span>الربط السحابي المعتمد (Meta Cloud API)</span>
+        </button>
+      </div>
+
+      {/* Tab Content Panels */}
+      <div id={activeTab === 'qr' ? 'panel-qr' : 'panel-cloud'} role="tabpanel" aria-labelledby={activeTab === 'qr' ? 'tab-qr' : 'tab-cloud'}>
+        {activeTab === 'qr' ? <WhatsAppQRPage /> : <WhatsAppCloudPage />}
+      </div>
+    </div>
+  );
+}

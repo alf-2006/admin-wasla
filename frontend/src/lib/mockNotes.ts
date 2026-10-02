@@ -1,0 +1,40 @@
+import type { Note } from '../types/db';
+
+export const DEFAULT_NOTES: Note[] = [
+  {
+    id: 1,
+    created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
+    text: 'تأكيد موعد نزول الإسكندرية القادم يوم السبت الساعة 10:00 صباحاً في مقر الأكاديمية. يرجى من الجميع الحضور مبكراً.',
+    author: 'أحمد عيد',
+    author_role: 'Team Lead',
+    date: '2026-09-27',
+    team: null,
+    target_team: null,
+    target_member_id: null,
+    target_name: null,
+  },
+  {
+    id: 2,
+    created_at: new Date(Date.now() - 86400000).toISOString(),
+    text: 'يرجى من فريق التصميم تجهيز كافة الأيقونات والـ Design Tokens بصيغة SVG متجهة قبل نهاية الأسبوع.',
+    author: 'إدارة التقنية',
+    author_role: 'Admin',
+    date: '2026-09-28',
+    team: null,
+    target_team: 'التصميم',
+    target_member_id: null,
+    target_name: null,
+  },
+  {
+    id: 3,
+    created_at: new Date().toISOString(),
+    text: 'متابعة تجهيز العرض التقديمي (Pitch Deck) وتنسيق القاعات الخاصة بالفعالية.',
+    author: 'إدارة العمليات',
+    author_role: 'Admin',
+    date: '2026-09-29',
+    team: null,
+    target_team: null,
+    target_member_id: 5,
+    target_name: 'يوسف إبراهيم',
+  },
+];
