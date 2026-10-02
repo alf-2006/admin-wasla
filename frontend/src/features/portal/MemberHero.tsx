@@ -1,4 +1,4 @@
-import { Laptop, MapPin, Bell, Download } from 'lucide-react';
+import { Laptop, MapPin, Bell, Download, CheckCircle2 } from 'lucide-react';
 import type { Member } from '../../types/db';
 import { usePWA } from '../../hooks/usePWA';
 
@@ -19,11 +19,20 @@ export function MemberHero({ member, onToggleField, isUpdating }: { member: Memb
               <Download size={14} /> تثبيت التطبيق
             </button>
           )}
-          {!isSubscribed && (
-            <button onClick={subscribeToPush} className="flex min-h-9 items-center gap-2 rounded-xl bg-blue-100 text-blue-900 px-3 text-xs font-bold hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-200">
-              <Bell size={14} /> تفعيل الإشعارات
-            </button>
-          )}
+          
+          <button 
+            onClick={!isSubscribed ? subscribeToPush : undefined} 
+            disabled={isSubscribed}
+            className={`flex min-h-9 items-center gap-2 rounded-xl px-3 text-xs font-bold transition-colors ${
+              isSubscribed 
+                ? 'bg-emerald-100 text-emerald-900 opacity-90 cursor-default dark:bg-emerald-900/40 dark:text-emerald-200' 
+                : 'bg-blue-100 text-blue-900 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-200 cursor-pointer'
+            }`}
+          >
+            {isSubscribed ? <CheckCircle2 size={14} /> : <Bell size={14} />} 
+            {isSubscribed ? 'الإشعارات مفعلة' : 'تفعيل الإشعارات'}
+          </button>
+
         </div>
       </div>
       <div className="grid gap-2 border-t border-[var(--border)] pt-4 sm:grid-cols-2">
