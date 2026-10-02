@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import { twMerge } from 'tailwind-merge';
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
@@ -19,7 +20,12 @@ export function Button({ variant = 'primary', icon, fullOnMobile = false, classN
   return (
     <button
       {...props}
-      className={`inline-flex min-h-[var(--touch)] items-center justify-center gap-2 rounded-xl border px-4 py-2 text-sm font-extrabold transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${variants[variant]} ${fullOnMobile ? 'w-full sm:w-auto' : ''} ${className}`}
+      className={twMerge(
+        'inline-flex min-h-[var(--touch)] items-center justify-center gap-2 rounded-xl border px-4 py-2 text-sm font-extrabold transition-colors disabled:cursor-not-allowed disabled:opacity-60',
+        variants[variant],
+        fullOnMobile && 'w-full sm:w-auto',
+        className
+      )}
     >
       {icon}<span>{children}</span>
     </button>
