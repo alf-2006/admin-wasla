@@ -18,13 +18,7 @@ import type { Member, MemberInsert, MemberUpdate } from '../../types/db';
 export const PUBLIC_MEMBER_COLUMNS =
   'id, created_at, email, full_name, completion_rank, bio, device, meeting_attendance, work_status, can_go_alexandria' as const;
 
-import { mockMembers } from './mockData';
-
 const getMembers = async (): Promise<Member[]> => {
-  if (import.meta.env.DEV) {
-    return mockMembers;
-  }
-
   const { data: sessionData } = await supabase.auth.getSession();
   const query = supabase.from(TABLES.members);
 

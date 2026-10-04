@@ -56,21 +56,23 @@ export function Drawer({
         role="dialog"
         aria-modal="true"
         aria-label={label ?? title}
-        className="absolute inset-y-0 end-0 flex w-full max-w-md flex-col border-s border-[var(--border)] bg-[var(--surface)] text-[var(--text)] shadow-[var(--shadow-lg)]"
+        className="absolute inset-y-0 end-0 flex w-full max-w-md min-w-0 flex-col border-s border-[var(--border)] bg-[var(--surface)] text-[var(--text)] shadow-[var(--shadow-lg)]"
         style={{ animation: 'app-drawer-in 180ms ease' }}
       >
-        <header className="flex min-h-16 shrink-0 items-center justify-between gap-3 border-b border-[var(--border)] px-4 py-3">
-          <h2 className="truncate text-base font-black">{title}</h2>
+        <header className="flex min-h-16 shrink-0 items-center justify-between gap-4 border-b border-[var(--border)] px-4 py-3">
+          <h2 className="min-w-0 flex-1 break-words text-base font-black leading-snug text-[var(--text)]" title={title}>
+            {title}
+          </h2>
           <button
             type="button"
             onClick={onClose}
-            className="grid size-11 shrink-0 place-items-center rounded-xl border border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--surface-2)]"
+            className="grid size-11 shrink-0 place-items-center rounded-xl border border-[var(--border)] text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-2)] hover:text-[var(--text)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--link)]"
             aria-label="إغلاق"
           >
             <X size={20} aria-hidden="true" />
           </button>
         </header>
-        <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-5">{children}</div>
+        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6">{children}</div>
       </section>
     </div>
   );

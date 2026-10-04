@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { 
   Laptop, MapPin, Phone, Award, CheckCircle2, 
-  XCircle, Edit2, Shield, FileText, Briefcase
+  XCircle, Edit2, Shield, FileText, Briefcase, Trash2
 } from 'lucide-react';
 import type { Member, Note } from '../../types/db';
 import { Modal } from '../../components/ui/Modal';
@@ -15,6 +15,7 @@ interface MemberProfileModalProps {
   onClose: () => void;
   onEdit?: (member: Member) => void;
   onAdjustBonus?: (member: Member) => void;
+  onDelete?: (member: Member) => void;
 }
 
 export function MemberProfileModal({
@@ -24,6 +25,7 @@ export function MemberProfileModal({
   onClose,
   onEdit,
   onAdjustBonus,
+  onDelete,
 }: MemberProfileModalProps) {
   const bonus = useMemo(() => {
     if (!member) return 0;
@@ -50,7 +52,7 @@ export function MemberProfileModal({
   ];
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="الملف الشخصي للعضو" maxWidth="lg">
+    <Modal isOpen={isOpen} onClose={onClose} title="الملف الشخصي للعضو" maxWidth="3xl">
       <div className="grid gap-5 text-start" dir="rtl">
         {/* Header Summary */}
         <div className="flex flex-col gap-4 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -105,7 +107,7 @@ export function MemberProfileModal({
               </div>
               <div className="min-w-0 flex-1">
                 <span className="block text-xs font-bold text-[var(--text-muted)]">{label}</span>
-                <span className="truncate text-sm font-semibold text-[var(--text)] block" dir={dir}>{val}</span>
+                <span className="text-sm font-semibold text-[var(--text)] block break-words" dir={dir}>{val}</span>
               </div>
             </div>
           ))}
@@ -151,21 +153,37 @@ export function MemberProfileModal({
         </div>
 
         {/* Modal Actions */}
-        <div className="flex flex-col-reverse gap-2 border-t border-[var(--border)] pt-4 sm:flex-row sm:justify-end">
-          <Button variant="secondary" onClick={onClose} fullOnMobile className="min-h-11">
-            إغلاق
-          </Button>
-          {onEdit && (
-            <Button
+        <div className="flex flex-col-reverse gap-2 border-t border-[var(--border)] pt-4 sm:flex-row sm:justify-between sm:items-center">
+          <div className="flex gap-2">
+            <Button variant="secondary" onClick={onClose} fullOnMobile className="min-h-11">
+              إغلاق
+            </Button>
+            {onEdit && (
+              <Button
+                onClick={() => {
+                  onClose();
+                  onEdit(member);
+                }}
+                icon={<Edit2 size={16} />}
+                fullOnMobile
+                className="min-h-11"
+              >
+                تعديل البيانات
+              </Button>
+            )}
+          </div>
+          {onDelete && (
+            <Button 
+              variant="secondary" 
               onClick={() => {
                 onClose();
-                onEdit(member);
-              }}
-              icon={<Edit2 size={16} />}
-              fullOnMobile
-              className="min-h-11"
+                onDelete(member);
+              }} 
+              icon={<Trash2 size={16} />} 
+              fullOnMobile 
+              className="text-[var(--danger)] border-red-200 hover:bg-red-50 hover:border-red-300 dark:border-red-900/30 dark:hover:bg-red-950/30 min-h-11"
             >
-              تعديل بيانات العضو
+              حذف العضو
             </Button>
           )}
         </div>

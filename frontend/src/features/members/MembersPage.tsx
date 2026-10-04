@@ -1,19 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, Users, UserPlus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, UserPlus, Users } from 'lucide-react';
 import type { Member, MemberInsert } from '../../types/db';
 import { useMembers, useAddMember, useUpdateMember, useDeleteMember } from './api';
 import { useNotes } from '../notes/api';
 import { Button } from '../../components/ui/Button';
-import { PageHeader } from '../../components/ui/PageHeader';
 import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { CardSkeletons } from '../../components/ui/Skeleton';
 import { ErrorState } from '../../components/ui/ErrorState';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { MemberToolbar } from './MemberToolbar';
 import type { MemberFiltersValue } from './MemberToolbar';
-import { MemberTable } from './MemberTable';
 import { MemberCards } from './MemberCards';
-import { MemberDrawer } from './MemberDrawer';
+import { MemberProfileModal } from './MemberProfileModal';
 import { MemberEditor } from './MemberEditor';
 import { MemberExcelActions } from './MemberExcelActions';
 import { sanitizeText, isValidEmail, isValidEgyptianPhone } from '../../lib/validators';
@@ -171,55 +169,73 @@ export default function MembersPage() {
 
   const askDelete = (member: Member) => { setDrawerMember(null); setMemberToDelete(member); };
 
-  return <section className="flex min-w-0 w-full flex-col gap-4 sm:gap-6" id="page-members" dir="rtl">
-    <PageHeader
-      icon={<Users size={24} aria-hidden="true" />}
-      title="دليل وجاهزية الأعضاء"
-      description={<>سجل الحالة التشغيلية، الأجهزة، وتوفر الكوادر للنزول الميداني. العدد الحالي: <span className="font-bold text-[var(--link)]">{query.data?.length ?? 0}</span> عضو.</>}
-      actions={<><Button onClick={openNew} icon={<UserPlus size={18} aria-hidden="true" />} fullOnMobile>تسجيل عضو جديد</Button><MemberExcelActions members={query.data ?? []} /></>}
-    />
+  return <section className="flex min-w-0 w-full flex-col gap-6" id="page-members" dir="rtl">
+    
+    {/* Brand Header */}
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 rounded-[var(--radius-lg)] bg-[var(--surface)] p-6 shadow-[var(--shadow-sm)] border border-[var(--border)]">
+      <div className="flex flex-col gap-2">
+        <h1 className="text-3xl font-bold text-[var(--text)] flex items-center gap-3 m-0">
+          <span className="flex items-center justify-center size-12 rounded-[var(--radius)] bg-[var(--primary-soft)] text-[var(--primary)]">
+            <Users size={24} />
+          </span>
+          دليل وجاهزية الأعضاء
+        </h1>
+        <p className="text-[var(--text-muted)] mt-1">
+          سجل الحالة التشغيلية، الأجهزة، وتوفر الكوادر للنزول الميداني. العدد الحالي: <span className="font-bold text-[var(--primary)]">{query.data?.length ?? 0}</span> عضو.
+        </p>
+      </div>
+      <div className="flex items-center gap-3 shrink-0">
+        <MemberExcelActions members={query.data ?? []} />
+        <Button onClick={openNew} icon={<UserPlus size={18} aria-hidden="true" />} variant="primary">
+          تسجيل عضو جديد
+        </Button>
+      </div>
+    </div>
 
-    <div className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-sm)] sm:p-5">
+    {/* Filters Section */}
+    <div className="rounded-[var(--radius-lg)] bg-[var(--surface)] p-4 shadow-[var(--shadow-sm)] border border-[var(--border)]">
       <MemberToolbar workConditions={workConditions} value={filters} onChange={setFilters} resultCount={visibleMembers.length} totalCount={query.data?.length ?? 0} />
     </div>
 
-    <div className="min-w-0 w-full overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-sm)]">
-      {query.isLoading ? <div className="p-6"><CardSkeletons count={4} /></div>
-        : query.isError ? <div className="p-6"><ErrorState message="تعذر تحميل سجلات الأعضاء." onRetry={() => { void query.refetch(); }} /></div>
+    {/* Main Content Area */}
+    <div className="min-w-0 w-full rounded-[var(--radius-lg)] bg-transparent">
+      {query.isLoading ? <div className="py-6"><CardSkeletons count={6} /></div>
+        : query.isError ? <div className="py-6"><ErrorState message="تعذر تحميل سجلات الأعضاء." onRetry={() => { void query.refetch(); }} /></div>
           : visibleMembers.length ? <>
-            <div className="hidden md:block">
-              <MemberTable members={pageMembers} onView={setDrawerMember} onEdit={openEdit} onDelete={askDelete} />
-            </div>
-            <div className="md:hidden">
+            <div className="mb-6">
               <MemberCards members={pageMembers} onView={setDrawerMember} onEdit={openEdit} onDelete={askDelete} />
             </div>
-            <div className="flex flex-wrap items-center gap-4 border-t border-[var(--border)] px-4 py-3" aria-label="ترقيم الصفحات">
-              <label className="flex items-center gap-2 text-xs font-bold text-[var(--text-muted)]" htmlFor="member-page-size">
-                لكل صفحة
-                <select
-                  id="member-page-size"
-                  value={pageSize}
-                  onChange={(event) => setPageSize(Number(event.target.value))}
-                  className="h-[var(--touch)] rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--surface-2)] px-3 text-sm font-bold text-[var(--text)] outline-none focus-visible:border-[var(--primary-hover)]"
-                >
-                  {PAGE_SIZES.map((size) => <option key={size} value={size}>{size}</option>)}
-                </select>
-              </label>
-              <p className="text-xs font-bold text-[var(--text-muted)] tabular-nums" role="status">
-                عرض {rangeStart}–{rangeEnd} من {visibleMembers.length}
-              </p>
-              <span className="ms-auto flex items-center gap-2">
+            
+            {/* Pagination */}
+            <div className="flex flex-wrap items-center justify-between gap-4 rounded-[var(--radius-lg)] bg-[var(--surface)] shadow-[var(--shadow-sm)] border border-[var(--border)] px-6 py-4" aria-label="ترقيم الصفحات">
+              <div className="flex items-center gap-4">
+                <label className="flex items-center gap-2 text-sm font-bold text-[var(--text-muted)]" htmlFor="member-page-size">
+                  لكل صفحة
+                  <select
+                    id="member-page-size"
+                    value={pageSize}
+                    onChange={(event) => setPageSize(Number(event.target.value))}
+                    className="h-[var(--touch)] rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--surface-2)] px-3 text-sm font-bold text-[var(--text)] outline-none focus-visible:border-[var(--primary)]"
+                  >
+                    {PAGE_SIZES.map((size) => <option key={size} value={size}>{size}</option>)}
+                  </select>
+                </label>
+                <p className="text-sm font-bold text-[var(--text-muted)] tabular-nums" role="status">
+                  عرض {rangeStart}–{rangeEnd} من {visibleMembers.length}
+                </p>
+              </div>
+              <span className="flex items-center gap-3">
                 <button type="button" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={safePage === 0} className="inline-flex size-[var(--touch)] items-center justify-center rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] hover:bg-[var(--surface-2)] disabled:opacity-50" aria-label="الصفحة السابقة">
-                  <ChevronRight size={17} aria-hidden="true" />
+                  <ChevronRight size={18} aria-hidden="true" />
                 </button>
-                <span className="text-xs font-black text-[var(--text)] tabular-nums" aria-current="page">صفحة {safePage + 1} من {totalPages}</span>
+                <span className="text-sm font-bold text-[var(--text)] tabular-nums" aria-current="page">صفحة {safePage + 1} من {totalPages}</span>
                 <button type="button" onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))} disabled={safePage >= totalPages - 1} className="inline-flex size-[var(--touch)] items-center justify-center rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] hover:bg-[var(--surface-2)] disabled:opacity-50" aria-label="الصفحة التالية">
-                  <ChevronLeft size={17} aria-hidden="true" />
+                  <ChevronLeft size={18} aria-hidden="true" />
                 </button>
               </span>
             </div>
           </>
-            : <div className="p-12"><EmptyState title="لا يوجد تطابق" description="لم نجد أي عضو يطابق معايير التصفية." /></div>}
+            : <div className="py-12"><EmptyState title="لا يوجد تطابق" description="لم نجد أي عضو يطابق معايير التصفية." /></div>}
     </div>
 
     <ConfirmDialog
@@ -234,7 +250,8 @@ export default function MembersPage() {
       pendingLabel="جارٍ الحذف..."
     />
 
-    <MemberDrawer
+    <MemberProfileModal
+      isOpen={Boolean(drawerMember)}
       member={drawerMember}
       notes={notesQuery.data ?? []}
       onClose={() => setDrawerMember(null)}

@@ -1,37 +1,37 @@
 :root {
   color-scheme: light;
   
-  /* Existing Purple Brand */
-  --primary: #6d28d9;
-  --primary-hover: #5b21b6;
-  --primary-soft: #f3e8ff;
-  --primary-ink: #4c1d95;
-  --on-primary: #fff;
-  --link: #6d28d9;
+  /* Wasla Tech Official Brand */
+  --primary: #6D28D9;
+  --primary-hover: #5B21B6;
+  --primary-soft: #F3E8FF;
+  --primary-ink: #4C1D95;
+  --on-primary: #FFFFFF;
+  --link: #6D28D9;
   
   /* Semantic */
-  --success: #10b981;
-  --warning: #f59e0b;
-  --danger: #ef4444;
-  --info: #06b6d4;
+  --success: #10B981;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+  --info: #06B6D4;
   
-  /* Surface / Background (Editorial Design System) */
-  --bg: #F4F1EA;
-  --surface: #ffffff;
-  --surface-2: #e9e5dc;
-  --bg-elevated: #ffffff;
-  --card: #ffffff;
-  --card-hover: #f9f8f6;
+  /* Surface / Background (Wasla Palette) */
+  --bg: #F3F4F6;
+  --surface: #FFFFFF;
+  --surface-2: #F8FAFC;
+  --bg-elevated: #FFFFFF;
+  --card: #FFFFFF;
+  --card-hover: #F8FAFC;
   
-  /* Text (Editorial Design System) */
-  --text: #14110F;
-  --text-2: #463f3a;
-  --text-secondary: #463f3a;
-  --text-muted: #6b645e;
-  --text-inverse: #ffffff;
+  /* Text */
+  --text: #0F172A;
+  --text-2: #334155;
+  --text-secondary: #475569;
+  --text-muted: #64748B;
+  --text-inverse: #FFFFFF;
   
   /* Borders */
-  --border: #dcd9d2;
+  --border: #E2E8F0;
   
   /* Layout */
   --touch: 44px;
@@ -43,11 +43,12 @@
   
   /* Radius */
   --radius-xs: 6px;
-  --radius-sm: 10px; /* controls */
+  --radius-sm: 8px; /* controls */
   --radius: 12px;    /* cards */
   --radius-lg: 16px;
+  --radius-full: 9999px;
   
-  /* Spacing Scale (4/8/12/16/24/32/48) mapped for existing vars */
+  /* Spacing Scale */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -57,9 +58,9 @@
   --space-7: 48px;
   
   /* Shadows */
-  --shadow-sm: 0 1px 2px rgb(0 0 0 / 4%);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 6%);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 7%);
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
   
   /* Typography Scale */
   --fs-sm: 0.875rem;
@@ -78,24 +79,24 @@
 
 [data-theme="dark"] {
   color-scheme: dark;
-  --primary: #8b5cf6;
-  --primary-hover: #a78bfa;
+  --primary: #8B5CF6;
+  --primary-hover: #A78BFA;
   --primary-soft: rgba(139, 92, 246, 0.16);
-  --primary-ink: #ddd6fe;
-  --link: #a78bfa;
+  --primary-ink: #DDD6FE;
+  --link: #A78BFA;
   
-  --bg: #14110F;
-  --surface: #1e1b19;
-  --surface-2: #2a2522;
-  --bg-elevated: #1e1b19;
-  --card: #1e1b19;
-  --card-hover: #2a2522;
+  --bg: #0F172A;
+  --surface: #1E293B;
+  --surface-2: #334155;
+  --bg-elevated: #1E293B;
+  --card: #1E293B;
+  --card-hover: #334155;
   
-  --text: #F4F1EA;
-  --text-2: #c4beb9;
-  --text-secondary: #c4beb9;
-  --text-muted: #9e9690;
-  --text-inverse: #14110F;
+  --text: #F8FAFC;
+  --text-2: #E2E8F0;
+  --text-secondary: #CBD5E1;
+  --text-muted: #94A3B8;
+  --text-inverse: #0F172A;
   
-  --border: #38332f;
+  --border: #334155;
 }
