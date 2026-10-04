@@ -188,19 +188,19 @@ export default function MembersPage() {
         : query.isError ? <div className="p-6"><ErrorState message="تعذر تحميل سجلات الأعضاء." onRetry={() => { void query.refetch(); }} /></div>
           : visibleMembers.length ? <>
             <div className="hidden md:block">
-              <MemberTable members={pageMembers} startIndex={safePage * pageSize} onView={setDrawerMember} onEdit={openEdit} onDelete={askDelete} />
+              <MemberTable members={pageMembers} onView={setDrawerMember} onEdit={openEdit} onDelete={askDelete} />
             </div>
             <div className="md:hidden">
               <MemberCards members={pageMembers} onView={setDrawerMember} onEdit={openEdit} onDelete={askDelete} />
             </div>
-            <div className="member-pagination border-t border-[var(--border)] px-4 py-3" aria-label="ترقيم الصفحات">
+            <div className="flex flex-wrap items-center gap-4 border-t border-[var(--border)] px-4 py-3" aria-label="ترقيم الصفحات">
               <label className="flex items-center gap-2 text-xs font-bold text-[var(--text-muted)]" htmlFor="member-page-size">
                 لكل صفحة
                 <select
                   id="member-page-size"
                   value={pageSize}
                   onChange={(event) => setPageSize(Number(event.target.value))}
-                  className="min-h-[44px] rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 text-sm font-bold text-[var(--text)]"
+                  className="h-[var(--touch)] rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--surface-2)] px-3 text-sm font-bold text-[var(--text)] outline-none focus-visible:border-[var(--primary-hover)]"
                 >
                   {PAGE_SIZES.map((size) => <option key={size} value={size}>{size}</option>)}
                 </select>
@@ -209,11 +209,11 @@ export default function MembersPage() {
                 عرض {rangeStart}–{rangeEnd} من {visibleMembers.length}
               </p>
               <span className="ms-auto flex items-center gap-2">
-                <button type="button" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={safePage === 0} className="member-page-btn" aria-label="الصفحة السابقة">
+                <button type="button" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={safePage === 0} className="inline-flex size-[var(--touch)] items-center justify-center rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] hover:bg-[var(--surface-2)] disabled:opacity-50" aria-label="الصفحة السابقة">
                   <ChevronRight size={17} aria-hidden="true" />
                 </button>
                 <span className="text-xs font-black text-[var(--text)] tabular-nums" aria-current="page">صفحة {safePage + 1} من {totalPages}</span>
-                <button type="button" onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))} disabled={safePage >= totalPages - 1} className="member-page-btn" aria-label="الصفحة التالية">
+                <button type="button" onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))} disabled={safePage >= totalPages - 1} className="inline-flex size-[var(--touch)] items-center justify-center rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] hover:bg-[var(--surface-2)] disabled:opacity-50" aria-label="الصفحة التالية">
                   <ChevronLeft size={17} aria-hidden="true" />
                 </button>
               </span>

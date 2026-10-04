@@ -54,6 +54,8 @@ export function WorkStatusChip({ status }: { status: string | null | undefined }
   return <StatusChip tone={active ? 'success' : 'muted'}>{active ? 'نشط' : 'غير نشط'}</StatusChip>;
 }
 
+import { createPortal } from 'react-dom';
+
 /** قائمة كباب (⋮): عرض / تعديل / حذف — أزرار ≥44px. */
 export function MemberRowMenu({
   member,
@@ -67,32 +69,51 @@ export function MemberRowMenu({
   onDelete: (member: Member) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const rootRef = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState({ top: 0, left: 0, width: 0 });
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const portalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
     const handlePointer = (event: PointerEvent) => {
-      if (rootRef.current && !rootRef.current.contains(event.target as Node)) setOpen(false);
+      if (portalRef.current && !portalRef.current.contains(event.target as Node) && !btnRef.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
     };
+    const handleScroll = () => setOpen(false);
     const handleKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') setOpen(false);
     };
     document.addEventListener('pointerdown', handlePointer);
     document.addEventListener('keydown', handleKey);
+    window.addEventListener('scroll', handleScroll, true);
     return () => {
       document.removeEventListener('pointerdown', handlePointer);
       document.removeEventListener('keydown', handleKey);
+      window.removeEventListener('scroll', handleScroll, true);
     };
-  }, [open ]);
+  }, [open]);
+
+  const toggle = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    if (!open && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      setPos({ top: rect.bottom + 6, left: rect.left, width: rect.width });
+      setOpen(true);
+    } else {
+      setOpen(false);
+    }
+  };
 
   const itemClass =
     'flex min-h-[44px] w-full items-center gap-2 whitespace-nowrap rounded-lg px-3 text-sm font-bold text-[var(--text)] hover:bg-[var(--surface-2)]';
 
   return (
-    <div ref={rootRef} className="relative inline-flex">
+    <>
       <button
+        ref={btnRef}
         type="button"
-        onClick={(event) => { event.stopPropagation(); setOpen((v) => !v); }}
+        onClick={toggle}
         aria-label={`خيارات ${member.full_name}`}
         aria-haspopup="menu"
         aria-expanded={open}
@@ -100,8 +121,14 @@ export function MemberRowMenu({
       >
         <MoreVertical size={18} aria-hidden="true" />
       </button>
-      {open && (
-        <div role="menu" aria-label={`خيارات ${member.full_name}`} className="member-kebab-menu absolute end-0 top-[calc(100%+6px)] z-20 w-44 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-1.5 shadow-[var(--shadow-lg)]" style={{ animation: 'app-kebab-in 140ms ease' }}>
+      {open && createPortal(
+        <div 
+          ref={portalRef}
+          role="menu" 
+          aria-label={`خيارات ${member.full_name}`} 
+          className="fixed z-[var(--z-toast)] w-44 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-1.5 shadow-[var(--shadow-lg)]" 
+          style={{ animation: 'app-kebab-in 140ms ease', top: pos.top, left: pos.left + pos.width - 176 /* 176 is w-44 in px */ }}
+        >
           <button type="button" role="menuitem" onClick={(e) => { e.stopPropagation(); setOpen(false); onView(member); }} className={itemClass}>
             <Eye size={16} aria-hidden="true" /> عرض التفاصيل
           </button>
@@ -116,8 +143,9 @@ export function MemberRowMenu({
           >
             <Trash2 size={16} aria-hidden="true" /> حذف
           </button>
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   );
 }
