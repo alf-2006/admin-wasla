@@ -14,11 +14,11 @@ export default function MainLayout() {
     || 'المسؤول الإداري';
 
   return (
-    <div className="flex min-h-dvh flex-col bg-[var(--bg)] text-[var(--text)] lg:flex-row" dir="rtl">
+    <div className="flex min-h-[100dvh] bg-[var(--bg)] text-[var(--text)]" dir="rtl">
       <AppSidebar userName={userName} drawerOpen={drawerOpen} onCloseDrawer={closeDrawer} />
-      <div className="flex min-h-dvh min-w-0 flex-1 flex-col">
-        <AdminHeader path={pathname} userName={userName} isDark={theme === 'dark'} onToggleTheme={toggle} onOpenMenu={openDrawer} />
-        <main className="mx-auto w-full max-w-[var(--content-max)] flex-1 px-4 pt-5 sm:px-6 sm:pt-6 lg:px-8 pb-8">
+      <div className="flex min-w-0 flex-1 flex-col min-h-[100dvh]">
+        <AdminHeader path={pathname} userName={userName} isDark={theme === 'dark'} drawerOpen={drawerOpen} onToggleTheme={toggle} onOpenMenu={openDrawer} />
+        <main className="mx-auto w-full max-w-[var(--content-max)] flex-1 px-4 py-4 md:px-6 md:py-6">
           <Outlet />
         </main>
       </div>

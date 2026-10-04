@@ -26,30 +26,31 @@ interface AdminHeaderProps {
   path: string;
   userName: string;
   isDark: boolean;
+  drawerOpen?: boolean;
   onToggleTheme: () => void;
   onOpenMenu: () => void;
 }
 
-export function AdminHeader({ path, userName, isDark, onToggleTheme, onOpenMenu }: AdminHeaderProps) {
+export function AdminHeader({ path, userName, isDark, drawerOpen = false, onToggleTheme, onOpenMenu }: AdminHeaderProps) {
   const title = pageTitles[path] ?? pageTitles['/admin'];
   const parent = pageParents[path];
   return (
-    <header className="sticky top-0 z-[var(--z-sticky)] flex h-[calc(var(--header-h)+env(safe-area-inset-top))] items-center justify-between gap-3 border-b border-[var(--border)] bg-[var(--surface)] px-4 pt-[env(safe-area-inset-top)] sm:px-6">
+    <header className="sticky top-0 z-[var(--z-sticky)] flex h-[calc(var(--header-h)+env(safe-area-inset-top))] items-center justify-between gap-3 border-b border-[var(--border)] bg-[var(--surface)] px-4 pt-[env(safe-area-inset-top)] md:px-6">
       <div className="flex min-w-0 items-center gap-2">
-        <button type="button" onClick={onOpenMenu} className="grid size-11 shrink-0 place-items-center rounded-xl border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] hover:bg-[var(--surface-2)] lg:hidden" aria-label="فتح القائمة الرئيسية" aria-haspopup="dialog">
+        <button type="button" onClick={onOpenMenu} aria-expanded={drawerOpen} className="grid size-11 shrink-0 place-items-center rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] hover:bg-[var(--surface-2)] lg:hidden" aria-label="فتح القائمة الرئيسية" aria-haspopup="dialog">
           <Menu size={20} aria-hidden="true" />
         </button>
         <div className="min-w-0 text-start">
-          <p className="truncate text-xs font-semibold text-[var(--text-muted)] sm:text-sm">
+          <p className="truncate text-xs font-semibold text-[var(--text-muted)] md:text-sm">
             مرحبًا، <span dir="ltr" className="inline-block">{userName}</span>
           </p>
-          <nav aria-label="مسار الصفحة" className="flex min-w-0 items-center gap-1.5 text-base font-black sm:text-lg">
-            {parent && <span className="hidden shrink-0 text-xs font-bold text-[var(--text-muted)] sm:inline">{parent} /</span>}
+          <nav aria-label="مسار الصفحة" className="flex min-w-0 items-center gap-1.5 text-base font-black md:text-lg">
+            {parent && <span className="hidden shrink-0 text-xs font-bold text-[var(--text-muted)] md:inline">{parent} /</span>}
             <h1 className="truncate">{title}</h1>
           </nav>
         </div>
       </div>
-      <button type="button" onClick={onToggleTheme} className="grid size-11 shrink-0 place-items-center rounded-xl border border-[var(--border)] bg-[var(--surface)] text-[var(--link)] transition-colors hover:bg-[var(--surface-2)]" aria-label={isDark ? 'تفعيل المظهر الفاتح' : 'تفعيل المظهر الداكن'}>
+      <button type="button" onClick={onToggleTheme} className="grid size-11 shrink-0 place-items-center rounded-[var(--radius-sm)] border border-[var(--border)] bg-[var(--surface)] text-[var(--link)] transition-colors hover:bg-[var(--surface-2)]" aria-label={isDark ? 'تفعيل المظهر الفاتح' : 'تفعيل المظهر الداكن'}>
         {isDark ? <Sun size={19} aria-hidden="true" /> : <Moon size={19} aria-hidden="true" />}
       </button>
     </header>
