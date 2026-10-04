@@ -168,7 +168,7 @@ export function getDashboardMetrics(members: Member[], tasks: Task[], notes: Not
       id: `m-${m.id}`,
       type: 'member',
       title: `انضمام عضو جديد: ${m.full_name}`,
-      description: `الفريق: ${m.team || 'غير محدد'}`,
+      description: `الموقع: ${m.residence || 'غير محدد'}`,
       date: new Date(m.created_at || Date.now()),
       meta: 'الأعضاء'
     });

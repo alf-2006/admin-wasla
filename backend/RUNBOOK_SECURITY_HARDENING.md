@@ -66,7 +66,7 @@ supabase functions deploy wasla-ai
 ```sql
 -- 1. anon يجب أن يرى الأعمدة العامة فقط: هذا الاستعلام ينجح
 BEGIN; SET LOCAL ROLE anon;
-SELECT id, full_name, team, device FROM members LIMIT 5;
+SELECT id, full_name, device FROM members LIMIT 5;
 ROLLBACK;
 
 -- 2. anon يحاول قراءة الهاتف/الإقامة: يجب أن يفشل (permission denied)

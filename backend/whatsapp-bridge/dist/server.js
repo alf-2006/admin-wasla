@@ -43,11 +43,27 @@ async function handle(req, res) {
             return send(res, 200, { configured: isConfigured(), ...await revokeSession() }, origin);
         if (url.pathname === '/v1/send-task') {
             const body = await readBody(req);
-            if (!Number.isInteger(body.taskId) || !Number.isInteger(body.memberId) || body.consentConfirmed !== true)
-                return send(res, 400, { error: 'اختر مهمة وعضوًا واحدًا وأكّد موافقته على واتساب.' }, origin);
-            const message = await resolveTaskMessage(admin, Number(body.taskId), Number(body.memberId));
-            const result = await sendText(message.phone, message.text);
-            return send(res, 200, { ...result, memberName: message.memberName, taskTitle: message.taskTitle }, origin);
+            if (!Number.isInteger(body.taskId) || !Array.isArray(body.memberIds) || body.consentConfirmed !== true)
+                return send(res, 400, { error: 'اختر مهمة والأعضاء وأكّد موافقتهم على واتساب.' }, origin);
+            const results = [];
+            let sentCount = 0;
+            let lastResult = {};
+            for (const id of body.memberIds) {
+                try {
+                    const memberIdNum = Number(id);
+                    if (!Number.isInteger(memberIdNum))
+                        continue;
+                    const baseUrl = origin || 'http://localhost:5173';
+                    const message = await resolveTaskMessage(admin, Number(body.taskId), memberIdNum, baseUrl);
+                    const result = await sendText(message.phone, message.text);
+                    sentCount++;
+                    lastResult = { ...result, memberName: message.memberName, taskTitle: message.taskTitle };
+                }
+                catch (err) {
+                    results.push(`عضو #${id}: ${err.message}`);
+                }
+            }
+            return send(res, 200, { ...(lastResult || {}), sent: sentCount, failed: results.length, errors: results }, origin);
         }
         return send(res, 404, { error: 'المسار غير موجود.' }, origin);
     }

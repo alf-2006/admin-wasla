@@ -45,7 +45,7 @@ export default function WhatsAppCloudPage() {
 
   return <section className="grid gap-4" dir="rtl">
     <header className="flex items-start gap-3">
-      <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-blue-100 text-blue-800 dark:bg-blue-950/50 dark:text-blue-300">
+      <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-[var(--primary-soft)] text-[var(--link)]">
         <Cloud />
       </span>
       <div>
@@ -54,7 +54,7 @@ export default function WhatsAppCloudPage() {
       </div>
     </header>
 
-    <Card className={`grid gap-4 border-s-4 ${status.data?.enabled ? 'border-s-emerald-500' : 'border-s-slate-400'}`}>
+    <Card className={`grid gap-4 border-s-4 ${status.data?.enabled ? 'border-s-emerald-500' : 'border-s-[var(--text-muted)]'}`}>
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-2 font-extrabold">
           {status.isLoading ? 'جارٍ التحقق...' : status.data?.enabled ? <CheckCircle2 className="text-emerald-600" /> : <AlertTriangle className="text-amber-600" />}

@@ -16,7 +16,7 @@ import type { Member, MemberInsert, MemberUpdate } from '../../types/db';
  * عبر نفس الـ hook لأنها تعمل بهوية authenticated.
  */
 export const PUBLIC_MEMBER_COLUMNS =
-  'id, created_at, email, full_name, team, completion_rank, bio, device, meeting_attendance, work_status, can_go_alexandria' as const;
+  'id, created_at, email, full_name, completion_rank, bio, device, meeting_attendance, work_status, can_go_alexandria' as const;
 
 const getMembers = async (): Promise<Member[]> => {
   const { data: sessionData } = await supabase.auth.getSession();

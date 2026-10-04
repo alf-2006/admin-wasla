@@ -4,6 +4,7 @@
 @import "./styles/tokens.css";
 @import "./styles/auth.css" layer(components);
 @import "./styles/tables.css" layer(components);
+@import "./styles/sidebar.css" layer(components);
 @import "./styles/members.css" layer(components);
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));

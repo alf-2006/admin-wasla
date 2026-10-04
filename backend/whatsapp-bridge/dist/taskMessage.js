@@ -8,7 +8,7 @@ export function normalizePhone(raw) {
         digits = `20${digits.slice(1)}`;
     return /^[1-9]\d{7,14}$/.test(digits) ? digits : null;
 }
-export async function resolveTaskMessage(admin, taskId, memberId) {
+export async function resolveTaskMessage(admin, taskId, memberId, baseUrl) {
     const client = createClient(config.supabaseUrl, config.supabaseAnonKey, { auth: { persistSession: false }, global: { headers: { Authorization: `Bearer ${admin.token}` } } });
     const [{ data: taskData, error: taskError }, { data: memberData, error: memberError }] = await Promise.all([
         client.from('tasks').select('id,title,has_deadline,deadline_date,assigned_to').eq('id', taskId).single(),
@@ -25,6 +25,15 @@ export async function resolveTaskMessage(admin, taskId, memberId) {
         throw new Error('يجب اختيار عضو نشط ومكلف بهذه المهمة.');
     if (!member.phone || !normalizePhone(member.phone))
         throw new Error('رقم العضو غير صالح. أضف رقمًا دوليًا من صفحة الأعضاء.');
-    const due = task.has_deadline && task.deadline_date ? ` الموعد النهائي: ${task.deadline_date}.` : '';
-    return { phone: normalizePhone(member.phone), memberName: member.full_name, taskTitle: task.title, text: `السلام عليكم ${member.full_name}، تم إسناد مهمة «${task.title}» إليك في وصلة.${due} يرجى متابعة المهمة من بوابة وصلة.` };
+    const formatArabicDate = (iso) => {
+        try {
+            return new Intl.DateTimeFormat('ar-EG', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }).format(new Date(iso));
+        }
+        catch {
+            return iso;
+        }
+    };
+    const due = task.has_deadline && task.deadline_date ? `\n\n📅 *الموعد النهائي المخطط للإنجاز:* ${formatArabicDate(task.deadline_date)}` : '';
+    const text = `مرحباً بك ${member.full_name} 👋،\n\nنود إعلامك بأنه قد تم إسناد تكليف جديد إليك في منظومة وصلة بعنوان:\n📌 *«${task.title}»*${due}\n\nيرجى التكرم بالدخول إلى بوابة وصلة لمراجعة تفاصيل المهمة والبدء في التنفيذ:\n🔗 ${baseUrl}/login\n\nتمنياتنا لك بالتوفيق،\nفريق إدارة وصلة.`;
+    return { phone: normalizePhone(member.phone), memberName: member.full_name, taskTitle: task.title, text };
 }

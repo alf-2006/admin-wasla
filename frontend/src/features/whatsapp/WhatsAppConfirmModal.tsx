@@ -62,8 +62,8 @@ export function WhatsAppConfirmModal({
         </div>
 
         {/* Mock Safety Notice */}
-        <div className="flex items-start gap-2.5 rounded-xl border border-sky-200 bg-sky-50 p-3 text-xs leading-5 text-sky-950 dark:border-sky-900/50 dark:bg-sky-950/20 dark:text-sky-200">
-          <ShieldAlert className="mt-0.5 shrink-0 text-sky-600 dark:text-sky-400" size={17} aria-hidden="true" />
+        <div className="flex items-start gap-2.5 rounded-xl border border-[var(--primary)] bg-[var(--primary-soft)] p-3 text-xs leading-5 text-[var(--text)]">
+          <ShieldAlert className="mt-0.5 shrink-0 text-[var(--link)]" size={17} aria-hidden="true" />
           <p>
             سيتم تنفيذ هذا الإرسال بنمط المحاكاة المعزول (Baileys Mock) دون إرسال حزم فعلية عبر شبكة واتساب، وذلك لاختبار مسار المهام وسجلات التسليم الداخلية.
           </p>

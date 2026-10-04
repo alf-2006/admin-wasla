@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase/client';
+import { toast } from '../store/toast';
 
 export function usePWA({ memberId, memberEmail }: { memberId?: number; memberEmail?: string }) {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -41,7 +42,7 @@ export function usePWA({ memberId, memberEmail }: { memberId?: number; memberEma
     try {
       const permission = await Notification.requestPermission();
       if (permission !== 'granted') {
-        alert('يرجى السماح بالإشعارات من إعدادات المتصفح.');
+        toast.warning('يرجى السماح بالإشعارات من إعدادات المتصفح.');
         return;
       }
 
@@ -53,7 +54,7 @@ export function usePWA({ memberId, memberEmail }: { memberId?: number; memberEma
       // We stored VAPID in env for the backend. The frontend needs the public key.
       const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
       if (!vapidPublicKey) {
-         alert('لم يتم تكوين مفتاح الإشعارات في النظام.');
+         toast.error('لم يتم تكوين مفتاح الإشعارات في النظام.');
          return;
       }
 
@@ -72,10 +73,10 @@ export function usePWA({ memberId, memberEmail }: { memberId?: number; memberEma
       if (error) throw error;
       
       setIsSubscribed(true);
-      alert('تم تفعيل الإشعارات بنجاح!');
+      toast.success('تم تفعيل الإشعارات بنجاح!');
     } catch (err: any) {
       console.error(err);
-      alert('تعذر تفعيل الإشعارات: ' + err.message);
+      toast.error('تعذر تفعيل الإشعارات: ' + err.message);
     }
   };
 

@@ -37,10 +37,6 @@ export function useRanking() {
 
   const topThree = useMemo(() => rankedAllMembers.slice(0, 3), [rankedAllMembers]);
 
-  const availableTeams = useMemo(() => {
-    return [...new Set(members.map((m) => m.team || 'Wasla').filter(Boolean))];
-  }, [members]);
-
   const isLoading = membersQuery.isLoading || notesQuery.isLoading;
   const isError = membersQuery.isError || notesQuery.isError;
   const refetch = () => Promise.all([membersQuery.refetch(), notesQuery.refetch()]);
@@ -50,7 +46,6 @@ export function useRanking() {
     notes,
     rankedAllMembers,
     topThree,
-    availableTeams,
     isLoading,
     isError,
     refetch,

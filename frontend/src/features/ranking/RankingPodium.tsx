@@ -69,8 +69,8 @@ export function RankingPodium({ topMembers, onSelectMember, onAdjustBonus }: Ran
               <h4 className="font-black text-base text-[var(--text)] group-hover:text-[var(--primary)] transition-colors truncate max-w-full">
                 {member.full_name}
               </h4>
-              <span className="text-xs text-[var(--text-muted)] mt-0.5">
-                {member.team || 'Wasla'}
+              <span className="text-xs text-[var(--text-muted)] mt-0.5 truncate max-w-full" dir="ltr">
+                {member.email}
               </span>
 
               {/* Bonus score */}

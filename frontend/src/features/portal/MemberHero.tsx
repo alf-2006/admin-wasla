@@ -15,18 +15,18 @@ export function MemberHero({ member, onToggleField, isUpdating }: { member: Memb
         
         <div className="flex flex-wrap gap-2">
           {isInstallable && (
-            <button onClick={installPWA} className="flex min-h-9 items-center gap-2 rounded-xl bg-violet-100 text-violet-900 px-3 text-xs font-bold hover:bg-violet-200 dark:bg-violet-900/30 dark:text-violet-200">
-              <Download size={14} /> تثبيت التطبيق
+            <button onClick={installPWA} className="flex min-h-11 items-center gap-2 rounded-xl bg-[var(--primary-soft)] text-[var(--link)] px-3 text-xs font-bold hover:bg-[var(--primary)] hover:text-white transition-colors">
+              <Download size={14} aria-hidden="true" /> تثبيت التطبيق
             </button>
           )}
           
           <button 
             onClick={!isSubscribed ? subscribeToPush : undefined} 
             disabled={isSubscribed}
-            className={`flex min-h-9 items-center gap-2 rounded-xl px-3 text-xs font-bold transition-colors ${
+            className={`flex min-h-11 items-center gap-2 rounded-xl px-3 text-xs font-bold transition-colors ${
               isSubscribed 
-                ? 'bg-emerald-100 text-emerald-900 opacity-90 cursor-default dark:bg-emerald-900/40 dark:text-emerald-200' 
-                : 'bg-blue-100 text-blue-900 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-200 cursor-pointer'
+                ? 'bg-emerald-500/10 text-emerald-700 opacity-90 cursor-default dark:text-emerald-400' 
+                : 'bg-[var(--primary-soft)] text-[var(--link)] hover:bg-[var(--primary)] hover:text-white cursor-pointer'
             }`}
           >
             {isSubscribed ? <CheckCircle2 size={14} /> : <Bell size={14} />} 

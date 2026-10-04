@@ -4,6 +4,10 @@ import { useNotes, useDeleteNote } from './api';
 import { useMembers } from '../members/api';
 import { NotesList } from './NotesList';
 import { NoteEditor } from './NoteEditor';
+import { toast } from '../../store/toast';
+import { handleSupabaseError } from '../../lib/errorHandler';
+import { Modal } from '../../components/ui/Modal';
+import { Button } from '../../components/ui/Button';
 
 type TargetFilter = 'ALL' | 'GENERAL' | 'MEMBER';
 
@@ -14,23 +18,30 @@ export default function NotesPage() {
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [targetFilter, setTargetFilter] = useState<TargetFilter>('ALL');
+  const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
   const query = searchTerm.toLowerCase();
   const filteredNotes = (notesQuery.data ?? []).filter((note) => {
     const matchSearch = note.text.toLowerCase().includes(query)
       || Boolean(note.target_name?.toLowerCase().includes(query))
       || Boolean(note.author?.toLowerCase().includes(query));
     const matchTarget = targetFilter === 'ALL'
-      || (targetFilter === 'GENERAL' && !note.target_team && !note.target_member_id)
+      || (targetFilter === 'GENERAL' && !note.target_member_id)
       || (targetFilter === 'MEMBER' && Boolean(note.target_member_id));
     return matchSearch && matchTarget;
   });
 
   const handleDelete = async (id: number) => {
-    if (!confirm('هل أنت متأكد من حذف هذه الملاحظة؟')) return;
+    setPendingDeleteId(id);
+  };
+
+  const confirmDeleteNote = async () => {
+    if (pendingDeleteId == null) return;
     try {
-      await deleteNote.mutateAsync(id);
+      await deleteNote.mutateAsync(pendingDeleteId);
+      toast.success('تم حذف الملاحظة.');
+      setPendingDeleteId(null);
     } catch (cause) {
-      alert(cause instanceof Error ? cause.message : 'تعذر حذف الملاحظة.');
+      toast.error(handleSupabaseError(cause).message || 'تعذر حذف الملاحظة.');
     }
   };
 
@@ -48,6 +59,12 @@ export default function NotesPage() {
       </section>
       <NotesList notes={filteredNotes} isLoading={notesQuery.isLoading} isError={notesQuery.isError} onRetry={() => { void notesQuery.refetch(); }} onDelete={handleDelete} />
       <NoteEditor isOpen={isEditorOpen} members={membersQuery.data ?? []} onClose={() => setIsEditorOpen(false)} />
+      <Modal isOpen={pendingDeleteId != null} onClose={() => setPendingDeleteId(null)} title="حذف الملاحظة" subtitle="سيتم حذف هذه الملاحظة نهائياً ولا يمكن التراجع." maxWidth="sm">
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <Button variant="secondary" onClick={() => setPendingDeleteId(null)} fullOnMobile>إلغاء</Button>
+          <Button variant="danger" onClick={() => void confirmDeleteNote()} isLoading={deleteNote.isPending} loadingText="جارٍ الحذف..." fullOnMobile>حذف نهائي</Button>
+        </div>
+      </Modal>
     </div>
   );
 }

@@ -8,8 +8,8 @@ export type Member = {
   created_at: string;
   email: string;
   full_name: string;
-  team: string | null;
   completion_rank: number | null;
+  /** ملاحظات الإدارة الخاصة بالعضو — ليست فرقاً، النظام كله وصلة واحدة */
   team_notes: string | null;
   residence: string | null;
   work_conditions: string | null;
@@ -58,18 +58,63 @@ export type Note = {
   author: string | null;
   author_role: string | null;
   date: string | null;
-  team: string | null;
-  target_team: string | null;
   target_member_id: number | null;
   target_name: string | null;
 }
 
 export type NoteInsert = Omit<Note, 'id' | 'created_at'>;
 
+// ===== أنواع بيانات نظام الإعلامات =====
+export type AnnouncementPriority = 'low' | 'normal' | 'high' | 'urgent';
+
+export type AnnouncementTargetAudience = {
+  type: 'all';
+} | {
+  type: 'specific';
+  member_ids: number[];
+};
+
+export type Announcement = {
+  id: number;
+  created_at: string;
+  title: string;
+  content: string;
+  target_audience: AnnouncementTargetAudience;
+  priority: AnnouncementPriority;
+  send_push: boolean;
+  send_whatsapp: boolean;
+  whatsapp_sent_at: string | null;
+  whatsapp_sent_count: number;
+  whatsapp_errors: any[];
+  expires_at: string | null;
+  is_active: boolean;
+  created_by: string | null;
+  read_receipts: Record<string, { read_at?: string; dismissed_at?: string }>;
+};
+
+export type AnnouncementInsert = Omit<Announcement, 'id' | 'created_at' | 'read_receipts' | 'whatsapp_sent_at' | 'whatsapp_sent_count' | 'whatsapp_errors'>;
+
+export type MemberAnnouncement = {
+  id: number;
+  created_at: string;
+  title: string;
+  content: string;
+  priority: AnnouncementPriority;
+  is_read: boolean;
+  is_dismissed: boolean;
+};
+
+export type AnnouncementStats = {
+  total_recipients: number;
+  read_count: number;
+  dismissed_count: number;
+  pending_count: number;
+};
+
 /** نتيجة دالة تسجيل دخول العضو (RPC محصورة بالأعمدة العامة فقط) */
 export type MemberLookupRow = Pick<
   Member,
-  'id' | 'created_at' | 'email' | 'full_name' | 'team' | 'completion_rank' | 'bio' | 'device' | 'meeting_attendance' | 'work_status' | 'can_go_alexandria'
+  'id' | 'created_at' | 'email' | 'full_name' | 'completion_rank' | 'bio' | 'device' | 'meeting_attendance' | 'work_status' | 'can_go_alexandria'
 >;
 
 /** نتيجة دالة الاعتماد الذرّي */
@@ -86,12 +131,17 @@ export interface Database {
       members: { Row: Member; Insert: MemberInsert; Update: Partial<MemberInsert>; Relationships: [] };
       tasks: { Row: Task; Insert: TaskInsert; Update: Partial<TaskInsert>; Relationships: [] };
       notes: { Row: Note; Insert: NoteInsert; Update: Partial<NoteInsert>; Relationships: [] };
+      announcements: { Row: Announcement; Insert: AnnouncementInsert; Update: Partial<AnnouncementInsert>; Relationships: [] };
     };
     Views: Record<string, never>;
     Functions: {
       lookup_member_by_email: { Args: { p_email: string }; Returns: MemberLookupRow[] };
       approve_task_submission: { Args: { p_task_id: number; p_member_id: number; p_bonus?: number }; Returns: ApproveTaskResult };
       save_push_subscription: { Args: { p_member_id: number; p_email: string; p_subscription: Record<string, any> }; Returns: boolean };
+      get_member_announcements: { Args: { p_member_id: number }; Returns: MemberAnnouncement[] };
+      mark_announcement_read: { Args: { p_announcement_id: number; p_member_id: number }; Returns: boolean };
+      dismiss_announcement: { Args: { p_announcement_id: number; p_member_id: number }; Returns: boolean };
+      get_announcement_stats: { Args: { p_announcement_id: number }; Returns: AnnouncementStats[] };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
@@ -103,4 +153,5 @@ export const TABLES = {
   members: 'members',
   tasks: 'tasks',
   notes: 'notes',
+  announcements: 'announcements',
 } as const;

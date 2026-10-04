@@ -61,10 +61,7 @@ export function MemberProfileModal({
             <div>
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className="text-lg font-black text-[var(--text)]">{member.full_name}</h3>
-                <span className="rounded-md border border-[var(--border)] bg-[var(--surface)] px-2 py-0.5 text-xs font-bold text-[var(--text-muted)]">
-                  {member.team || 'Wasla'}
-                </span>
-                <span className={`rounded-md px-2 py-0.5 text-xs font-bold ${member.work_status === 'active' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-zinc-500/10 text-[var(--text-muted)]'}`}>
+                <span className={`rounded-md px-2 py-0.5 text-xs font-bold ${member.work_status === 'active' ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-[var(--surface-2)] text-[var(--text-muted)]'}`}>
                   {member.work_status === 'active' ? 'نشط' : 'غير نشط'}
                 </span>
               </div>
@@ -103,7 +100,7 @@ export function MemberProfileModal({
         <div className="grid gap-3 sm:grid-cols-2">
           {infoItems.map(({ icon: Icon, label, val, dir, isAlex }, idx) => (
             <div key={idx} className="flex items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3">
-              <div className={`grid size-9 shrink-0 place-items-center rounded-lg ${isAlex ? (member.can_go_alexandria ? 'bg-emerald-500/10 text-emerald-600' : 'bg-zinc-500/10 text-zinc-500') : 'bg-[var(--surface-2)] text-[var(--text-muted)]'}`}>
+              <div className={`grid size-9 shrink-0 place-items-center rounded-lg ${isAlex ? (member.can_go_alexandria ? 'bg-emerald-500/10 text-emerald-600' : 'bg-[var(--surface-2)] text-[var(--text-muted)]') : 'bg-[var(--surface-2)] text-[var(--text-muted)]'}`}>
                 <Icon size={17} />
               </div>
               <div className="min-w-0 flex-1">

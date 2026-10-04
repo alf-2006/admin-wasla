@@ -10,6 +10,12 @@ export default function WhatsAppTasksPage() {
 
   return (
     <div className="grid gap-6" dir="rtl">
+      {/* خطوات الإرسال */}
+      <ol aria-label="خطوات إرسال المهام" className="grid gap-2 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4 text-sm font-bold sm:grid-cols-3">
+        <li className="flex items-center gap-2"><span aria-hidden="true" className="grid size-7 shrink-0 place-items-center rounded-full bg-[var(--primary)] text-xs font-black text-white">1</span> الربط والتفعيل</li>
+        <li className="flex items-center gap-2"><span aria-hidden="true" className="grid size-7 shrink-0 place-items-center rounded-full bg-[var(--primary-soft)] text-xs font-black text-[var(--link)]">2</span> اختيار الأعضاء والمهام</li>
+        <li className="flex items-center gap-2"><span aria-hidden="true" className="grid size-7 shrink-0 place-items-center rounded-full bg-[var(--primary-soft)] text-xs font-black text-[var(--link)]">3</span> الإرسال والتأكيد</li>
+      </ol>
       {/* Policy and Ban Risk Disclaimer Banner */}
       <section
         role="alert"

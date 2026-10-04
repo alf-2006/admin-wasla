@@ -14,6 +14,10 @@ export default defineConfig({
     manifest: false,
     injectManifest: {
       maximumFileSizeToCacheInBytes: 3000000,
+    },
+    devOptions: {
+      enabled: true,
+      type: 'module',
     }
   })],
 })

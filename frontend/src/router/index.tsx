@@ -13,6 +13,7 @@ const NotesPage = lazy(() => import('../features/notes/NotesPage'));
 const RankingPage = lazy(() => import('../features/ranking/RankingPage'));
 const AiAssistantPage = lazy(() => import('../features/ai-assistant/AiAssistantPage'));
 const WhatsAppTasksPage = lazy(() => import('../features/whatsapp/WhatsAppTasksPage'));
+const AnnouncementsPage = lazy(() => import('../features/admin/announcements/AnnouncementsPage'));
 
 function PageFallback() {
   return <div className="grid min-h-40 place-items-center text-sm font-bold text-[var(--text-muted)]" role="status">جارٍ تحميل الصفحة...</div>;
@@ -86,6 +87,7 @@ export const router = createBrowserRouter([
       { path: 'tasks', element: <Page><TasksPage /></Page> },
       { path: 'ranking', element: <Page><RankingPage /></Page> },
       { path: 'notes', element: <Page><NotesPage /></Page> },
+      { path: 'announcements', element: <Page><AnnouncementsPage /></Page> },
       { path: 'ai-assistant', element: <Page><AiAssistantPage /></Page> },
       { path: 'whatsapp', element: <Page><WhatsAppTasksPage /></Page> },
     ],

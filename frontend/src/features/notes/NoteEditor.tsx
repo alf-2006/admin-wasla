@@ -34,8 +34,6 @@ export function NoteEditor({ isOpen, members, onClose }: { isOpen: boolean; memb
       author: author.trim() || 'الإدارة',
       author_role: 'Admin',
       date: new Date().toLocaleDateString('ar-EG', { dateStyle: 'medium' }),
-      team: null,
-      target_team: null,
       target_member_id: targetType === 'member' ? targetMemberId : null,
       target_name: targetType === 'member' ? targetMember?.full_name ?? null : null,
     };
@@ -66,7 +64,7 @@ export function NoteEditor({ isOpen, members, onClose }: { isOpen: boolean; memb
           </label>
         </div>
         {targetType === 'member' && <label className="grid gap-2 text-sm font-bold">العضو المستهدف<select required value={targetMemberId ?? ''} onChange={(event) => setTargetMemberId(Number(event.target.value))} className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3"><option value="">اختر عضوًا</option>{members.map((member) => <option key={member.id} value={member.id}>{member.full_name}</option>)}</select></label>}
-        <div className="flex flex-col-reverse gap-2 border-t border-[var(--border)] pt-4 sm:flex-row sm:justify-end"><Button type="button" variant="secondary" onClick={onClose} fullOnMobile>إلغاء</Button><Button type="submit" disabled={createNote.isPending} fullOnMobile>{createNote.isPending ? 'جاري الحفظ...' : 'حفظ الملاحظة'}</Button></div>
+        <div className="flex flex-col-reverse gap-2 border-t border-[var(--border)] pt-4 sm:flex-row sm:justify-end"><Button type="button" variant="secondary" onClick={onClose} fullOnMobile>إلغاء</Button><Button type="submit" isLoading={createNote.isPending} loadingText="جارٍ الحفظ..." fullOnMobile>حفظ الملاحظة</Button></div>
       </form>
     </Modal>
   );

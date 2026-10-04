@@ -5,8 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && npm run ux:guard && vite build",
     "lint": "oxlint",
+    "ux:guard": "node scripts/ux-guard.mjs",
+    "ux:audit": "node scripts/ux-audit.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

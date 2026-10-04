@@ -18,7 +18,7 @@ export const Badge: React.FC<BadgeProps> = ({
     warning: 'bg-amber-50 text-amber-700 border-amber-200/80 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-800/60',
     danger: 'bg-rose-50 text-rose-700 border-rose-200/80 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-800/60',
     info: 'bg-cyan-50 text-cyan-700 border-cyan-200/80 dark:bg-cyan-950/50 dark:text-cyan-300 dark:border-cyan-800/60',
-    neutral: 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800/80 dark:text-slate-300 dark:border-slate-700',
+    neutral: 'bg-[var(--surface-2)] text-[var(--text-muted)] border-[var(--border)]',
   }[variant];
 
   const dotStyles = {
@@ -27,7 +27,7 @@ export const Badge: React.FC<BadgeProps> = ({
     warning: 'bg-amber-500',
     danger: 'bg-rose-500',
     info: 'bg-cyan-500',
-    neutral: 'bg-slate-400',
+    neutral: 'bg-[var(--text-muted)]',
   }[variant];
 
   const sizeStyles = {

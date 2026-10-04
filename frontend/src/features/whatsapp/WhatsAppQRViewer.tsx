@@ -65,7 +65,7 @@ export function WhatsAppQRViewer({
         </div>
 
         {status?.dryRun && (
-          <span className="rounded-lg border border-sky-200 bg-sky-50 px-2.5 py-1 text-xs font-bold text-sky-800 dark:border-sky-800/60 dark:bg-sky-950/40 dark:text-sky-200">
+          <span className="rounded-lg border border-[var(--primary)] bg-[var(--primary-soft)] px-2.5 py-1 text-xs font-bold text-[var(--link)]">
             وضع محاكاة معزول (Mock)
           </span>
         )}

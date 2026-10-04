@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useAskWaslaAi, type AiAction, type AiMessage } from './api';
 import { useCreateTask } from '../tasks/api';
 import { useCreateNote } from '../notes/api';
+import { toast } from '../../store/toast';
 import type { Member, Task } from '../../types/db';
 
 export function useAiConversation(members: Member[], tasks: Task[]) {
@@ -28,7 +29,7 @@ export function useAiConversation(members: Member[], tasks: Task[]) {
       activeTasksCount: tasks.filter((task) => Object.values(task.tracking ?? {}).some((entry) => entry.status !== 'approved')).length,
     },
     members: members.slice(0, 50).map((member) => ({
-      id: member.id, name: member.full_name, email: member.email, team: member.team,
+      id: member.id, name: member.full_name, email: member.email,
       device: member.device, can_go_alexandria: member.can_go_alexandria,
     })),
     tasks: tasks.slice(0, 20).map((task) => ({ id: task.id, title: task.title, deadline: task.deadline_date, tracking: task.tracking })),
@@ -78,17 +79,17 @@ export function useAiConversation(members: Member[], tasks: Task[]) {
           text: stringValue(payload.text) ?? 'ملاحظة من مساعد وصلة الذكي (بدون نص).',
           author: 'مساعد وصلة الذكي (AI)', author_role: 'AI Assistant',
           date: new Date().toLocaleDateString('ar-EG', { dateStyle: 'medium' }),
-          team: null, target_team: stringValue(payload.targetTeam), target_member_id: null,
+          target_member_id: null,
           target_name: stringValue(payload.targetName),
         });
       } else {
-        alert(`نوع الإجراء "${action.type}" غير مدعوم للتنفيذ التلقائي بعد — نفّذ التعديل يدوياً من صفحات الإدارة.`);
+        toast.warning(`نوع الإجراء "${action.type}" غير مدعوم للتنفيذ التلقائي بعد — نفّذ التعديل يدوياً من صفحات الإدارة.`);
         return;
       }
       setMessages((current) => current.map((message) => message.id === messageId ? { ...message, actionExecuted: true } : message));
-      alert('تم تنفيذ الإجراء فعلياً في قاعدة البيانات.');
+      toast.success('تم تنفيذ الإجراء فعلياً في قاعدة البيانات.');
     } catch (cause) {
-      alert(`فشل تنفيذ الإجراء: ${cause instanceof Error ? cause.message : 'خطأ غير معروف'} — لم يُكتب شيء في قاعدة البيانات.`);
+      toast.error(`فشل تنفيذ الإجراء: ${cause instanceof Error ? cause.message : 'خطأ غير معروف'} — لم يُكتب شيء في قاعدة البيانات.`);
     }
   };
 

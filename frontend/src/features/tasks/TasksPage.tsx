@@ -8,6 +8,8 @@ import { CardSkeletons } from '../../components/ui/Skeleton';
 import { ErrorState } from '../../components/ui/ErrorState';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { TaskAssignmentModal } from './TaskAssignmentModal';
+import { toast } from '../../store/toast';
+import { handleSupabaseError } from '../../lib/errorHandler';
 import { TaskCard } from './TaskCard';
 import { TaskTable } from './TaskTable';
 import { TaskReviewModal } from './TaskReviewModal';
@@ -27,8 +29,8 @@ export default function TasksPage() {
   const members = membersQuery.data ?? [];
   const confirmDelete = async () => {
     if (!remove) return;
-    try { await deleteTask.mutateAsync(remove.id); setRemove(null); }
-    catch (cause) { alert(cause instanceof Error ? cause.message : 'تعذر حذف المهمة.'); }
+    try { await deleteTask.mutateAsync(remove.id); setRemove(null); toast.success('تم حذف المهمة بنجاح.'); }
+    catch (cause) { toast.error(handleSupabaseError(cause).message || 'تعذر حذف المهمة.'); }
   };
 
   return <section className="grid gap-4" id="page-tasks" dir="rtl">

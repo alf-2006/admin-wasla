@@ -47,7 +47,7 @@ export function AuthShell({ title, description, badge, audience, children, foote
           <div className="auth-footer">{footer}</div>
         </section>
       </main>
-      <footer className="auth-page-footer">Code. Build. Innovate. Impact. <span>© 2026 Wasla Tech</span></footer>
+      <footer className="auth-page-footer" dir="ltr" lang="en">Code. Build. Innovate. Impact. <span>© 2026 Wasla Tech</span></footer>
     </div>
   );
 }

@@ -69,7 +69,9 @@ export function logError(error: unknown, context?: string): void {
 export function showErrorToast(error: unknown, context?: string): void {
   logError(error, context);
   const appError = handleSupabaseError(error);
-  
-  // يمكن استبداله بـ toast library مثل react-hot-toast
-  alert(appError.message);
+  // Toast مركزي بدل alert — يعمل حتى خارج React عبر zustand store
+  import('../store/toast').then(({ toast }) => toast.error(appError.message)).catch(() => {
+    // fallback نادر لو فشل تحميل المتجر
+    console.error(appError.message);
+  });
 }

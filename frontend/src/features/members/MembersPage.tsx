@@ -1,36 +1,43 @@
-import { useMemo, useState } from 'react';
-import { Users, UserPlus } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { ChevronLeft, ChevronRight, Users, UserPlus } from 'lucide-react';
 import type { Member, MemberInsert } from '../../types/db';
 import { useMembers, useAddMember, useUpdateMember, useDeleteMember } from './api';
 import { useNotes } from '../notes/api';
 import { Button } from '../../components/ui/Button';
+import { PageHeader } from '../../components/ui/PageHeader';
+import { ConfirmDialog } from '../../components/ui/ConfirmDialog';
 import { CardSkeletons } from '../../components/ui/Skeleton';
 import { ErrorState } from '../../components/ui/ErrorState';
 import { EmptyState } from '../../components/ui/EmptyState';
-import { MemberFilters, type MemberFiltersValue } from './MemberFilters';
-import { MemberRows } from './MemberRows';
+import { MemberToolbar } from './MemberToolbar';
+import type { MemberFiltersValue } from './MemberToolbar';
+import { MemberTable } from './MemberTable';
+import { MemberCards } from './MemberCards';
+import { MemberDrawer } from './MemberDrawer';
 import { MemberEditor } from './MemberEditor';
-import { MemberProfileModal } from './MemberProfileModal';
 import { MemberExcelActions } from './MemberExcelActions';
-import { sanitizeText, isValidEmail } from '../../lib/validators';
+import { sanitizeText, isValidEmail, isValidEgyptianPhone } from '../../lib/validators';
 import { handleSupabaseError, logError } from '../../lib/errorHandler';
+import { toast } from '../../store/toast';
 
-const emptyMember: MemberInsert = { 
-  email: '', 
-  full_name: '', 
-  team: 'Wasla',
+const emptyMember: MemberInsert = {
+  email: '',
+  full_name: '',
   completion_rank: null,
   team_notes: null,
-  residence: '', 
-  work_conditions: '', 
-  bio: '', 
-  phone: '', 
-  device: 'لابتوب', 
-  gender: '', 
+  residence: '',
+  work_conditions: '',
+  bio: '',
+  phone: '',
+  device: 'لابتوب',
+  gender: '',
   meeting_attendance: null,
-  work_status: 'active', 
-  can_go_alexandria: false 
+  work_status: 'active',
+  can_go_alexandria: false,
 };
+
+const PAGE_SIZES = [10, 20, 50] as const;
+const DELETE_UNDO_MS = 5000;
 
 export default function MembersPage() {
   const query = useMembers();
@@ -40,129 +47,201 @@ export default function MembersPage() {
   const remove = useDeleteMember();
   const [filters, setFilters] = useState<MemberFiltersValue>({ search: '', work_conditions: 'ALL', device: 'ALL', alexandria: 'ALL' });
   const [editing, setEditing] = useState<Member | null>(null);
-  const [selectedProfileMember, setSelectedProfileMember] = useState<Member | null>(null);
+  const [drawerMember, setDrawerMember] = useState<Member | null>(null);
   const [form, setForm] = useState<MemberInsert>(emptyMember);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [formError, setFormError] = useState('');
   const [memberToDelete, setMemberToDelete] = useState<Member | null>(null);
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState<number>(10);
+  const deleteTimer = useRef<number | null>(null);
+
+  useEffect(() => () => {
+    if (deleteTimer.current !== null) window.clearTimeout(deleteTimer.current);
+  }, []);
+
   const workConditions = useMemo(() => [...new Set((query.data ?? []).map((member) => member.work_conditions).filter((c): c is string => Boolean(c)))], [query.data]);
-  
+
   const visibleMembers = useMemo(() => (query.data ?? []).filter((member) => {
     const term = filters.search.trim().toLowerCase();
-    const matchesText = !term || `${member.full_name} ${member.email} ${member.residence ?? ''} ${member.bio ?? ''}`.toLowerCase().includes(term);
+    const matchesText = !term || `${member.full_name} ${member.email} ${member.phone ?? ''} ${member.residence ?? ''} ${member.bio ?? ''}`.toLowerCase().includes(term);
     const matchesWorkConditions = filters.work_conditions === 'ALL' || member.work_conditions === filters.work_conditions;
     const matchesDevice = filters.device === 'ALL' || (member.device ?? '').includes(filters.device);
     const matchesAlexandria = filters.alexandria === 'ALL' || member.can_go_alexandria === (filters.alexandria === 'YES');
     return matchesText && matchesWorkConditions && matchesDevice && matchesAlexandria;
   }), [filters, query.data]);
 
+  // العودة لأول صفحة عند تغير الفلاتر أو البيانات أو حجم الصفحة
+  useEffect(() => { setPage(0); }, [filters, pageSize, query.data?.length]);
+
+  const totalPages = Math.max(1, Math.ceil(visibleMembers.length / pageSize));
+  const safePage = Math.min(page, totalPages - 1);
+  const pageMembers = visibleMembers.slice(safePage * pageSize, safePage * pageSize + pageSize);
+  const rangeStart = visibleMembers.length ? safePage * pageSize + 1 : 0;
+  const rangeEnd = Math.min(visibleMembers.length, safePage * pageSize + pageSize);
+
   const openNew = () => { setEditing(null); setForm(emptyMember); setFormError(''); setDialogOpen(true); };
   const openEdit = (member: Member) => {
+    setDrawerMember(null);
     setEditing(member);
-    setForm({ 
-      email: member.email, 
-      full_name: member.full_name, 
-      team: member.team,
+    setForm({
+      email: member.email,
+      full_name: member.full_name,
       completion_rank: member.completion_rank,
       team_notes: member.team_notes,
-      residence: member.residence ?? '', 
-      work_conditions: member.work_conditions ?? '', 
-      bio: member.bio ?? '', 
-      phone: member.phone ?? '', 
-      device: member.device ?? 'لابتوب', 
-      gender: member.gender ?? '', 
+      residence: member.residence ?? '',
+      work_conditions: member.work_conditions ?? '',
+      bio: member.bio ?? '',
+      phone: member.phone ?? '',
+      device: member.device ?? 'لابتوب',
+      gender: member.gender ?? '',
       meeting_attendance: member.meeting_attendance,
-      work_status: member.work_status ?? 'active', 
-      can_go_alexandria: member.can_go_alexandria 
+      work_status: member.work_status ?? 'active',
+      can_go_alexandria: member.can_go_alexandria,
     });
     setFormError(''); setDialogOpen(true);
   };
-  
+
   const save = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault(); setFormError('');
-    
-    // Validation
+
     const trimmedName = sanitizeText(form.full_name.trim());
     const trimmedEmail = form.email.trim().toLowerCase();
-    
-    if (!trimmedName || !trimmedEmail) { 
-      setFormError('الاسم والبريد الإلكتروني حقول إجبارية.'); 
-      return; 
+
+    if (!trimmedName || !trimmedEmail) {
+      setFormError('الاسم والبريد الإلكتروني حقول إجبارية.');
+      return;
     }
-    
-    // Email format validation
+
     if (!isValidEmail(trimmedEmail)) {
       setFormError('البريد الإلكتروني غير صالح. يجب أن يحتوي على @ ونطاق صحيح.');
       return;
     }
-    
+
+    const trimmedPhone = (form.phone || '').trim();
+    if (trimmedPhone && !isValidEgyptianPhone(trimmedPhone)) {
+      setFormError('رقم الهاتف غير صالح. استخدم رقم مصري صحيح: 01xxxxxxxxx أو +20xxxxxxxxxx.');
+      return;
+    }
+
     try {
       const cleanedForm = {
         ...form,
         full_name: trimmedName,
         email: trimmedEmail,
+        phone: trimmedPhone || null,
         bio: sanitizeText(form.bio || ''),
       };
-      
+
       if (editing) await update.mutateAsync({ id: editing.id, ...cleanedForm });
       else await add.mutateAsync(cleanedForm);
       setDialogOpen(false);
-    } catch (cause) { 
+      toast.success(editing ? 'تم حفظ بيانات العضو بنجاح.' : 'تم تسجيل العضو الجديد بنجاح.');
+    } catch (cause) {
       logError(cause, 'MembersPage.save');
       const error = handleSupabaseError(cause);
       setFormError(error.message);
     }
   };
-  const confirmDelete = async () => {
-    if (!memberToDelete) return;
-    try { await remove.mutateAsync(memberToDelete.id); setMemberToDelete(null); }
-    catch (cause) { alert(cause instanceof Error ? cause.message : 'تعذر حذف العضو.'); }
+
+  // حذف مؤجل 5 ثوانٍ مع تراجع — نفس منطق الحذف الحالي دون تغيير semantics الخادم
+  const confirmDelete = () => {
+    const target = memberToDelete;
+    if (!target) return;
+    setMemberToDelete(null);
+    if (deleteTimer.current !== null) window.clearTimeout(deleteTimer.current);
+    deleteTimer.current = window.setTimeout(() => {
+      deleteTimer.current = null;
+      void remove.mutateAsync(target.id).then(
+        () => toast.success(`تم حذف ${target.full_name} نهائياً.`),
+        (cause: unknown) => toast.error(handleSupabaseError(cause).message || 'تعذر حذف العضو.'),
+      );
+    }, DELETE_UNDO_MS);
+    toast.success(`تم حذف ${target.full_name}.`, {
+      durationMs: DELETE_UNDO_MS,
+      action: {
+        label: 'تراجع',
+        onClick: () => {
+          if (deleteTimer.current !== null) { window.clearTimeout(deleteTimer.current); deleteTimer.current = null; }
+          toast.info('تم التراجع عن الحذف.');
+        },
+      },
+    });
   };
 
-  return <section className="flex flex-col gap-6 p-2 sm:p-6 min-w-0 w-full" id="page-members" dir="rtl">
-    <header className="flex flex-col gap-4 sm:flex-row sm:items-end justify-between bg-[var(--surface)] p-6 rounded-[var(--radius-lg)] border border-[var(--border)] shadow-[var(--shadow-sm)]">
-      <div className="flex items-start gap-4">
-        <div className="grid place-items-center w-12 h-12 rounded-xl bg-[var(--primary-soft)] text-[var(--primary)] shrink-0">
-          <Users size={24} />
-        </div>
-        <div>
-          <h2 className="text-2xl font-black text-[var(--text)]">دليل وجاهزية الأعضاء</h2>
-          <p className="mt-1 text-sm text-[var(--text-muted)] max-w-xl">
-            سجل الحالة التشغيلية، الأجهزة، وتوفر الكوادر للنزول الميداني. العدد الحالي: <span className="font-bold text-[var(--primary)]">{query.data?.length ?? 0}</span> عضو.
-          </p>
-        </div>
-      </div>
-      <div className="flex flex-wrap sm:flex-nowrap items-center gap-3">
-        <Button onClick={openNew} icon={<UserPlus size={18} />} fullOnMobile>تسجيل عضو جديد</Button>
-        <MemberExcelActions members={query.data ?? []} />
-      </div>
-      <MemberEditor isOpen={dialogOpen} isSaving={add.isPending || update.isPending} member={editing} value={form} error={formError} onChange={setForm} onClose={() => setDialogOpen(false)} onSubmit={save} />
-    </header>
+  const askDelete = (member: Member) => { setDrawerMember(null); setMemberToDelete(member); };
 
-    <div className="flex flex-col gap-6 min-w-0 w-full">
-      <div className="bg-[var(--surface)] p-5 rounded-[var(--radius-lg)] border border-[var(--border)] shadow-[var(--shadow-sm)]">
-        <MemberFilters workConditions={workConditions} value={filters} onChange={setFilters} />
-      </div>
-      
-      <div className="bg-[var(--surface)] rounded-[var(--radius-lg)] border border-[var(--border)] shadow-[var(--shadow-sm)] overflow-hidden min-w-0 w-full">
-        {query.isLoading ? <div className="p-6"><CardSkeletons count={4} /></div>
-          : query.isError ? <div className="p-6"><ErrorState message="تعذر تحميل سجلات الأعضاء." onRetry={() => { void query.refetch(); }} /></div>
-            : visibleMembers.length ? <MemberRows members={visibleMembers} onEdit={openEdit} onDelete={setMemberToDelete} onSelectMember={setSelectedProfileMember} />
-              : <div className="p-12"><EmptyState title="لا يوجد تطابق" description="لم نجد أي عضو يطابق معايير التصفية." /></div>}
-      </div>
+  return <section className="flex min-w-0 w-full flex-col gap-4 sm:gap-6" id="page-members" dir="rtl">
+    <PageHeader
+      icon={<Users size={24} aria-hidden="true" />}
+      title="دليل وجاهزية الأعضاء"
+      description={<>سجل الحالة التشغيلية، الأجهزة، وتوفر الكوادر للنزول الميداني. العدد الحالي: <span className="font-bold text-[var(--link)]">{query.data?.length ?? 0}</span> عضو.</>}
+      actions={<><Button onClick={openNew} icon={<UserPlus size={18} aria-hidden="true" />} fullOnMobile>تسجيل عضو جديد</Button><MemberExcelActions members={query.data ?? []} /></>}
+    />
+
+    <div className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-sm)] sm:p-5">
+      <MemberToolbar workConditions={workConditions} value={filters} onChange={setFilters} resultCount={visibleMembers.length} totalCount={query.data?.length ?? 0} />
     </div>
 
-    {memberToDelete && <div className="fixed inset-0 z-[var(--z-modal)] grid place-items-center bg-black/50 p-4"><section className="w-full max-w-sm bg-[var(--surface)] rounded-[var(--radius-lg)] p-6 shadow-xl border border-[var(--border)]" role="dialog" aria-modal="true" aria-labelledby="delete-member-title"><div className="w-12 h-12 bg-red-100 dark:bg-red-950/30 text-red-600 rounded-full flex items-center justify-center mb-4"><Users size={24} /></div><h2 id="delete-member-title" className="text-lg font-black mb-2 text-[var(--text)]">تأكيد الحذف</h2><p className="mb-6 text-[var(--text-muted)] text-sm leading-relaxed">هل أنت متأكد من حذف السجل الخاص بـ <b className="text-[var(--text)]">{memberToDelete.full_name}</b>؟ هذا الإجراء سيؤدي إلى إزالة كافة بياناته من النظام ولا يمكن التراجع عنه.</p><div className="flex gap-3"><Button variant="secondary" onClick={() => setMemberToDelete(null)} className="flex-1" fullOnMobile>إلغاء</Button><Button variant="danger" onClick={() => void confirmDelete()} className="flex-1" fullOnMobile>حذف نهائي</Button></div></section></div>}
+    <div className="min-w-0 w-full overflow-hidden rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] shadow-[var(--shadow-sm)]">
+      {query.isLoading ? <div className="p-6"><CardSkeletons count={4} /></div>
+        : query.isError ? <div className="p-6"><ErrorState message="تعذر تحميل سجلات الأعضاء." onRetry={() => { void query.refetch(); }} /></div>
+          : visibleMembers.length ? <>
+            <div className="hidden md:block">
+              <MemberTable members={pageMembers} startIndex={safePage * pageSize} onView={setDrawerMember} onEdit={openEdit} onDelete={askDelete} />
+            </div>
+            <div className="md:hidden">
+              <MemberCards members={pageMembers} onView={setDrawerMember} onEdit={openEdit} onDelete={askDelete} />
+            </div>
+            <div className="member-pagination border-t border-[var(--border)] px-4 py-3" aria-label="ترقيم الصفحات">
+              <label className="flex items-center gap-2 text-xs font-bold text-[var(--text-muted)]" htmlFor="member-page-size">
+                لكل صفحة
+                <select
+                  id="member-page-size"
+                  value={pageSize}
+                  onChange={(event) => setPageSize(Number(event.target.value))}
+                  className="min-h-[44px] rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 text-sm font-bold text-[var(--text)]"
+                >
+                  {PAGE_SIZES.map((size) => <option key={size} value={size}>{size}</option>)}
+                </select>
+              </label>
+              <p className="text-xs font-bold text-[var(--text-muted)] tabular-nums" role="status">
+                عرض {rangeStart}–{rangeEnd} من {visibleMembers.length}
+              </p>
+              <span className="ms-auto flex items-center gap-2">
+                <button type="button" onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={safePage === 0} className="member-page-btn" aria-label="الصفحة السابقة">
+                  <ChevronRight size={17} aria-hidden="true" />
+                </button>
+                <span className="text-xs font-black text-[var(--text)] tabular-nums" aria-current="page">صفحة {safePage + 1} من {totalPages}</span>
+                <button type="button" onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))} disabled={safePage >= totalPages - 1} className="member-page-btn" aria-label="الصفحة التالية">
+                  <ChevronLeft size={17} aria-hidden="true" />
+                </button>
+              </span>
+            </div>
+          </>
+            : <div className="p-12"><EmptyState title="لا يوجد تطابق" description="لم نجد أي عضو يطابق معايير التصفية." /></div>}
+    </div>
 
-    <MemberProfileModal
-      isOpen={Boolean(selectedProfileMember)}
-      member={selectedProfileMember}
-      notes={notesQuery.data ?? []}
-      onClose={() => setSelectedProfileMember(null)}
-      onEdit={(m) => {
-        setSelectedProfileMember(null);
-        openEdit(m);
-      }}
+    <ConfirmDialog
+      isOpen={Boolean(memberToDelete)}
+      onClose={() => setMemberToDelete(null)}
+      onConfirm={confirmDelete}
+      title="تأكيد حذف العضو"
+      itemName={memberToDelete?.full_name}
+      description={memberToDelete ? `سيتم حذف ${memberToDelete.full_name} نهائياً. يمكنك التراجع خلال 5 ثوانٍ من إشعار التأكيد.` : undefined}
+      confirmLabel="حذف نهائي"
+      isPending={false}
+      pendingLabel="جارٍ الحذف..."
     />
+
+    <MemberDrawer
+      member={drawerMember}
+      notes={notesQuery.data ?? []}
+      onClose={() => setDrawerMember(null)}
+      onEdit={openEdit}
+      onDelete={askDelete}
+    />
+
+    <MemberEditor isOpen={dialogOpen} isSaving={add.isPending || update.isPending} member={editing} value={form} error={formError} onChange={setForm} onClose={() => setDialogOpen(false)} onSubmit={save} />
   </section>;
 }

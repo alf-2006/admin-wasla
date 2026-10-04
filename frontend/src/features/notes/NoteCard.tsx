@@ -1,9 +1,9 @@
-import { CalendarDays, Megaphone, Trash2, Users, UserRound } from 'lucide-react';
+import { CalendarDays, Megaphone, Trash2, UserRound } from 'lucide-react';
 import type { Note } from '../../types/db';
 
 export function NoteCard({ note, onDelete }: { note: Note; onDelete: (id: number) => void }) {
-  const Icon = note.target_name ? UserRound : note.target_team ? Users : Megaphone;
-  const audience = note.target_name ? `إلى ${note.target_name}` : note.target_team ? `فريق ${note.target_team}` : 'ملاحظة عامة';
+  const Icon = note.target_name ? UserRound : Megaphone;
+  const audience = note.target_name ? `إلى ${note.target_name}` : 'ملاحظة عامة';
   return (
     <article className="grid content-between gap-4 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-sm)] sm:p-5">
       <div className="grid gap-3">

@@ -42,8 +42,6 @@ export function BonusAdjustmentModal({ isOpen, member, onClose, onSuccess }: Bon
       author: author.trim() || 'إدارة وصلة',
       author_role: 'Admin',
       date: new Date().toISOString().slice(0, 10),
-      team: member.team || 'Wasla',
-      target_team: member.team || 'Wasla',
       target_member_id: member.id,
       target_name: member.full_name,
     };
@@ -80,7 +78,7 @@ export function BonusAdjustmentModal({ isOpen, member, onClose, onSuccess }: Bon
           </div>
           <div>
             <div className="font-black text-sm text-[var(--text)]">{member.full_name}</div>
-            <div className="text-xs text-[var(--text-muted)]">{member.team || 'Wasla'} — {member.email}</div>
+            <div className="text-xs text-[var(--text-muted)]" dir="ltr">{member.email}</div>
           </div>
         </div>
 
@@ -170,8 +168,8 @@ export function BonusAdjustmentModal({ isOpen, member, onClose, onSuccess }: Bon
           <Button type="button" variant="secondary" onClick={onClose} fullOnMobile className="min-h-11">
             إلغاء
           </Button>
-          <Button type="submit" disabled={createNote.isPending} fullOnMobile className="min-h-11">
-            {createNote.isPending ? 'جارٍ التسجيل...' : 'حفظ التقييم والملاحظة'}
+          <Button type="submit" isLoading={createNote.isPending} loadingText="جارٍ التسجيل..." fullOnMobile className="min-h-11">
+            حفظ التقييم والملاحظة
           </Button>
         </div>
       </form>

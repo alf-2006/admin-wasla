@@ -29,7 +29,6 @@ export function parseMemberWorkbook(buffer: ArrayBuffer, knownMembers: Member[])
     imported.push({
       full_name: name, 
       email,
-      team: clean(cell(row, ['الفريق', 'Team'])) || null,
       completion_rank: null,
       team_notes: null,
       device: clean(cell(row, ['الجهاز', 'الجهاز المتوفر', 'Device'])) || 'لابتوب',
@@ -49,7 +48,6 @@ export function parseMemberWorkbook(buffer: ArrayBuffer, knownMembers: Member[])
 export function downloadMembersWorkbook(members: Member[]) {
   const rows = members.map((member) => ({
     'الاسم الكامل': safeCell(member.full_name), 'البريد الإلكتروني': safeCell(member.email),
-    'الفريق': safeCell(member.team || 'Wasla'),
     'الجهاز المتوفر': safeCell(member.device), 'محل الإقامة': safeCell(member.residence),
     'رقم الهاتف': safeCell(member.phone),
     'متاح لنزول الإسكندرية': member.can_go_alexandria ? 'نعم' : 'لا',

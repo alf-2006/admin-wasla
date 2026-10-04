@@ -19,7 +19,7 @@ const escapeSql = (str: string | null) => {
 };
 
 let sql = `-- سكربت استيراد بيانات الأعضاء\n`;
-sql += `INSERT INTO members (email, full_name, phone, residence, device, work_conditions, bio, can_go_alexandria, work_status, completion_rank, team)\nVALUES\n`;
+sql += `INSERT INTO members (email, full_name, phone, residence, device, work_conditions, bio, can_go_alexandria, work_status, completion_rank)\nVALUES\n`;
 
 const values: string[] = [];
 
@@ -44,7 +44,7 @@ for (const row of data as any[]) {
   if (specialization) bio += `التخصص: ${specialization}`;
   if (notes) bio += (bio ? ' | ' : '') + `ملاحظات: ${notes}`;
   
-  values.push(`(${escapeSql(email)}, ${escapeSql(fullName)}, ${escapeSql(phone || rawPhone || null)}, ${escapeSql(residence)}, ${escapeSql(device)}, ${escapeSql(work_conditions)}, ${escapeSql(bio || null)}, ${can_go_alexandria}, 'active', 0, NULL)`);
+  values.push(`(${escapeSql(email)}, ${escapeSql(fullName)}, ${escapeSql(phone || rawPhone || null)}, ${escapeSql(residence)}, ${escapeSql(device)}, ${escapeSql(work_conditions)}, ${escapeSql(bio || null)}, ${can_go_alexandria}, 'active', 0)`);
 }
 
 sql += values.join(',\n') + '\n';

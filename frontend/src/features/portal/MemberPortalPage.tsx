@@ -6,9 +6,12 @@ import { useTasks, useUpdateTaskStatus } from '../tasks/api';
 import { useUpdateMember } from '../members/api';
 import type { Task } from '../../types/db';
 import { PortalHeader } from './PortalHeader';
+import { toast } from '../../store/toast';
+import { handleSupabaseError } from '../../lib/errorHandler';
 import { MemberHero } from './MemberHero';
 import { MemberTasks } from './MemberTasks';
 import { SubmissionModal } from './SubmissionModal';
+import MemberAnnouncements from './announcements/MemberAnnouncements';
 
 export default function MemberPortalPage() {
   const member = useAuthStore((state) => state.currentMember);
@@ -38,8 +41,9 @@ export default function MemberPortalPage() {
   const startTask = async (task: Task) => {
     try {
       await updateTask.mutateAsync({ taskId: task.id, memberId: member.id, status: 'in_progress', currentTracking: task.tracking ?? {} });
+      toast.success('بدأت المهمة — بالتوفيق.');
     } catch (cause) {
-      alert(cause instanceof Error ? cause.message : 'تعذر بدء المهمة — لم يتغير شيء.');
+      toast.error(handleSupabaseError(cause).message || 'تعذر بدء المهمة — لم يتغير شيء.');
     }
   };
 
@@ -59,8 +63,9 @@ export default function MemberPortalPage() {
       setSelectedTask(null);
       setSubmissionUrl('');
       setSubmissionNote('');
+      toast.success('تم تسليم المهمة للمراجعة.');
     } catch (cause) {
-      alert(cause instanceof Error ? cause.message : 'تعذر تسليم المهمة — حاول مرة أخرى.');
+      toast.error(handleSupabaseError(cause).message || 'تعذر تسليم المهمة — حاول مرة أخرى.');
     } finally {
       setIsSubmitting(false);
     }
@@ -71,8 +76,9 @@ export default function MemberPortalPage() {
     try {
       await updateMember.mutateAsync({ id: member.id, can_go_alexandria: canGo });
       useAuthStore.getState().setMember({ ...member, can_go_alexandria: canGo });
+      toast.success(canGo ? 'تم تفعيل جاهزية النزول الميداني.' : 'تم إيقاف جاهزية النزول الميداني.');
     } catch (cause) {
-      alert(cause instanceof Error ? cause.message : 'تعذر تحديث حالة الاستعداد — لن يتم الحفظ حتى تكسَب صلاحية الحساب الكامل (قادم في المرحلة 3).');
+      toast.error(handleSupabaseError(cause).message || 'تعذر تحديث حالة الاستعداد.');
     }
   };
 
@@ -87,6 +93,7 @@ export default function MemberPortalPage() {
       <PortalHeader onLogout={logout} />
       <main className="mx-auto grid w-full max-w-[var(--content-max)] gap-6 px-4 pb-8 pt-5 sm:px-6 sm:pt-7">
         <MemberHero member={member} onToggleField={toggleFieldReadiness} isUpdating={updateMember.isPending} />
+        <MemberAnnouncements memberId={member.id} />
         <MemberTasks tasks={myTasks} memberId={memberId} isLoading={tasksQuery.isLoading} isError={tasksQuery.isError} onRetry={() => { void tasksQuery.refetch(); }} onStart={startTask} onSubmit={openSubmission} />
       </main>
       <SubmissionModal task={selectedTask} url={submissionUrl} note={submissionNote} isSubmitting={isSubmitting} onUrlChange={setSubmissionUrl} onNoteChange={setSubmissionNote} onClose={() => setSelectedTask(null)} onSubmit={submitTask} />
