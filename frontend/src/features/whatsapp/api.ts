@@ -1,6 +1,6 @@
 import { supabase } from '../../lib/supabase/client';
 
-const bridgeUrl = (import.meta.env.VITE_WHATSAPP_BRIDGE_URL as string | undefined) ?? 'http://localhost:3030';
+const bridgeUrl = ((import.meta.env.VITE_WHATSAPP_BRIDGE_URL as string | undefined) ?? 'http://localhost:3030').trim();
 
 export type ConnectionState = 'disconnected' | 'qr_ready' | 'connecting' | 'connected';
 
