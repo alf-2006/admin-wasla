@@ -203,6 +203,15 @@ test('WhatsApp bridge URL is validated', async (t) => {
     assert.match(api, /memberIds\.length > 50/);
     assert.match(api, /consentConfirmed/);
   });
+  await t.test('misconfigured bridge fails per-request, never at module load', () => {
+    const api = src('src/features/whatsapp/api.ts');
+    // bridgeUrl may be null; request() must guard before any fetch
+    assert.match(api, /const bridgeUrl = resolveBridgeUrl\(\);/);
+    assert.match(api, /if \(!bridgeUrl\) throw new Error\(BRIDGE_MISCONFIGURED_MESSAGE\)/);
+    // resolveBridgeUrl itself must never throw (page crash) — only return null
+    const fnBody = api.slice(api.indexOf('function resolveBridgeUrl'), api.indexOf('const bridgeUrl ='));
+    assert.ok(!/throw new Error/.test(fnBody), 'resolveBridgeUrl must not throw');
+  });
 });
 
 // ---------- 7. security headers ----------

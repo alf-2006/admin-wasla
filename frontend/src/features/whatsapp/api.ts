@@ -3,29 +3,29 @@ import { supabase } from '../../lib/supabase/client';
 const RAW_BRIDGE_URL = ((import.meta.env.VITE_WHATSAPP_BRIDGE_URL as string | undefined) ?? 'http://localhost:3030').trim();
 
 /**
- * عنوان جسر واتساب — في الإنتاج يُشترط https (باستثناء localhost للتطوير)
- * لمنع Mixed Content وتسريب Bearer token فوق http.
+ * عنوان جسر واتساب — يُحلّ مرة واحدة لكن بلا رمي إطلاقاً على مستوى الموديول
+ * (الرمي أثناء التحميل يُسقط الصفحة كلها). القيمة null تعني "غير مضبوط"،
+ * وكل استدعاء فعلي يرفض بخطأ عادي تلتقطه مكونات الواجهة كبطاقة خطأ.
  */
-function resolveBridgeUrl(): string {
+function resolveBridgeUrl(): string | null {
   const fallback = 'http://localhost:3030';
+  const raw = RAW_BRIDGE_URL || fallback;
   let parsed: URL;
   try {
-    parsed = new URL(RAW_BRIDGE_URL || fallback);
+    parsed = new URL(raw);
   } catch {
-    if (import.meta.env.PROD) throw new Error('عنوان خدمة واتساب غير مضبوط.');
-    return fallback;
+    return null;
   }
   const isLocal = parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1';
-  if (import.meta.env.PROD && parsed.protocol !== 'https:' && !isLocal) {
-    throw new Error('خدمة واتساب غير متاحة فوق اتصال غير مشفّر.');
-  }
-  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-    throw new Error('عنوان خدمة واتساب غير صالح.');
-  }
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+  if (import.meta.env.PROD && parsed.protocol !== 'https:' && !isLocal) return null;
   return parsed.origin;
 }
 
 const bridgeUrl = resolveBridgeUrl();
+
+export const BRIDGE_MISCONFIGURED_MESSAGE =
+  'عنوان خدمة واتساب غير مضبوط — اضبط VITE_WHATSAPP_BRIDGE_URL برابط https للجسر ثم أعد النشر.';
 
 const ALLOWED_BRIDGE_PATHS = new Set([
   '/v1/status',
@@ -81,6 +81,7 @@ export const getBridgeUrl = () => bridgeUrl;
 export const getBridgeDiagnostics = () => request<BridgeDiagnostics>('/v1/diagnostics');
 
 async function request<T>(path: string, body?: Record<string, unknown>): Promise<T> {
+  if (!bridgeUrl) throw new Error(BRIDGE_MISCONFIGURED_MESSAGE);
   if (!ALLOWED_BRIDGE_PATHS.has(path)) throw new Error('مسار خدمة واتساب غير مسموح.');
   if (body) {
     const taskId = (body as { taskId?: unknown }).taskId;

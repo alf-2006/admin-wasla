@@ -5,7 +5,7 @@ import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { supabase } from '../../lib/supabase/client';
 import { toast } from '../../store/toast';
-import { getBridgeDiagnostics, getBridgeUrl, type BridgeDiagnostics, type DiagCheck } from './api';
+import { getBridgeDiagnostics, getBridgeUrl, BRIDGE_MISCONFIGURED_MESSAGE, type BridgeDiagnostics, type DiagCheck } from './api';
 
 const STATUS_META: Record<DiagCheck['status'], { icon: typeof CheckCircle2; label: string; chip: string }> = {
   ok: { icon: CheckCircle2, label: 'سليم', chip: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300' },
@@ -34,9 +34,12 @@ function verdict(data: BridgeDiagnostics | undefined): string {
 
 export default function WhatsAppDiagnostics() {
   const [sessionOk, setSessionOk] = useState<boolean | null>(null);
+  const queryKey = ['whatsapp-diagnostics'];
+  const bridgeUrl = getBridgeUrl();
   const diag = useQuery({
-    queryKey: ['whatsapp-diagnostics'],
+    queryKey,
     queryFn: async () => {
+      if (!bridgeUrl) throw new Error(BRIDGE_MISCONFIGURED_MESSAGE);
       const { data } = await supabase.auth.getSession();
       setSessionOk(Boolean(data.session?.access_token));
       return getBridgeDiagnostics();
@@ -77,7 +80,9 @@ export default function WhatsAppDiagnostics() {
       <Card className="flex flex-wrap items-center gap-3">
         <span className="flex items-center gap-2 text-sm font-bold text-[var(--text-2)]">
           <PlugZap size={16} aria-hidden="true" />
-          <span dir="ltr">{getBridgeUrl()}</span>
+          {bridgeUrl
+            ? <span dir="ltr">{bridgeUrl}</span>
+            : <span className="text-[var(--danger)]">{BRIDGE_MISCONFIGURED_MESSAGE}</span>}
         </span>
         <span className="text-xs text-[var(--text-muted)]">
           جلسة الإدارة: {sessionOk === null ? '…' : sessionOk ? 'موجودة' : 'غائبة — سجّل الدخول'}
