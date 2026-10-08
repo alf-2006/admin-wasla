@@ -3,7 +3,7 @@ import type { FormEvent } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/auth';
 import { useTasks, useUpdateTaskStatus } from '../tasks/api';
-import { useUpdateMember } from '../members/api';
+import { logoutMemberDevice, updateMemberReadiness } from '../members/api';
 import type { Task } from '../../types/db';
 import { PortalHeader } from './PortalHeader';
 import { toast } from '../../store/toast';
@@ -19,11 +19,11 @@ export default function MemberPortalPage() {
   const navigate = useNavigate();
   const tasksQuery = useTasks();
   const updateTask = useUpdateTaskStatus();
-  const updateMember = useUpdateMember();
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [submissionUrl, setSubmissionUrl] = useState('');
   const [submissionNote, setSubmissionNote] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isTogglingReadiness, setIsTogglingReadiness] = useState(false);
 
   if (!member) return <Navigate to="/login" replace />;
 
@@ -34,8 +34,10 @@ export default function MemberPortalPage() {
   });
 
   const logout = () => {
+    const memberId = member.id;
     logoutMember();
     navigate('/login');
+    void logoutMemberDevice(memberId);
   };
 
   const startTask = async (task: Task) => {
@@ -73,12 +75,15 @@ export default function MemberPortalPage() {
 
   const toggleFieldReadiness = async () => {
     const canGo = !member.can_go_alexandria;
+    setIsTogglingReadiness(true);
     try {
-      await updateMember.mutateAsync({ id: member.id, can_go_alexandria: canGo });
+      await updateMemberReadiness(member.id, canGo);
       useAuthStore.getState().setMember({ ...member, can_go_alexandria: canGo });
       toast.success(canGo ? 'تم تفعيل جاهزية النزول الميداني.' : 'تم إيقاف جاهزية النزول الميداني.');
     } catch (cause) {
       toast.error(handleSupabaseError(cause).message || 'تعذر تحديث حالة الاستعداد.');
+    } finally {
+      setIsTogglingReadiness(false);
     }
   };
 
@@ -92,7 +97,7 @@ export default function MemberPortalPage() {
     <div className="min-h-dvh bg-[var(--bg)] text-[var(--text)]" dir="rtl">
       <PortalHeader onLogout={logout} />
       <main className="mx-auto grid w-full max-w-[var(--content-max)] gap-6 px-4 pb-8 pt-5 sm:px-6 sm:pt-7">
-        <MemberHero member={member} onToggleField={toggleFieldReadiness} isUpdating={updateMember.isPending} />
+        <MemberHero member={member} onToggleField={toggleFieldReadiness} isUpdating={isTogglingReadiness} />
         <MemberAnnouncements memberId={member.id} />
         <MemberTasks tasks={myTasks} memberId={memberId} isLoading={tasksQuery.isLoading} isError={tasksQuery.isError} onRetry={() => { void tasksQuery.refetch(); }} onStart={startTask} onSubmit={openSubmission} />
       </main>

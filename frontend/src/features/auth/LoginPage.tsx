@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertCircle, ArrowLeft, Mail } from 'lucide-react';
 import { AuthShell } from '../../components/layout/AuthShell';
-import { useAuthStore } from '../../store/auth';
+import { useAuthStore, setDeviceToken } from '../../store/auth';
+import { supabase } from '../../lib/supabase/client';
 import { fetchMemberByEmail } from '../members/api';
 import { isValidEmail } from '../../lib/validators';
 
@@ -16,6 +17,12 @@ export default function LoginPage() {
   const handleMemberLogin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const cleanEmail = email.trim().toLowerCase();
+
+    if (cleanEmail === 'admin') {
+      navigate('/admin/login');
+      return;
+    }
+
     if (!cleanEmail) {
       setError('يرجى كتابة البريد الإلكتروني الخاص بك.');
       return;
@@ -27,10 +34,25 @@ export default function LoginPage() {
 
     setLoading(true);
     setError('');
+    // رمز جهاز غير متوقع (CSPRNG) — إثبات ملكية سجل العضو في RPCs اللاحقة
+    const deviceBytes = new Uint8Array(16);
+    crypto.getRandomValues(deviceBytes);
+    const deviceToken = Array.from(deviceBytes, (b) => b.toString(36)).join('').replace(/[^a-z0-9]/gi, '').slice(0, 20) + Date.now().toString(36);
+
+    // افصل جلسة الإدارة (إن وجدت) عن بوابة الأعضاء لمنع تسريب صلاحيات
     try {
-      const member = await fetchMemberByEmail(cleanEmail);
-      if (!member) setError('هذا البريد الإلكتروني غير مسجل في فريق وصلة. يرجى مراجعة الإدارة.');
-      else {
+      await supabase.auth.signOut();
+    } catch {
+      // تجاهل الفشل: تسجيل الدخول بوابة الأعضاء يعمل حتى بدون signOut
+    }
+
+    try {
+      const member = await fetchMemberByEmail(cleanEmail, deviceToken);
+      if (!member) {
+        setError('هذا البريد الإلكتروني غير مسجل في فريق وصلة. يرجى مراجعة الإدارة.');
+      } else {
+        // لا نخزّن session_token في الواجهة لتقليل أثر سرقة الجلسة (يظل محفوظاً في قاعدة البيانات فقط).
+        setDeviceToken(deviceToken);
         setMember(member);
         navigate('/portal');
       }
@@ -50,7 +72,7 @@ export default function LoginPage() {
       footer={<span className="text-sm text-[var(--text-2)]">هل تواجه مشكلة في الدخول؟ تواصل مع مسؤول فريقك.</span>}
     >
       {error && <div className="auth-error" role="alert"><AlertCircle size={18} aria-hidden="true" /><span>{error}</span></div>}
-      <form onSubmit={handleMemberLogin} className="auth-form" noValidate>
+      <form onSubmit={handleMemberLogin} method="post" className="auth-form" noValidate>
         <label className="auth-field" htmlFor="member-email">البريد الإلكتروني للعضو
           <span className="auth-input-wrap"><Mail size={17} aria-hidden="true" /><input id="member-email" type="email" dir="ltr" autoComplete="email" required placeholder="name@wasla.com" value={email} onChange={(event) => { setEmail(event.target.value); if (error) setError(''); }} aria-invalid={Boolean(error) || undefined} aria-describedby={error ? 'member-email-error' : undefined} /></span>
         </label>

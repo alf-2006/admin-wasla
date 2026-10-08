@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Users, Eye, EyeOff, Trash2 } from 'lucide-react';
+import { Users, Eye, EyeOff, Trash2, Footprints } from 'lucide-react';
 import AnnouncementsAPI from '../../../lib/api/announcements';
-import type { AnnouncementStats } from '../../../types/db';
+import type { AnnouncementMemberDetail, AnnouncementStats } from '../../../types/db';
 import { Modal } from '../../../components/ui/Modal';
 import { ErrorState } from '../../../components/ui/ErrorState';
 import { Skeleton } from '../../../components/ui/Skeleton';
+import { Badge } from '../../../components/ui/Badge';
 
 interface AnnouncementStatsModalProps {
   announcementId: number;
@@ -16,6 +17,7 @@ export default function AnnouncementStatsModal({
   onClose,
 }: AnnouncementStatsModalProps) {
   const [stats, setStats] = useState<AnnouncementStats | null>(null);
+  const [details, setDetails] = useState<AnnouncementMemberDetail[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,8 +25,12 @@ export default function AnnouncementStatsModal({
     try {
       setLoading(true);
       setError(null);
-      const data = await AnnouncementsAPI.getAnnouncementStats(announcementId);
-      setStats(data);
+      const [statsData, detailsData] = await Promise.all([
+        AnnouncementsAPI.getAnnouncementStats(announcementId),
+        AnnouncementsAPI.getAnnouncementDetails(announcementId),
+      ]);
+      setStats(statsData);
+      setDetails(detailsData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'حدث خطأ غير معروف');
     } finally {
@@ -45,6 +51,29 @@ export default function AnnouncementStatsModal({
   const getDismissedPercentage = () => {
     if (!stats || stats.total_recipients === 0) return 0;
     return Math.round((stats.dismissed_count / stats.total_recipients) * 100);
+  };
+
+  const getViewedPercentage = () => {
+    if (!stats || stats.total_recipients === 0) return 0;
+    return Math.round((stats.viewed_count / stats.total_recipients) * 100);
+  };
+
+  const formatDateTime = (value: string | null) => {
+    if (!value) return '—';
+    return new Intl.DateTimeFormat('ar-EG', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(new Date(value));
+  };
+
+  const memberStatus = (row: AnnouncementMemberDetail): { label: string; variant: 'success' | 'info' | 'warning' | 'neutral' } => {
+    if (row.dismissed_at) return { label: 'مسح الإعلان', variant: 'neutral' };
+    if (row.read_at) return { label: 'قرأ الإعلان', variant: 'success' };
+    if (row.viewed_at) return { label: 'فتح ولم يقرأ', variant: 'warning' };
+    return { label: 'لم يفتح بعد', variant: 'info' };
   };
 
   return (
@@ -78,8 +107,22 @@ export default function AnnouncementStatsModal({
               </p>
             </div>
 
-            {/* إحصائيات القراءة والمسح */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {/* إحصائيات المشاهدة والقراءة والمسح */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              {/* فتح الإعلان */}
+              <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-2)] p-4">
+                <div className="mb-2 flex items-center gap-2">
+                  <Footprints className="text-[var(--link)]" size={20} aria-hidden="true" />
+                  <h4 className="font-semibold text-[var(--text)]">فتح الإعلان</h4>
+                </div>
+                <p className="text-xl font-bold text-[var(--text)]">
+                  {stats.viewed_count}
+                </p>
+                <p className="mt-1 text-xs text-[var(--text-muted)]">
+                  {getViewedPercentage()}% فتحوه ولو مرة واحدة
+                </p>
+              </div>
+
               {/* تمت القراءة */}
               <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900 dark:bg-emerald-950/40">
                 <div className="mb-2 flex items-center gap-2">
@@ -139,10 +182,61 @@ export default function AnnouncementStatsModal({
               </p>
             </div>
 
+            {/* تفاصيل كل عضو */}
+            <div className="grid gap-3 rounded-xl border border-[var(--border)] bg-[var(--bg)] p-4">
+              <h4 className="font-black text-[var(--text)]">تفاصيل الأعضاء ({details.length})</h4>
+              {details.length === 0 ? (
+                <p className="text-sm text-[var(--text-muted)]">لا يوجد مستلمون لهذا الإعلان.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="data-table text-sm">
+                    <thead>
+                      <tr className="text-xs text-[var(--text-muted)]">
+                        <th className="text-start font-bold">العضو</th>
+                        <th className="text-start font-bold">الحالة</th>
+                        <th className="text-start font-bold">أول فتح</th>
+                        <th className="text-start font-bold">آخر فتح (مرات)</th>
+                        <th className="text-start font-bold">تمت القراءة</th>
+                        <th className="text-start font-bold">المسح</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {details.map((row) => {
+                        const status = memberStatus(row);
+                        return (
+                          <tr key={row.member_id}>
+                            <td data-label="العضو">
+                              <p className="font-bold text-[var(--text)]">{row.full_name}</p>
+                              <p className="text-xs text-[var(--text-muted)]" dir="ltr">{row.email}</p>
+                            </td>
+                            <td data-label="الحالة">
+                              <Badge variant={status.variant === 'success' ? 'success' : status.variant === 'warning' ? 'warning' : status.variant === 'info' ? 'info' : 'neutral'}>
+                                {status.label}
+                              </Badge>
+                            </td>
+                            <td data-label="أول فتح" className="whitespace-nowrap text-[var(--text-2)]">{formatDateTime(row.viewed_at)}</td>
+                            <td data-label="آخر فتح" className="whitespace-nowrap text-[var(--text-2)]">
+                              {row.view_count > 0 ? `${formatDateTime(row.last_viewed_at)} (${row.view_count})` : '—'}
+                            </td>
+                            <td data-label="تمت القراءة" className="whitespace-nowrap text-[var(--text-2)]">{formatDateTime(row.read_at)}</td>
+                            <td data-label="المسح" className="whitespace-nowrap text-[var(--text-2)]">{formatDateTime(row.dismissed_at)}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
             {/* ملخص سريع */}
             <div className="rounded-xl border border-[var(--border)] bg-[var(--surface-2)] p-4">
               <h4 className="mb-3 font-semibold text-[var(--text)]">ملخص سريع</h4>
               <dl className="grid gap-2 text-sm">
+                <div className="flex justify-between">
+                  <dt className="text-[var(--text-muted)]">معدل الفتح:</dt>
+                  <dd className="font-medium text-[var(--text)]">{getViewedPercentage()}%</dd>
+                </div>
                 <div className="flex justify-between">
                   <dt className="text-[var(--text-muted)]">معدل القراءة:</dt>
                   <dd className="font-medium text-[var(--text)]">{getReadPercentage()}%</dd>

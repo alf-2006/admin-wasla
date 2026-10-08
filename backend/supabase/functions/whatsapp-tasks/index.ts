@@ -54,7 +54,7 @@ serve(async (req) => {
     if (!configured) return reply({ error: 'أكمل أسرار WhatsApp Cloud API وإعداد القالب على الخادم.' }, 503)
     const { data: setting, error: settingError } = await service.from('whatsapp_settings').select('enabled').eq('id', 1).maybeSingle()
     if (settingError || !setting?.enabled) return reply({ error: 'بوت واتساب متوقف. فعّله من لوحة الإدارة أولًا.' }, 409)
-    if (!consentConfirmed || !Number.isInteger(taskId) || !Array.isArray(memberIds) || memberIds.length < 1 || memberIds.length > 50) {
+    if (!consentConfirmed || !Number.isInteger(taskId) || taskId <= 0 || !Array.isArray(memberIds) || memberIds.length < 1 || memberIds.length > 50) {
       return reply({ error: 'تأكيد الموافقة مطلوب. اختر من 1 إلى 50 عضوًا لهذه الدفعة.' }, 400)
     }
     const validIds = memberIds.filter((id: unknown): id is number => Number.isInteger(id))

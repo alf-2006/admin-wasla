@@ -7,10 +7,13 @@
 -- بدلاً من هذا الملف (هذا الملف للتثبيت الجديد الكامل فقط).
 --
 -- قواعد الأمان المعتمدة هنا:
---   1. الإدارة (authenticated): صلاحيات كاملة عبر RLS.
---   2. بوابة الأعضاء (anon): قراءة أعمدة محددة فقط (بدون هاتف/نوع/سكن/ملاحظات خاصة)
---      + تحديث عمود tracking في المهام فقط (عمود واحد ولا شيء غيره).
---   3. الاعتماد (approved) حق إداري حصرياً — Trigger يمنع anon من اعتماد أي مهمة.
+--   1. الإدارة: صلاحيات كاملة عبر RLS مقصورة على admin_emails (is_admin).
+--   2. بوابة الأعضاء (anon): قراءة أعمدة عامة فقط
+--      (بدون هاتف/نوع/سكن/ملاحظات خاصة/session_token/push_subscription)
+--      + كتابة عبر RPCs مربوطة برمز الجهاز فقط (submit_task_status،
+--      update_member_readiness، دوال الإعلانات) — لا UPDATE مباشر.
+--   3. الاعتماد (approved) حق إداري حصرياً — Trigger + فحص is_admin
+--      في approve_task_submission يمنعان أي اعتماد غير إداري.
 --   4. دوال الـ Vault (مفتاح Groq) قاصرة على service_role — لا يمكن لأي زائر أو
 --      مستخدم عادي استدعاؤها عبر PostgREST.
 -- ========================================================
@@ -80,47 +83,76 @@ ALTER TABLE public.members ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tasks ENABLE ROW LEVEL SECURITY;
 
--- 2) السياسات: الإدارة (authenticated) ----------------------
+-- 2) السياسات: الإدارة (authenticated + is_admin) -------------
+-- الوصول الكامل مقصور على الحسابات المدرجة في admin_emails
+-- (راجع backend/migrations/0008_admin_email_rls.sql) — أي حساب
+-- authenticated خارج القائمة يُرفض على مستوى القاعدة.
+
+CREATE TABLE IF NOT EXISTS public.admin_emails (
+  email TEXT PRIMARY KEY
+);
+
+INSERT INTO public.admin_emails (email) VALUES
+  ('admin@wasla.com'),
+  ('admin@wasla.local'),
+  ('admin@example.com')
+ON CONFLICT (email) DO NOTHING;
+
+CREATE OR REPLACE FUNCTION public.is_admin()
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY INVOKER
+SET search_path = public
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.admin_emails a
+    WHERE lower(a.email) = lower(auth.jwt() ->> 'email')
+  );
+$$;
+
+REVOKE ALL ON FUNCTION public.is_admin() FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.is_admin() TO authenticated;
 
 DROP POLICY IF EXISTS "Admins full access to members" ON public.members;
 DROP POLICY IF EXISTS "Full access to members for authenticated users" ON public.members;
 CREATE POLICY "Admins full access to members"
-ON public.members FOR ALL TO authenticated USING (true) WITH CHECK (true);
+ON public.members FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
 
 DROP POLICY IF EXISTS "Admins full access to notes" ON public.notes;
 DROP POLICY IF EXISTS "Full access to notes for authenticated users" ON public.notes;
 CREATE POLICY "Admins full access to notes"
-ON public.notes FOR ALL TO authenticated USING (true) WITH CHECK (true);
+ON public.notes FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
 
 DROP POLICY IF EXISTS "Admins full access to tasks" ON public.tasks;
 DROP POLICY IF EXISTS "Full access to tasks for authenticated users" ON public.tasks;
 CREATE POLICY "Admins full access to tasks"
-ON public.tasks FOR ALL TO authenticated USING (true) WITH CHECK (true);
+ON public.tasks FOR ALL TO authenticated USING (public.is_admin()) WITH CHECK (public.is_admin());
 
 -- 3) السياسات: بوابة الأعضاء (anon) -------------------------
--- ملاحظة: التقييد الحقيقي للأعمدة يتم في القسم 4 (Column-level GRANTs)
--- فالسياسة تشمل الصفوف، والـ GRANT يشمل الأعمدة — الطبقتان تعملان معاً.
+-- بوابة الأعضاء لا تلمس members مباشرة — الدخول عبر
+-- lookup_member_by_email فقط (backend/migrations/0009).
+-- tasks/notes: قراءة فقط؛ تحديث tracking عبر submit_task_status حصراً
+-- (لا UPDATE مباشر من anon).
 
 DROP POLICY IF EXISTS "Anon read members by email" ON public.members;
-CREATE POLICY "Anon members login lookup"
-ON public.members FOR SELECT TO anon USING (true);
+DROP POLICY IF EXISTS "Anon members login lookup" ON public.members;
 
 DROP POLICY IF EXISTS "Anon read tasks" ON public.tasks;
 CREATE POLICY "Anon read tasks"
 ON public.tasks FOR SELECT TO anon USING (true);
 
 DROP POLICY IF EXISTS "Anon update task tracking" ON public.tasks;
-CREATE POLICY "Anon update own task tracking"
-ON public.tasks FOR UPDATE TO anon USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Anon update own task tracking" ON public.tasks;
 
 DROP POLICY IF EXISTS "Anon read notes" ON public.notes;
 CREATE POLICY "Anon read notes"
 ON public.notes FOR SELECT TO anon USING (true);
 
 -- 4) صلاحيات الأعمدة (الحزام الثاني بعد RLS) ----------------
--- هذا القسم هو ما يمنع تسريب البيانات الشخصية فعلياً:
---  - بلااته: anon لا يرى phone / gender / residence / work_conditions / team_notes
---  - المهام: anon لا يمكنه تعديل أي عمود سوى tracking (لا عنوان ولا قائمة مكلفين)
+--  - anon لا يرى phone / gender / residence / work_conditions /
+--    team_notes / session_token / push_subscription إطلاقاً.
+--  - anon لا يحدّث أي عمود مباشرة (التحديث عبر RPCs مربوطة بالجهاز).
 
 REVOKE ALL ON public.members, public.tasks, public.notes FROM anon;
 
@@ -128,7 +160,6 @@ GRANT SELECT (id, created_at, email, full_name, bio, device, meeting_attendance,
     ON public.members TO anon;
 
 GRANT SELECT ON public.tasks TO anon;
-GRANT UPDATE (tracking) ON public.tasks TO anon;
 GRANT SELECT ON public.notes TO anon;
 
 -- 5) Trigger: منع الاعتماد الذاتي للعضو ----------------------

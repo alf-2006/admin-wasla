@@ -26,6 +26,11 @@ export default function MemberAnnouncements({ memberId }: MemberAnnouncementsPro
       setError(null);
       const data = await AnnouncementsAPI.getMemberAnnouncements(memberId);
       setAnnouncements(data);
+      // تسجيل المشاهدة لكل إعلان ظهر في البوابة — حدث منفصل عن "تمت القراءة".
+      // fire-and-forget: فشل التسجيل لا يعطل العرض.
+      for (const ann of data) {
+        void AnnouncementsAPI.markAnnouncementViewed(ann.id, memberId).catch(() => {});
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'حدث خطأ في تحميل الإعلانات');
     } finally {

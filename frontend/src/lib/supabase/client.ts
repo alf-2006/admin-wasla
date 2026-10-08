@@ -21,5 +21,30 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
+    // تقليل أثر سرقة الجلسة: نخزن جلسة Supabase في sessionStorage بدل localStorage.
+    // supabase-js يتوقع كائن Storage-like.
+    storage: {
+      getItem: (key: string) => {
+        try {
+          return sessionStorage.getItem(key);
+        } catch {
+          return null;
+        }
+      },
+      setItem: (key: string, value: string) => {
+        try {
+          sessionStorage.setItem(key, value);
+        } catch {
+          // ignore
+        }
+      },
+      removeItem: (key: string) => {
+        try {
+          sessionStorage.removeItem(key);
+        } catch {
+          // ignore
+        }
+      },
+    } as any,
   },
 });

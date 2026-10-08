@@ -90,13 +90,38 @@ export function checkPasswordStrength(password: string): {
  */
 export function isValidUrl(url: string): boolean {
   if (!url || typeof url !== 'string') return false;
-  
+  if (url.length > 2048) return false;
+
   try {
-    const parsed = new URL(url);
+    const parsed = new URL(url.trim());
     return ['http:', 'https:'].includes(parsed.protocol);
   } catch {
     return false;
   }
+}
+
+/**
+ * إرجاع href آمن للعرض فقط — يقبل http/https حصراً.
+ * أي قيمة أخرى (javascript:, data:, blob:, مسار نسبي غامض) تُرفض بإرجاع null
+ * حتى لا تتحول بيانات مخزنة إلى XSS/open-redirect عند العرض.
+ */
+export function safeHref(raw: unknown): string | null {
+  if (typeof raw !== 'string') return null;
+  const trimmed = raw.trim();
+  if (!trimmed || trimmed.length > 2048) return null;
+  let parsed: URL;
+  try {
+    parsed = new URL(trimmed);
+  } catch {
+    return null;
+  }
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+  return parsed.href;
+}
+
+/** التأكد من معرّف رقمي موجب ضمن حد 32-bit */
+export function isPositiveId(value: unknown): value is number {
+  return typeof value === 'number' && Number.isInteger(value) && value > 0 && value <= 2147483647;
 }
 
 /**

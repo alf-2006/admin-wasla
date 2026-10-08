@@ -7,6 +7,8 @@ backend/whatsapp-bridge/.env
 backend/whatsapp-bridge/.env.*
 !backend/whatsapp-bridge/.env.example
 backend/whatsapp-bridge/data/
+# أسرار التطوير المحلية لجسر واتساب — لا تدخل المستودع أبداً
+backend/whatsapp-service/.env.local
 
 # Dependencies
 node_modules/

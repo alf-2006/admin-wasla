@@ -36,17 +36,27 @@ whatsappRouter.post('/revoke', (_req, res) => {
 whatsappRouter.post('/mock-send', (req, res, next) => {
   try {
     const { taskId, memberIds, consentConfirmed } = req.body;
-    if (taskId === undefined || !Array.isArray(memberIds)) {
+    if (!Number.isInteger(Number(taskId)) || Number(taskId) <= 0 || !Array.isArray(memberIds)) {
       return res.status(400).json({
         success: false,
         error: 'بيانات المهمة أو قائمة الأعضاء غير مكتملة.',
       });
     }
+    const ids = (memberIds as unknown[]).filter(
+      (id): id is number => Number.isInteger(id) && (id as number) > 0
+    );
+    if (ids.length === 0 || ids.length > 50 || ids.length !== memberIds.length ||
+        new Set(ids).size !== ids.length || consentConfirmed !== true) {
+      return res.status(400).json({
+        success: false,
+        error: 'يلزم تأكيد الموافقة وقائمة 1-50 عضواً بلا تكرار.',
+      });
+    }
 
     const result = mockBaileysManager.mockSend(
       Number(taskId),
-      memberIds,
-      Boolean(consentConfirmed)
+      ids,
+      true
     );
     return res.json(result);
   } catch (err) {
@@ -87,16 +97,25 @@ whatsappRouter.post('/v1/revoke', (_req, res) => {
 whatsappRouter.post('/v1/send-task', (req, res) => {
   try {
     const { taskId, memberIds, consentConfirmed } = req.body;
-    if (taskId === undefined || !Array.isArray(memberIds)) {
+    if (!Number.isInteger(Number(taskId)) || Number(taskId) <= 0 || !Array.isArray(memberIds)) {
       return res.status(400).json({
         error: 'اختر مهمة والأعضاء وأكّد موافقتهم على واتساب.',
+      });
+    }
+    const ids = (memberIds as unknown[]).filter(
+      (id): id is number => Number.isInteger(id) && (id as number) > 0
+    );
+    if (ids.length === 0 || ids.length > 50 || ids.length !== memberIds.length ||
+        new Set(ids).size !== ids.length || consentConfirmed !== true) {
+      return res.status(400).json({
+        error: 'يلزم تأكيد الموافقة وقائمة 1-50 عضواً بلا تكرار.',
       });
     }
 
     const result = mockBaileysManager.mockSend(
       Number(taskId),
-      memberIds,
-      Boolean(consentConfirmed)
+      ids,
+      true
     );
 
     return res.json({

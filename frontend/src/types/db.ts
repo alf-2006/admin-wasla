@@ -20,6 +20,7 @@ export type Member = {
   meeting_attendance: string | null;
   work_status: string | null;
   can_go_alexandria: boolean;
+  session_token?: string | null;
 }
 
 export type MemberInsert = Omit<Member, 'id' | 'created_at'>;
@@ -109,9 +110,22 @@ export type AnnouncementStats = {
   read_count: number;
   dismissed_count: number;
   pending_count: number;
+  viewed_count: number;
 };
 
-/** نتيجة دالة تسجيل دخول العضو (RPC محصورة بالأعمدة العامة فقط) */
+/** صف تفصيلي لعضو واحد داخل تقرير إعلان (للإدارة فقط — بلا أعمدة حساسة) */
+export type AnnouncementMemberDetail = {
+  member_id: number;
+  full_name: string;
+  email: string;
+  viewed_at: string | null;
+  last_viewed_at: string | null;
+  view_count: number;
+  read_at: string | null;
+  dismissed_at: string | null;
+};
+
+/** نتيجة دالة تسجيل دخول العضو (RPC محصورة بالأعمدة العامة فقط — بلا session_token) */
 export type MemberLookupRow = Pick<
   Member,
   'id' | 'created_at' | 'email' | 'full_name' | 'completion_rank' | 'bio' | 'device' | 'meeting_attendance' | 'work_status' | 'can_go_alexandria'
@@ -135,12 +149,20 @@ export interface Database {
     };
     Views: Record<string, never>;
     Functions: {
-      lookup_member_by_email: { Args: { p_email: string }; Returns: MemberLookupRow[] };
+      lookup_member_by_email: { Args: { p_email: string; p_device_token?: string | null }; Returns: MemberLookupRow[] };
+      logout_member_device: { Args: { p_member_id: number; p_device_token?: string | null }; Returns: boolean };
+      submit_task_status: {
+        Args: { p_task_id: number; p_member_id: number; p_device_token?: string | null; p_status?: string; p_note?: string; p_submission_url?: string };
+        Returns: unknown;
+      };
+      update_member_readiness: { Args: { p_member_id: number; p_device_token: string; p_can_go: boolean }; Returns: boolean };
       approve_task_submission: { Args: { p_task_id: number; p_member_id: number; p_bonus?: number }; Returns: ApproveTaskResult };
-      save_push_subscription: { Args: { p_member_id: number; p_email: string; p_subscription: Record<string, any> }; Returns: boolean };
-      get_member_announcements: { Args: { p_member_id: number }; Returns: MemberAnnouncement[] };
-      mark_announcement_read: { Args: { p_announcement_id: number; p_member_id: number }; Returns: boolean };
-      dismiss_announcement: { Args: { p_announcement_id: number; p_member_id: number }; Returns: boolean };
+      save_push_subscription: { Args: { p_member_id: number; p_email: string; p_subscription: Record<string, any>; p_device_token?: string | null }; Returns: boolean };
+      get_member_announcements: { Args: { p_member_id: number; p_device_token?: string | null }; Returns: MemberAnnouncement[] };
+      mark_announcement_viewed: { Args: { p_announcement_id: number; p_member_id: number; p_device_token?: string | null }; Returns: boolean };
+      mark_announcement_read: { Args: { p_announcement_id: number; p_member_id: number; p_device_token?: string | null }; Returns: boolean };
+      dismiss_announcement: { Args: { p_announcement_id: number; p_member_id: number; p_device_token?: string | null }; Returns: boolean };
+      get_announcement_details: { Args: { p_announcement_id: number }; Returns: AnnouncementMemberDetail[] };
       get_announcement_stats: { Args: { p_announcement_id: number }; Returns: AnnouncementStats[] };
     };
     Enums: Record<string, never>;

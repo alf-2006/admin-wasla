@@ -7,6 +7,11 @@ import { supabase } from '../../lib/supabase/client';
 import { toAppError } from '../../lib/supabase/errors';
 import { TABLES } from '../../types/db';
 import type { Task, TaskInsert, TaskStatus, TaskTrackingEntry } from '../../types/db';
+import { getDeviceToken } from '../../store/auth';
+import { isPositiveId, safeHref } from '../../lib/validators';
+
+/** الحالات المسموحة من بوابة الأعضاء — approved لا تمر من هنا أبداً */
+const MEMBER_WRITABLE_STATUSES: TaskStatus[] = ['pending', 'in_progress', 'under_review', 'revision_requested'];
 
 export const useTasks = () => {
   return useQuery({
@@ -62,7 +67,6 @@ export const useUpdateTaskStatus = () => {
       status,
       note,
       submissionUrl,
-      currentTracking = {},
     }: {
       taskId: number;
       memberId: number;
@@ -71,20 +75,36 @@ export const useUpdateTaskStatus = () => {
       submissionUrl?: string;
       currentTracking?: Record<string, TaskTrackingEntry>;
     }) => {
-      const updatedTracking = buildTrackingPatch(currentTracking, memberId, {
-        status,
-        note: note || '',
-        submission_url: submissionUrl || '',
+      // تحقق client-side (الدفاع الحقيقي في submit_task_status server-side)
+      if (!isPositiveId(taskId) || !isPositiveId(memberId)) {
+        throw new Error('معرّفات المهمة أو العضو غير صالحة.');
+      }
+      if (!MEMBER_WRITABLE_STATUSES.includes(status)) {
+        throw new Error('حالة المهمة غير مسموحة.');
+      }
+      const cleanNote = (note || '').slice(0, 2000);
+      const rawUrl = (submissionUrl || '').trim().slice(0, 2048);
+      if (rawUrl && !safeHref(rawUrl)) {
+        throw new Error('رابط التسليم غير صالح — يجب أن يبدأ بـ http:// أو https://.');
+      }
+      // الخادم يرقّع مفتاح هذا العضو فقط بعد التحقق من جهازه وتكليفه —
+      // لا نرسل tracking كاملاً من العميل (منع الكتابة فوق مفاتيح الآخرين).
+      const { error } = await supabase.rpc('submit_task_status', {
+        p_task_id: taskId,
+        p_member_id: memberId,
+        p_device_token: getDeviceToken(),
+        p_status: status,
+        p_note: cleanNote,
+        p_submission_url: rawUrl,
       });
 
-      const { data, error } = await supabase
-        .from(TABLES.tasks)
-        .update({ tracking: updatedTracking })
-        .eq('id', taskId)
-        .select()
-        .single();
-
       if (error) throw toAppError(error, 'فشل تحديث حالة المهمة.');
+      const { data, error: fetchError } = await supabase
+        .from(TABLES.tasks)
+        .select('*')
+        .eq('id', taskId)
+        .single();
+      if (fetchError) throw toAppError(fetchError, 'فشل تحديث حالة المهمة.');
       return data as Task;
     },
     // تحديث تفاؤلي يشعر العضو بفورية تسليمه، مع تراجع عند الفشل

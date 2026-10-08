@@ -1,6 +1,41 @@
 import { supabase } from '../../lib/supabase/client';
 
-const bridgeUrl = ((import.meta.env.VITE_WHATSAPP_BRIDGE_URL as string | undefined) ?? 'http://localhost:3030').trim();
+const RAW_BRIDGE_URL = ((import.meta.env.VITE_WHATSAPP_BRIDGE_URL as string | undefined) ?? 'http://localhost:3030').trim();
+
+/**
+ * عنوان جسر واتساب — في الإنتاج يُشترط https (باستثناء localhost للتطوير)
+ * لمنع Mixed Content وتسريب Bearer token فوق http.
+ */
+function resolveBridgeUrl(): string {
+  const fallback = 'http://localhost:3030';
+  let parsed: URL;
+  try {
+    parsed = new URL(RAW_BRIDGE_URL || fallback);
+  } catch {
+    if (import.meta.env.PROD) throw new Error('عنوان خدمة واتساب غير مضبوط.');
+    return fallback;
+  }
+  const isLocal = parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1';
+  if (import.meta.env.PROD && parsed.protocol !== 'https:' && !isLocal) {
+    throw new Error('خدمة واتساب غير متاحة فوق اتصال غير مشفّر.');
+  }
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    throw new Error('عنوان خدمة واتساب غير صالح.');
+  }
+  return parsed.origin;
+}
+
+const bridgeUrl = resolveBridgeUrl();
+
+const ALLOWED_BRIDGE_PATHS = new Set([
+  '/v1/status',
+  '/qr',
+  '/v1/connect',
+  '/v1/disconnect',
+  '/v1/revoke',
+  '/v1/send-task',
+  '/v1/diagnostics',
+]);
 
 export type ConnectionState = 'disconnected' | 'qr_ready' | 'connecting' | 'connected';
 
@@ -24,7 +59,48 @@ export type QRResponse = {
 };
 export type WhatsAppSendResult = { accepted: boolean; simulated: boolean; memberName?: string; taskTitle?: string; sent: number; failed: number; errors: string[] };
 
+// --- تشخيص الجسر: فحوصات دقيقة بلا أي قيم سرية ---
+export type DiagStatus = 'ok' | 'warn' | 'fail';
+export interface DiagCheck {
+  id: string;
+  category: 'env' | 'network' | 'auth' | 'service' | 'cloud';
+  label: string;
+  status: DiagStatus;
+  detail: string;
+  fix?: string;
+}
+export interface BridgeDiagnostics {
+  generatedAt: string;
+  mode: string;
+  summary: { total: number; fails: number; warns: number };
+  checks: DiagCheck[];
+}
+
+export const getBridgeUrl = () => bridgeUrl;
+
+export const getBridgeDiagnostics = () => request<BridgeDiagnostics>('/v1/diagnostics');
+
 async function request<T>(path: string, body?: Record<string, unknown>): Promise<T> {
+  if (!ALLOWED_BRIDGE_PATHS.has(path)) throw new Error('مسار خدمة واتساب غير مسموح.');
+  if (body) {
+    const taskId = (body as { taskId?: unknown }).taskId;
+    const memberIds = (body as { memberIds?: unknown }).memberIds;
+    if (taskId !== undefined && (!Number.isInteger(taskId) || (taskId as number) <= 0)) {
+      throw new Error('معرّف المهمة غير صالح.');
+    }
+    if (memberIds !== undefined) {
+      if (!Array.isArray(memberIds) || memberIds.length < 1 || memberIds.length > 50) {
+        throw new Error('قائمة الأعضاء غير صالحة (1-50).');
+      }
+      const ids = memberIds as unknown[];
+      if (!ids.every((id) => Number.isInteger(id) && (id as number) > 0) || new Set(ids).size !== ids.length) {
+        throw new Error('قائمة الأعضاء تحتوي قيماً غير صالحة أو مكررة.');
+      }
+      if ('consentConfirmed' in body && (body as { consentConfirmed?: unknown }).consentConfirmed !== true) {
+        throw new Error('يلزم تأكيد موافقة الأعضاء قبل الإرسال.');
+      }
+    }
+  }
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
   if (!token) throw new Error('سجّل دخول الإدارة أولًا لفتح إعدادات واتساب.');

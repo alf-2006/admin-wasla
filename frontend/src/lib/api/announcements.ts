@@ -1,9 +1,12 @@
 import { supabase } from '../supabase/client';
 import { toAppError } from '../supabase/errors';
+import { getDeviceToken } from '../../store/auth';
+import { isPositiveId } from '../validators';
 import type {
   Announcement,
   AnnouncementInsert,
   MemberAnnouncement,
+  AnnouncementMemberDetail,
   AnnouncementStats,
 } from '../../types/db';
 import type { AnnouncementTargetAudience } from '../../types/db';
@@ -22,7 +25,6 @@ export class AnnouncementsAPI {
       .single();
 
     if (error) {
-      console.error('[AnnouncementsAPI] خطأ في إنشاء الإعلان:', error);
       throw toAppError(error, 'فشل في إنشاء الإعلان.');
     }
 
@@ -39,7 +41,6 @@ export class AnnouncementsAPI {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('[AnnouncementsAPI] خطأ في جلب الإعلامات:', error);
       throw toAppError(error, 'فشل في جلب الإعلامات.');
     }
 
@@ -61,7 +62,6 @@ export class AnnouncementsAPI {
       .single();
 
     if (error) {
-      console.error('[AnnouncementsAPI] خطأ في تحديث الإعلان:', error);
       throw toAppError(error, 'فشل في تحديث الإعلان.');
     }
 
@@ -78,7 +78,6 @@ export class AnnouncementsAPI {
       .eq('id', id);
 
     if (error) {
-      console.error('[AnnouncementsAPI] خطأ في حذف الإعلان:', error);
       throw toAppError(error, 'فشل في حذف الإعلان.');
     }
   }
@@ -91,24 +90,40 @@ export class AnnouncementsAPI {
       .rpc('get_announcement_stats', { p_announcement_id: announcementId });
 
     if (error) {
-      console.error('[AnnouncementsAPI] خطأ في جلب إحصائيات الإعلان:', error);
       throw toAppError(error, 'فشل في جلب إحصائيات الإعلان.');
     }
 
     return stats && stats.length > 0 ? stats[0] : null;
   }
 
+  /**
+   * جلب تفاصيل كل مستلم (للإدارة فقط): المشاهدة والقراءة والمسح لكل عضو.
+   */
+  static async getAnnouncementDetails(announcementId: number): Promise<AnnouncementMemberDetail[]> {
+    if (!isPositiveId(announcementId)) {
+      throw toAppError(new Error('INVALID_ID'), 'معرّف الإعلان غير صالح.');
+    }
+    const { data: details, error } = await supabase
+      .rpc('get_announcement_details', { p_announcement_id: announcementId });
+
+    if (error) {
+      throw toAppError(error, 'فشل في جلب تفاصيل الإعلان.');
+    }
+
+    return details || [];
+  }
+
   // ===== Member APIs =====
 
   /**
-   * جلب إعلامات العضو المخصصة له فقط
+   * جلب إعلامات العضو المخصصة له فقط — برمز جهازه (منع BOLA).
    */
   static async getMemberAnnouncements(memberId: number): Promise<MemberAnnouncement[]> {
+    if (!isPositiveId(memberId)) throw toAppError(new Error('INVALID_ID'), 'معرّف العضو غير صالح.');
     const { data: announcements, error } = await supabase
-      .rpc('get_member_announcements', { p_member_id: memberId });
+      .rpc('get_member_announcements', { p_member_id: memberId, p_device_token: getDeviceToken() });
 
     if (error) {
-      console.error('[AnnouncementsAPI] خطأ في جلب إعلامات العضو:', error);
       throw toAppError(error, 'فشل في جلب إعلامات العضو.');
     }
 
@@ -116,20 +131,48 @@ export class AnnouncementsAPI {
   }
 
   /**
-   * تعليم الإعلان كمقروء (يبقى ظاهراً)
+   * تسجيل مشاهدة العضو للإعلان (تُستدعى عند ظهور الإعلان في بوابته —
+   * حدث منفصل عن ضغط "تمت القراءة").
+   */
+  static async markAnnouncementViewed(
+    announcementId: number,
+    memberId: number
+  ): Promise<boolean> {
+    if (!isPositiveId(announcementId) || !isPositiveId(memberId)) {
+      throw toAppError(new Error('INVALID_ID'), 'معرّفات الإعلان غير صالحة.');
+    }
+    const { data: result, error } = await supabase
+      .rpc('mark_announcement_viewed', {
+        p_announcement_id: announcementId,
+        p_member_id: memberId,
+        p_device_token: getDeviceToken(),
+      });
+
+    if (error) {
+      throw toAppError(error, 'فشل في تسجيل المشاهدة.');
+    }
+
+    return result === true;
+  }
+
+  /**
+   * تعليم الإعلان كمقروء (يبقى ظاهراً) — برمز الجهاز.
    */
   static async markAnnouncementRead(
     announcementId: number,
     memberId: number
   ): Promise<boolean> {
+    if (!isPositiveId(announcementId) || !isPositiveId(memberId)) {
+      throw toAppError(new Error('INVALID_ID'), 'معرّفات الإعلان غير صالحة.');
+    }
     const { data: result, error } = await supabase
       .rpc('mark_announcement_read', {
         p_announcement_id: announcementId,
-        p_member_id: memberId
+        p_member_id: memberId,
+        p_device_token: getDeviceToken(),
       });
 
     if (error) {
-      console.error('[AnnouncementsAPI] خطأ في تعليم الإعلان كمقروء:', error);
       throw toAppError(error, 'فشل في تعليم الإعلان كمقروء.');
     }
 
@@ -137,20 +180,23 @@ export class AnnouncementsAPI {
   }
 
   /**
-   * مسح الإعلان (إخفاؤه نهائياً من بوابة العضو)
+   * مسح الإعلان (إخفاؤه نهائياً من بوابة العضو) — برمز الجهاز.
    */
   static async dismissAnnouncement(
     announcementId: number,
     memberId: number
   ): Promise<boolean> {
+    if (!isPositiveId(announcementId) || !isPositiveId(memberId)) {
+      throw toAppError(new Error('INVALID_ID'), 'معرّفات الإعلان غير صالحة.');
+    }
     const { data: result, error } = await supabase
       .rpc('dismiss_announcement', {
         p_announcement_id: announcementId,
-        p_member_id: memberId
+        p_member_id: memberId,
+        p_device_token: getDeviceToken(),
       });
 
     if (error) {
-      console.error('[AnnouncementsAPI] خطأ في مسح الإعلان:', error);
       throw toAppError(error, 'فشل في مسح الإعلان.');
     }
 

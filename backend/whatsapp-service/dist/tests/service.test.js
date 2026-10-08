@@ -59,6 +59,9 @@ test('HTTP API Integration Tests', async (t) => {
         throw new Error('Unable to get test server address');
     }
     const baseUrl = `http://127.0.0.1:${address.port}`;
+    // Explicit test-mode bypass only when NODE_ENV=test (see set-test-env preload).
+    // In any other mode every protected route must reject anonymous callers.
+    const BYPASS = process.env.NODE_ENV === 'test';
     t.after(() => {
         mockBaileysManager.disconnect();
         server.close();
@@ -70,7 +73,75 @@ test('HTTP API Integration Tests', async (t) => {
         assert.equal(body.status, 'ok');
         assert.equal(body.isMock, true);
     });
+    await t.test('anonymous callers are rejected on protected routes outside test mode', async () => {
+        if (BYPASS)
+            return;
+        for (const [method, route, body] of [
+            ['GET', '/status', undefined],
+            ['GET', '/qr', undefined],
+            ['POST', '/connect', {}],
+            ['POST', '/mock-send', { taskId: 42, memberIds: [1, 2], consentConfirmed: true }],
+            ['POST', '/v1/send-task', { taskId: 1, memberIds: [1], consentConfirmed: true }],
+            ['GET', '/v1/diagnostics', undefined],
+            ['POST', '/api/push', { title: 'x', body: 'y', memberIds: [1] }],
+        ]) {
+            const res = await fetch(`${baseUrl}${route}`, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: body === undefined ? undefined : JSON.stringify(body),
+            });
+            assert.equal(res.status, 401, `${method} ${route} must require auth`);
+        }
+    });
+    await t.test('POST /api/push requires auth and validates payload', async () => {
+        if (!BYPASS)
+            return;
+        const bad = await fetch(`${baseUrl}/api/push`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title: '', body: '', memberIds: ['x'] }),
+        });
+        assert.equal(bad.status, 400);
+    });
+    await t.test('GET /v1/diagnostics returns structured checks without secrets', async () => {
+        if (!BYPASS)
+            return;
+        const res = await fetch(`${baseUrl}/v1/diagnostics`);
+        assert.equal(res.status, 200);
+        const body = await res.json();
+        assert.ok(body.generatedAt && body.mode);
+        assert.ok(Array.isArray(body.checks) && body.checks.length >= 8, 'expected a full checklist');
+        for (const check of body.checks) {
+            assert.ok(['ok', 'warn', 'fail'].includes(check.status), `bad status on ${check.id}`);
+            assert.ok(check.id && check.label && check.detail, `incomplete check ${check.id}`);
+        }
+        // No secret values may ever appear in a diagnostics payload
+        const serialized = JSON.stringify(body);
+        assert.ok(!/eyJ[A-Za-z0-9_-]{10,}/.test(serialized), 'JWT-like value leaked in diagnostics');
+        assert.ok(!/gsk_[A-Za-z0-9]+/.test(serialized), 'API key leaked in diagnostics');
+        assert.ok(!/xapp_[A-Za-z0-9]+/.test(serialized), 'token leaked in diagnostics');
+    });
+    await t.test('POST /v1/send-task rejects invalid payloads', async () => {
+        if (!BYPASS)
+            return;
+        const cases = [
+            { taskId: 1, memberIds: [1, 1], consentConfirmed: true },
+            { taskId: 1, memberIds: [1], consentConfirmed: false },
+            { taskId: -5, memberIds: [1], consentConfirmed: true },
+            { taskId: 1, memberIds: Array.from({ length: 51 }, (_, i) => i + 1), consentConfirmed: true },
+        ];
+        for (const payload of cases) {
+            const res = await fetch(`${baseUrl}/v1/send-task`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+            assert.equal(res.status, 400, `must reject ${JSON.stringify(payload).slice(0, 80)}`);
+        }
+    });
     await t.test('GET /status returns disconnected state', async () => {
+        if (!BYPASS)
+            return;
         mockBaileysManager.disconnect();
         const res = await fetch(`${baseUrl}/status`);
         assert.equal(res.status, 200);
@@ -80,6 +151,8 @@ test('HTTP API Integration Tests', async (t) => {
         assert.equal(body.connected, false);
     });
     await t.test('GET /qr returns mock QR string and 60 seconds remaining', async () => {
+        if (!BYPASS)
+            return;
         const res = await fetch(`${baseUrl}/qr`);
         assert.equal(res.status, 200);
         const body = await res.json();
@@ -88,6 +161,8 @@ test('HTTP API Integration Tests', async (t) => {
         assert.equal(body.state, 'qr_ready');
     });
     await t.test('POST /connect simulates connection', async () => {
+        if (!BYPASS)
+            return;
         const res = await fetch(`${baseUrl}/connect`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -101,6 +176,8 @@ test('HTTP API Integration Tests', async (t) => {
         assert.ok(body.phone?.includes('2222'));
     });
     await t.test('POST /mock-send dispatches mock messages', async () => {
+        if (!BYPASS)
+            return;
         const res = await fetch(`${baseUrl}/mock-send`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -113,6 +190,8 @@ test('HTTP API Integration Tests', async (t) => {
         assert.equal(body.sentCount, 3);
     });
     await t.test('POST /disconnect resets connection state', async () => {
+        if (!BYPASS)
+            return;
         const res = await fetch(`${baseUrl}/disconnect`, {
             method: 'POST',
         });
@@ -123,6 +202,8 @@ test('HTTP API Integration Tests', async (t) => {
         assert.equal(body.connected, false);
     });
     await t.test('Legacy /v1/* endpoints work seamlessly', async () => {
+        if (!BYPASS)
+            return;
         const statusRes = await fetch(`${baseUrl}/v1/status`);
         assert.equal(statusRes.status, 200);
         const statusBody = await statusRes.json();

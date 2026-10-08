@@ -4,6 +4,7 @@ import { config } from './config.js';
 import { authMiddleware } from './middleware/auth.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { whatsappRouter } from './routes/whatsapp.js';
+import { diagnosticsRouter } from './routes/diagnostics.js';
 import { pushRouter } from './routes/push.js';
 
 export const app = express();
@@ -29,14 +30,28 @@ app.use(express.json({ limit: '1mb' }));
 
 // Public Routes
 app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', service: 'wasla-whatsapp-service' });
+  res.json({
+    status: 'ok',
+    service: 'wasla-whatsapp-service',
+    isMock: config.isMock,
+  });
 });
 
-// Push endpoints (they manage their own auth inside, or public key retrieval)
-app.use(pushRouter);
+// المفتاح العام للـ VAPID علني بطبيعته — يبقى بلا مصادقة.
+app.get('/api/vapid-key', (_req, res) => {
+  if (!process.env.VAPID_PUBLIC_KEY) {
+    return res.status(503).json({ error: 'Not configured.' });
+  }
+  return res.json({ publicKey: process.env.VAPID_PUBLIC_KEY });
+});
 
-// Auth middleware protecting all WhatsApp routes
+// Auth middleware protecting all WhatsApp routes AND push dispatch.
+// (POST /api/push كان مكشوفاً قبل هذا الترتيب — أي متصل يرسل push لأي أعضاء.)
 app.use(authMiddleware);
+
+// Diagnostics (authenticated admins) + push dispatch + WhatsApp routes
+app.use(diagnosticsRouter);
+app.use(pushRouter);
 
 // Mount WhatsApp router at root
 app.use(whatsappRouter);

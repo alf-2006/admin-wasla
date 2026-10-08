@@ -1,4 +1,7 @@
 import dotenv from 'dotenv';
+// .env.local أولاً (أسرار التطوير المحلية غير المتتبعة)، ثم .env للقيم المشتركة.
+// متغيرات البيئة الفعلية تسبق الاثنين دائماً.
+dotenv.config({ path: '.env.local' });
 dotenv.config();
 function parseOrigins(raw) {
     if (!raw)
@@ -9,8 +12,9 @@ function parseOrigins(raw) {
         .filter(Boolean);
 }
 function parseAdminEmails(raw) {
+    // بلا قيمة افتراضية عمداً: الإنتاج بلا قائمة صريحة يرفض الجميع (فشل مغلق).
     if (!raw)
-        return ['admin@wasla.local', 'admin@example.com'];
+        return [];
     return raw
         .split(',')
         .map((email) => email.trim().toLowerCase())
@@ -21,12 +25,19 @@ export const config = {
     supabaseUrl: process.env.SUPABASE_URL ||
         process.env.VITE_SUPABASE_URL ||
         'https://mukqrnmveydxfphftlaq.supabase.co',
+    // لا قيمة افتراضية مضمّنة للمفتاح — يُقرأ من البيئة فقط ويفشل مغلقاً عند غيابه.
     supabaseAnonKey: process.env.SUPABASE_ANON_KEY ||
         process.env.VITE_SUPABASE_ANON_KEY ||
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im11a3Fybm12ZXlkeGZwaGZ0bGFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkwNzk2MDEsImV4cCI6MjEwNDY1NTYwMX0.-Kv6J-vnpBiONn6mpsXMZRdFPOvkjQ-HDQ_iVEpWPaM',
+        '',
     adminEmails: parseAdminEmails(process.env.WHATSAPP_ADMIN_EMAILS || process.env.WHATSAPP_BRIDGE_ADMIN_EMAILS),
     corsOrigins: parseOrigins(process.env.CORS_ORIGIN || process.env.WHATSAPP_BRIDGE_ORIGINS),
     nodeEnv: process.env.NODE_ENV || 'development',
     isDev: (process.env.NODE_ENV || 'development') !== 'production',
+    isTest: (process.env.NODE_ENV || '') === 'test',
+    // تجاوز التطوير صريح فقط — لا يُفعّل ضمنياً في أي بيئة.
+    allowDevBypass: process.env.ALLOW_DEV_BYPASS === 'true',
     isMock: true,
 };
+if (!config.supabaseAnonKey && config.nodeEnv === 'production') {
+    console.warn('[WhatsApp Service] SUPABASE_ANON_KEY missing — auth verification will fail closed.');
+}

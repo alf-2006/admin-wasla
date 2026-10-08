@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase/client';
+import { getDeviceToken } from '../store/auth';
 import { toast } from '../store/toast';
 
 export function usePWA({ memberId, memberEmail }: { memberId?: number; memberEmail?: string }) {
@@ -67,7 +68,8 @@ export function usePWA({ memberId, memberEmail }: { memberId?: number; memberEma
       const { error } = await supabase.rpc('save_push_subscription', {
         p_member_id: memberId,
         p_email: memberEmail,
-        p_subscription: JSON.parse(JSON.stringify(subscription))
+        p_subscription: JSON.parse(JSON.stringify(subscription)),
+        p_device_token: getDeviceToken(),
       });
 
       if (error) throw error;

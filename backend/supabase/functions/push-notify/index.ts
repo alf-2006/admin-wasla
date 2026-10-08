@@ -21,11 +21,12 @@ webpush.setVapidDetails(
 serve(async (req) => {
   const origin = req.headers.get('Origin') ?? '';
   const reply = (body: unknown, status = 200) => response(body, status, origin);
-  
+
+  if (origin && !allowedOrigins.includes(origin)) return new Response('Forbidden', { status: 403 });
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: { ...corsHeaders, 'Access-Control-Allow-Origin': origin || allowedOrigins[0] || 'null' } });
   }
-  
+
   if (req.method !== 'POST') return reply({ error: 'Method not allowed' }, 405);
   
   try {
@@ -44,12 +45,29 @@ serve(async (req) => {
     }
     
     const { title, body, icon, url, memberIds } = await req.json();
-    if (!title || !body || !Array.isArray(memberIds)) {
+    if (typeof title !== 'string' || !title.trim() || title.length > 120 ||
+        typeof body !== 'string' || !body.trim() || body.length > 500 ||
+        !Array.isArray(memberIds)) {
       return reply({ error: 'بيانات الإشعار غير مكتملة.' }, 400);
     }
-    
-    const validIds = memberIds.filter((id) => Number.isInteger(Number(id)));
-    if (validIds.length === 0) return reply({ error: 'لا يوجد أعضاء.' }, 400);
+
+    const validIds = [...new Set(
+      memberIds.filter((id) => Number.isInteger(id) && id > 0 && id <= 2147483647)
+    )];
+    if (validIds.length === 0 || validIds.length > 50 || validIds.length !== memberIds.length) {
+      return reply({ error: 'قائمة الأعضاء غير صالحة (1-50 بلا تكرار).' }, 400);
+    }
+
+    const safeIcon = typeof icon === 'string' && icon !== ''
+      ? icon.slice(0, 2048)
+      : '/wasla-logo.png';
+    if (safeIcon !== '/wasla-logo.png' && !/^https:\/\/[^/]+/.test(safeIcon) && !safeIcon.startsWith('/')) {
+      return reply({ error: 'أيقونة الإشعار غير صالحة.' }, 400);
+    }
+    const safeUrl = typeof url === 'string' && url !== '' ? url.slice(0, 2048) : '/portal';
+    if (!safeUrl.startsWith('/') && !/^https:\/\/[^/]+/.test(safeUrl)) {
+      return reply({ error: 'رابط الإشعار غير صالح.' }, 400);
+    }
     
     // جلب اشتراكات الأعضاء من قاعدة البيانات
     const serviceClient = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
@@ -64,10 +82,10 @@ serve(async (req) => {
     if (members.length === 0) return reply({ sent: 0, failed: 0, message: 'لا يوجد أعضاء لديهم تطبيق منزّل واشتراكات مفعّلة.' });
     
     const payload = JSON.stringify({
-      title,
-      body,
-      icon: icon || '/wasla-logo.png',
-      url: url || '/portal',
+      title: title.trim().slice(0, 120),
+      body: body.trim().slice(0, 500),
+      icon: safeIcon,
+      url: safeUrl,
     });
     
     let sent = 0;

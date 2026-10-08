@@ -1,5 +1,8 @@
 import dotenv from 'dotenv';
 
+// .env.local أولاً (أسرار التطوير المحلية غير المتتبعة)، ثم .env للقيم المشتركة.
+// متغيرات البيئة الفعلية تسبق الاثنين دائماً.
+dotenv.config({ path: '.env.local' });
 dotenv.config();
 
 export interface AppConfig {
@@ -10,6 +13,8 @@ export interface AppConfig {
   corsOrigins: string[];
   nodeEnv: string;
   isDev: boolean;
+  isTest: boolean;
+  allowDevBypass: boolean;
   isMock: boolean;
 }
 
@@ -22,7 +27,8 @@ function parseOrigins(raw?: string): string[] {
 }
 
 function parseAdminEmails(raw?: string): string[] {
-  if (!raw) return ['admin@wasla.local', 'admin@example.com'];
+  // بلا قيمة افتراضية عمداً: الإنتاج بلا قائمة صريحة يرفض الجميع (فشل مغلق).
+  if (!raw) return [];
   return raw
     .split(',')
     .map((email) => email.trim().toLowerCase())
@@ -35,10 +41,11 @@ export const config: AppConfig = {
     process.env.SUPABASE_URL ||
     process.env.VITE_SUPABASE_URL ||
     'https://mukqrnmveydxfphftlaq.supabase.co',
+  // لا قيمة افتراضية مضمّنة للمفتاح — يُقرأ من البيئة فقط ويفشل مغلقاً عند غيابه.
   supabaseAnonKey:
     process.env.SUPABASE_ANON_KEY ||
     process.env.VITE_SUPABASE_ANON_KEY ||
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im11a3Fybm12ZXlkeGZwaGZ0bGFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkwNzk2MDEsImV4cCI6MjEwNDY1NTYwMX0.-Kv6J-vnpBiONn6mpsXMZRdFPOvkjQ-HDQ_iVEpWPaM',
+    '',
   adminEmails: parseAdminEmails(
     process.env.WHATSAPP_ADMIN_EMAILS || process.env.WHATSAPP_BRIDGE_ADMIN_EMAILS
   ),
@@ -47,5 +54,12 @@ export const config: AppConfig = {
   ),
   nodeEnv: process.env.NODE_ENV || 'development',
   isDev: (process.env.NODE_ENV || 'development') !== 'production',
+  isTest: (process.env.NODE_ENV || '') === 'test',
+  // تجاوز التطوير صريح فقط — لا يُفعّل ضمنياً في أي بيئة.
+  allowDevBypass: process.env.ALLOW_DEV_BYPASS === 'true',
   isMock: true,
 };
+
+if (!config.supabaseAnonKey && config.nodeEnv === 'production') {
+  console.warn('[WhatsApp Service] SUPABASE_ANON_KEY missing — auth verification will fail closed.');
+}

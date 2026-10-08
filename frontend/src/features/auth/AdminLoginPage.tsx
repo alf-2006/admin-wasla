@@ -60,7 +60,7 @@ export default function AdminLoginPage() {
       footer={<Link to="/login" className="auth-inline-link"><span>بوابة الأعضاء</span><ArrowLeft size={16} /></Link>}
     >
       {error && <div className="auth-error" role="alert"><AlertCircle size={18} aria-hidden="true" /><span>{error}</span></div>}
-      <form onSubmit={handleLogin} className="auth-form" noValidate>
+      <form onSubmit={handleLogin} method="post" className="auth-form" noValidate>
         <label className="auth-field" htmlFor="admin-email">البريد الإلكتروني
           <span className="auth-input-wrap"><input id="admin-email" type="email" dir="ltr" autoComplete="username" required placeholder="admin@wasla.com" value={email} onChange={(event) => { setEmail(event.target.value); if (error) setError(''); }} aria-invalid={Boolean(error) || undefined} /></span>
         </label>

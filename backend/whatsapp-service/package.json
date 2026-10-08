@@ -10,7 +10,8 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "test": "node --test dist/tests/service.test.js"
+    "test": "node --test dist/tests/service.test.js",
+    "test:bypass": "node --test --import ./dist/tests/set-test-env.js dist/tests/service.test.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",

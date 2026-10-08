@@ -7,19 +7,18 @@ import type { PostgrestError } from '@supabase/supabase-js';
 
 export type AppError = {
   message: string;
-  code?: string;
-  details?: string;
-  hint?: string;
 };
 
 /**
- * تحويل أخطاء Supabase إلى رسائل عربية واضحة
+ * تحويل أخطاء Supabase إلى رسائل عربية واضحة.
+ * لا تُرجع details/hint/code للواجهة — تسريب مخطط قاعدة البيانات
+ * ورسائل PostgreSQL الخام للعميل مرفوض في الإنتاج.
  */
 export function handleSupabaseError(error: PostgrestError | Error | unknown): AppError {
   // خطأ من PostgreSQL
   if (error && typeof error === 'object' && 'code' in error) {
     const pgError = error as PostgrestError;
-    
+
     // أخطاء شائعة
     const errorMessages: Record<string, string> = {
       '23505': 'البريد الإلكتروني مُستخدم بالفعل',
@@ -28,12 +27,9 @@ export function handleSupabaseError(error: PostgrestError | Error | unknown): Ap
       'PGRST116': 'لا يوجد صف يطابق هذا المعرّف',
       'PGRST301': 'انتهت صلاحية الجلسة - يرجى تسجيل الدخول مجدداً',
     };
-    
+
     return {
-      message: errorMessages[pgError.code] || pgError.message || 'حدث خطأ في قاعدة البيانات',
-      code: pgError.code,
-      details: pgError.details,
-      hint: pgError.hint,
+      message: errorMessages[pgError.code] || 'حدث خطأ في قاعدة البيانات',
     };
   }
   

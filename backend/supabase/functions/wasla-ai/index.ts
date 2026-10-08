@@ -3,20 +3,45 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
 
 // لتقييد CORS في الإنتاج: اضبط WASLA_ALLOWED_ORIGINS في أسرار الـ Edge Function
 // بصيغة: https://wasla.vercel.app,http://localhost:5173
-const allowedOrigin = Deno.env.get('WASLA_ALLOWED_ORIGINS') ?? '*'
+// غياب القائمة يعني رفض أي Origin متصفح — لا wildcard مع بيانات موثقة.
+const allowedOrigins = (Deno.env.get('WASLA_ALLOWED_ORIGINS') ?? '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean)
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': allowedOrigin,
+const corsHeaders = (origin: string) => ({
+  'Access-Control-Allow-Origin': origin,
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+})
+
+const jsonReply = (body: unknown, status: number, origin: string) =>
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders(origin), 'Content-Type': 'application/json' },
+  })
 
 serve(async (req) => {
+  const origin = req.headers.get('Origin') ?? ''
+  if (origin && !allowedOrigins.includes(origin)) {
+    return new Response('Forbidden', { status: 403 })
+  }
+  const replyOrigin = origin || allowedOrigins[0] || 'null'
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeaders(replyOrigin) })
+  }
+  if (req.method !== 'POST') {
+    return jsonReply({ error: 'Method not allowed' }, 405, replyOrigin)
   }
 
   try {
-    const { question, context } = await req.json()
+    const parsed = await req.json().catch(() => null) as { question?: unknown; context?: unknown; history?: unknown } | null
+    const question = typeof parsed?.question === 'string' ? parsed.question.slice(0, 4000) : ''
+    const context = typeof parsed?.context === 'string' ? parsed.context.slice(0, 20000) : ''
+    const history = Array.isArray(parsed?.history) ? (parsed.history as unknown[]).slice(0, 20) : []
+    if (!question.trim()) {
+      return jsonReply({ error: 'السؤال مطلوب.' }, 400, replyOrigin)
+    }
     
     // Create Supabase Client to fetch the API Key from Vault
     const authHeader = req.headers.get('Authorization')
@@ -28,7 +53,25 @@ serve(async (req) => {
 
     // Ensure user has access
     const { data: { user }, error: authError } = await supabaseClient.auth.getUser()
-    if (authError || !user) throw new Error("Unauthorized Access")
+    if (authError || !user) throw new Error('Unauthorized')
+
+    // Admin-only check: env allowlist first, else database admin_emails via is_admin().
+    const allowed = (Deno.env.get('WASLA_AI_ADMIN_EMAILS') ?? Deno.env.get('WHATSAPP_ADMIN_EMAILS') ?? '')
+      .split(',')
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean)
+
+    if (allowed.length > 0) {
+      const email = user.email?.toLowerCase()
+      if (!email || !allowed.includes(email)) {
+        return jsonReply({ error: 'غير مخول' }, 403, replyOrigin)
+      }
+    } else {
+      const { data: isAdmin } = await supabaseClient.rpc('is_admin')
+      if (isAdmin !== true) {
+        return jsonReply({ error: 'غير مخول' }, 403, replyOrigin)
+      }
+    }
 
     // Fetch API key from Supabase Vault (RPC function we defined) or environment
     // ملاحظة أمنية: دالة get_groq_key_from_vault صارت قاصرة على service_role
@@ -43,10 +86,7 @@ serve(async (req) => {
     const apiKey = secrets || Deno.env.get('GROQ_API_KEY') || Deno.env.get('GEMINI_API_KEY')
     
     if (!apiKey) {
-      return new Response(JSON.stringify({ error: 'لم يتم العثور على مفتاح AI API. يرجى إعداده في إعدادات Supabase.' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400
-      })
+      return jsonReply({ error: 'لم يتم العثور على مفتاح AI API.' }, 400, replyOrigin)
     }
 
     const systemPrompt = `أنت "مساعد وصلة الذكي"، خبير في إدارة فريق "وصلة" وتحليل أدائهم وجاهزيتهم.
@@ -66,6 +106,14 @@ serve(async (req) => {
 ${context}`;
 
     let reply = ''
+    const historyMessages = (history as { role?: unknown; parts?: unknown }[])
+      .filter((turn) => turn && (turn.role === 'user' || turn.role === 'assistant') && Array.isArray(turn.parts))
+      .slice(0, 20)
+      .map((turn) => ({
+        role: turn.role as 'user' | 'assistant',
+        content: (turn.parts as { text?: unknown }[]).map((part) => String(part.text ?? '')).join('\n').slice(0, 2000),
+      }))
+      .filter((turn) => turn.content.trim() !== '')
     if (apiKey.startsWith('gsk_') || Deno.env.get('GROQ_API_KEY')) {
       // Use Groq API (OpenAI compatible)
       const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -78,6 +126,7 @@ ${context}`;
           model: 'llama-3.3-70b-versatile',
           messages: [
             { role: 'system', content: systemPrompt },
+            ...historyMessages,
             { role: 'user', content: question },
           ],
           temperature: 0.2,
@@ -117,16 +166,11 @@ ${context}`;
     }
     
     // Clean reply from JSON block to show nice text to the user
-    let cleanReply = reply.replace(/```json\s*(\{[\s\S]*?\})\s*```/g, '').trim()
+    let cleanReply = reply.replace(/```json\s*(\{[\s\S]*?\})\s*```/g, '').trim().slice(0, 8000)
 
-    return new Response(JSON.stringify({ answer: cleanReply, action }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
+    return jsonReply({ answer: cleanReply, action }, 200, replyOrigin)
 
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 400,
-    })
+  } catch (_error) {
+    return jsonReply({ error: 'تعذر معالجة الطلب حالياً.' }, 400, replyOrigin)
   }
 })

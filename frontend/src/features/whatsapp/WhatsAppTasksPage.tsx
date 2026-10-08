@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Cloud, QrCode, ShieldAlert } from 'lucide-react';
+import { Activity, Cloud, QrCode, ShieldAlert } from 'lucide-react';
 import WhatsAppCloudPage from './WhatsAppCloudPage';
+import WhatsAppDiagnostics from './WhatsAppDiagnostics';
 import WhatsAppQRPage from './WhatsAppQRPage';
 
-type TabKey = 'qr' | 'cloud';
+type TabKey = 'qr' | 'cloud' | 'diag';
 
 export default function WhatsAppTasksPage() {
   const [activeTab, setActiveTab] = useState<TabKey>('qr');
@@ -70,11 +71,27 @@ export default function WhatsAppTasksPage() {
           <Cloud size={18} aria-hidden="true" />
           <span>الربط السحابي المعتمد (Meta Cloud API)</span>
         </button>
+        <button
+          type="button"
+          role="tab"
+          id="tab-diag"
+          aria-selected={activeTab === 'diag'}
+          aria-controls="panel-diag"
+          onClick={() => setActiveTab('diag')}
+          className={`flex min-h-[44px] items-center gap-2 border-b-2 px-4 py-2.5 text-sm font-bold transition-colors ${
+            activeTab === 'diag'
+              ? 'border-[var(--primary)] text-[var(--primary)]'
+              : 'border-transparent text-[var(--text-muted)] hover:text-[var(--text)]'
+          }`}
+        >
+          <Activity size={18} aria-hidden="true" />
+          <span>التشخيص الدقيق</span>
+        </button>
       </div>
 
       {/* Tab Content Panels */}
-      <div id={activeTab === 'qr' ? 'panel-qr' : 'panel-cloud'} role="tabpanel" aria-labelledby={activeTab === 'qr' ? 'tab-qr' : 'tab-cloud'}>
-        {activeTab === 'qr' ? <WhatsAppQRPage /> : <WhatsAppCloudPage />}
+      <div id={activeTab === 'qr' ? 'panel-qr' : activeTab === 'cloud' ? 'panel-cloud' : 'panel-diag'} role="tabpanel" aria-labelledby={activeTab === 'qr' ? 'tab-qr' : activeTab === 'cloud' ? 'tab-cloud' : 'tab-diag'}>
+        {activeTab === 'qr' ? <WhatsAppQRPage /> : activeTab === 'cloud' ? <WhatsAppCloudPage /> : <WhatsAppDiagnostics />}
       </div>
     </div>
   );

@@ -25,8 +25,11 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
   const authHeader = req.headers.authorization;
   const token = authHeader?.match(/^Bearer\s+(.+)$/i)?.[1];
 
-  // Dev fallback: in development mode, allow requests without token or with mock tokens
-  if (config.isDev && (!token || token === 'dev-token' || token === 'mock-admin-token')) {
+  // تجاوز صريح فقط: بيئة test، أو development مع ALLOW_DEV_BYPASS=true.
+  // الإنتاج لا يتجاوز أبداً — غياب التوكن = 401.
+  const bypassAllowed =
+    config.isTest || (config.isDev && config.allowDevBypass);
+  if (bypassAllowed && (!token || token === 'dev-token' || token === 'mock-admin-token')) {
     req.user = {
       id: 'mock-admin-id',
       email: config.adminEmails[0] || 'admin@wasla.local',
@@ -43,6 +46,12 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
   }
 
   try {
+    if (!config.supabaseAnonKey) {
+      return res.status(500).json({
+        success: false,
+        error: 'خدمة التحقق غير مضبوطة على الخادم.',
+      });
+    }
     const supabase = createClient(config.supabaseUrl, config.supabaseAnonKey, {
       auth: { persistSession: false },
       global: { headers: { Authorization: `Bearer ${token}` } },
@@ -52,14 +61,6 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
     const email = data.user?.email?.toLowerCase();
 
     if (error || !email) {
-      if (config.isDev) {
-        req.user = {
-          id: 'dev-fallback-id',
-          email: config.adminEmails[0] || 'admin@wasla.local',
-          role: 'admin',
-        };
-        return next();
-      }
       return res.status(401).json({
         success: false,
         error: 'جلسة الإدارة غير صالحة أو منتهية الصلاحية.',
@@ -80,14 +81,6 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
     };
     return next();
   } catch (_err) {
-    if (config.isDev) {
-      req.user = {
-        id: 'dev-fallback-id',
-        email: config.adminEmails[0] || 'admin@wasla.local',
-        role: 'admin',
-      };
-      return next();
-    }
     return res.status(500).json({
       success: false,
       error: 'فشل التحقق من صلاحيات الإدارة.',

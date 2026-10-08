@@ -33,11 +33,45 @@ interface AuthState {
 }
 
 const SAVED_MEMBER_KEY = 'wasla_member_session';
+const DEVICE_TOKEN_KEY = 'wasla_device_token';
+
+/** رمز الجهاز لهذا المتصفح — إثبات ملكية سجل العضو في RPCs العضوية */
+export const getDeviceToken = (): string | null => {
+  try {
+    const raw = localStorage.getItem(DEVICE_TOKEN_KEY);
+    if (!raw || raw.length > 128) return null;
+    return raw;
+  } catch {
+    return null;
+  }
+};
+
+export const setDeviceToken = (token: string): void => {
+  try {
+    if (token && token.length <= 128) localStorage.setItem(DEVICE_TOKEN_KEY, token);
+  } catch {
+    // ignore
+  }
+};
+
+export const clearDeviceToken = (): void => {
+  try {
+    localStorage.removeItem(DEVICE_TOKEN_KEY);
+  } catch {
+    // ignore
+  }
+};
 
 const getInitialMember = (): Member | null => {
   try {
     const raw = localStorage.getItem(SAVED_MEMBER_KEY);
-    return raw ? JSON.parse(raw) : null;
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Member;
+    // إزالة token من التخزين المحلي لتقليل أثر سرقة الجلسة عبر XSS/الامتدادات
+    if (parsed && 'session_token' in parsed) {
+      (parsed as Member).session_token = null;
+    }
+    return parsed;
   } catch {
     return null;
   }
@@ -84,15 +118,20 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   currentMember: getInitialMember(),
   setMember: (member) => {
-    if (member) {
-      localStorage.setItem(SAVED_MEMBER_KEY, JSON.stringify(member));
+    // لا نحتفظ بـ session_token في localStorage أو state لتقليل سطح الهجوم.
+    // رمز الجهاز يعيش في مفتاح مستقل (wasla_device_token) ويُمرر لكل RPC عضوية.
+    const sanitized = member ? ({ ...member, session_token: null } as Member) : null;
+
+    if (sanitized) {
+      localStorage.setItem(SAVED_MEMBER_KEY, JSON.stringify(sanitized));
     } else {
       localStorage.removeItem(SAVED_MEMBER_KEY);
     }
-    set({ currentMember: member });
+    set({ currentMember: sanitized });
   },
   logoutMember: () => {
     localStorage.removeItem(SAVED_MEMBER_KEY);
+    clearDeviceToken();
     set({ currentMember: null });
   },
 }));
