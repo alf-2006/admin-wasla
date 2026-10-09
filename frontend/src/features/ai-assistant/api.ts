@@ -12,6 +12,7 @@ export interface AiAction {
   type: string;
   payload?: Record<string, unknown>;
   name?: string;
+  title?: string;
   patch?: Record<string, unknown>;
   description?: string;
   id?: number | string;

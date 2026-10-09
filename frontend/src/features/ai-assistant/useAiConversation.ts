@@ -67,9 +67,10 @@ export function useAiConversation(members: Member[], tasks: Task[]) {
 
   const executeAction = async (messageId: string, action: AiAction) => {
     const payload = action.payload ?? {};
+    const actionType = typeof action.type === 'string' ? action.type.trim().toLowerCase() : '';
     const stringValue = (value: unknown): string | null => typeof value === 'string' && value.trim() ? value.trim() : null;
     try {
-      if (action.type === 'create_task') {
+      if (actionType === 'create_task') {
         const rawAssigned = payload.assigned_to;
         const assignedTo: string[] | string = Array.isArray(rawAssigned) ? rawAssigned.map(String) : stringValue(rawAssigned) ?? 'ALL';
         await createTask.mutateAsync({
@@ -80,7 +81,7 @@ export function useAiConversation(members: Member[], tasks: Task[]) {
           assigned_to: assignedTo,
           tracking: {},
         });
-      } else if (action.type === 'delete_task') {
+      } else if (actionType === 'delete_task') {
         const taskIdStr = stringValue(action.id) ?? stringValue(payload.id);
         const taskId = Number(taskIdStr);
         if (!taskIdStr || isNaN(taskId)) {
@@ -92,7 +93,7 @@ export function useAiConversation(members: Member[], tasks: Task[]) {
         } else {
           await deleteTask.mutateAsync(taskId);
         }
-      } else if (action.type === 'add_note') {
+      } else if (actionType === 'add_note') {
         await createNote.mutateAsync({
           text: stringValue(payload.text) ?? 'ملاحظة من مساعد وصلة الذكي (بدون نص).',
           author: 'مساعد وصلة الذكي (AI)', author_role: 'AI Assistant',
@@ -100,21 +101,30 @@ export function useAiConversation(members: Member[], tasks: Task[]) {
           target_member_id: null,
           target_name: stringValue(payload.targetName),
         });
-      } else if (action.type === 'delete_note') {
+      } else if (actionType === 'delete_note') {
         const noteId = Number(stringValue(action.id) ?? stringValue(payload.id));
         if (isNaN(noteId)) throw new Error('رقم الملاحظة غير صالح.');
         await deleteNote.mutateAsync(noteId);
-      } else if (action.type === 'create_member') {
-        if (!payload.full_name || !payload.email) throw new Error('الاسم والبريد مطلوبان لإنشاء عضو.');
+      } else if (actionType === 'create_member') {
+        const fullName = stringValue(payload.full_name);
+        const email = stringValue(payload.email)?.toLowerCase();
+        if (!fullName || !email) throw new Error('الاسم والبريد مطلوبان لإنشاء عضو.');
         await addMember.mutateAsync({
-          full_name: stringValue(payload.full_name)!,
-          email: stringValue(payload.email)!,
+          full_name: fullName,
+          email,
           phone: stringValue(payload.phone),
           device: stringValue(payload.device) ?? 'بدون',
           bio: stringValue(payload.bio),
           completion_rank: 0,
+          team_notes: null,
+          residence: null,
+          work_conditions: null,
+          gender: null,
+          meeting_attendance: null,
+          work_status: 'active',
+          can_go_alexandria: false,
         });
-      } else if (action.type === 'update_member') {
+      } else if (actionType === 'update_member') {
         const targetName = action.name;
         const patch = action.patch;
         if (!targetName || !patch) {
@@ -131,7 +141,7 @@ export function useAiConversation(members: Member[], tasks: Task[]) {
           id: member.id,
           ...patch,
         });
-      } else if (action.type === 'delete_member') {
+      } else if (actionType === 'delete_member') {
         const targetName = action.name ?? stringValue(payload.name);
         if (!targetName) throw new Error('اسم العضو مطلوب.');
         const member = members.find((m) => m.full_name === targetName);
