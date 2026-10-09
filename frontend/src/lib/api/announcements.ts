@@ -83,6 +83,26 @@ export class AnnouncementsAPI {
   }
 
   /**
+   * جلب إعلان واحد بالمعرف (للإدارة فقط) — يُستخدم لعرض حالة إرسال الواتساب.
+   */
+  static async getAnnouncementById(id: number): Promise<Announcement | null> {
+    if (!isPositiveId(id)) {
+      throw toAppError(new Error('INVALID_ID'), 'معرّف الإعلان غير صالح.');
+    }
+    const { data: announcement, error } = await supabase
+      .from('announcements')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (error) {
+      throw toAppError(error, 'فشل في جلب الإعلان.');
+    }
+
+    return announcement ?? null;
+  }
+
+  /**
    * جلب إحصائيات الإعلان (للإدارة فقط)
    */
   static async getAnnouncementStats(announcementId: number): Promise<AnnouncementStats | null> {

@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Users, User, Send, AlertCircle } from 'lucide-react';
 import AnnouncementsAPI from '../../../lib/api/announcements';
 import { supabase } from '../../../lib/supabase/client';
 import type { AnnouncementInsert, AnnouncementPriority } from '../../../types/db';
+import { sendWhatsAppAnnouncement } from '../../whatsapp/api';
+import { sendPushNotification } from '../../../lib/api/push';
 import { Button } from '../../../components/ui/Button';
 import { Modal } from '../../../components/ui/Modal';
 import { toast } from '../../../store/toast';
@@ -90,8 +92,64 @@ export default function CreateAnnouncementModal({
         expires_at: formData.expires_at || null
       };
 
-      await AnnouncementsAPI.createAnnouncement(dataToSubmit);
-      toast.success('تم نشر الإعلان بنجاح.');
+      const created = await AnnouncementsAPI.createAnnouncement(dataToSubmit);
+      let mIds = dataToSubmit.target_audience.type === 'specific' ? selectedMembers : members.map(m => m.id);
+      if (dataToSubmit.target_audience.type !== 'specific' && mIds.length === 0) {
+        // قائمة الأعضاء لا تُحمّل في وضع "الكل" — اجلب المعرفات للـ Push فقط
+        try {
+          const { data: allMembers, error: allMembersError } = await supabase.from('members').select('id').limit(500);
+          if (allMembersError) throw allMembersError;
+          mIds = (allMembers ?? []).map((m: { id: number }) => m.id);
+        } catch {
+          mIds = [];
+        }
+        if (mIds.length === 0) {
+          throw new Error('تعذر تحديد الأعضاء المستلمين (القائمة فارغة) — أعد تحميل الصفحة وحاول مجدداً.');
+        }
+      }
+
+      if (dataToSubmit.send_push) {
+        try {
+          // split into chunks of 50 if needed, but push-notify handles it if we modify it, 
+          // wait, push-notify has a limit of 50! Let's chunk the push notifications.
+          for (let i = 0; i < mIds.length; i += 50) {
+            const chunk = mIds.slice(i, i + 50);
+            await sendPushNotification(dataToSubmit.title, dataToSubmit.content.substring(0, 100), chunk, '/announcements');
+          }
+        } catch (pushErr) {
+          toast.error('لم يتم إرسال الإشعارات: ' + (pushErr instanceof Error ? pushErr.message : ''));
+        }
+      }
+
+      if (dataToSubmit.send_whatsapp) {
+        try {
+          const waResult = await sendWhatsAppAnnouncement(created.id, mIds);
+          const sent = waResult?.sent ?? 0;
+          const failed = waResult?.failed ?? 0;
+          const waErrors = Array.isArray(waResult?.errors) ? waResult.errors.slice(0, 10) : [];
+          // وثّق نتيجة الإرسال على صف الإعلان حتى تظهر في "الإحصائيات" لاحقاً
+          try {
+            await AnnouncementsAPI.updateAnnouncement(created.id, {
+              whatsapp_sent_at: new Date().toISOString(),
+              whatsapp_sent_count: sent,
+              whatsapp_errors: waErrors,
+            } as Partial<AnnouncementInsert>);
+          } catch {
+            // توثيق النتيجة ثانوي — لا يحجب رسالة النتيجة نفسها
+          }
+          if (sent > 0 && failed === 0) {
+            toast.success(`تم نشر الإعلان وإرساله عبر واتساب إلى ${sent} عضو بنجاح.`);
+          } else if (sent > 0) {
+            toast.warning(`تم نشر الإعلان، ووصل واتساب إلى ${sent} عضو وفشل لـ ${failed}. راجع "الإحصائيات" للتفاصيل: ${waErrors.slice(0, 2).join('؛ ')}`);
+          } else {
+            toast.error(`تم نشر الإعلان، لكن لم تصل رسالة الواتساب لأي عضو (فشل ${failed}). السبب: ${waErrors.slice(0, 2).join('؛ ') || 'غير معروف — راجع اتصال الواتساب وأرقام الهواتف.'}`);
+          }
+        } catch (whatsappErr) {
+          toast.error('تم نشر الإعلان بنجاح، لكن حدث خطأ أثناء الإرسال عبر واتساب: ' + (whatsappErr instanceof Error ? whatsappErr.message : ''));
+        }
+      } else {
+        toast.success('تم نشر الإعلان بنجاح.');
+      }
       onSuccess();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'حدث خطأ غير معروف');
@@ -316,3 +374,4 @@ export default function CreateAnnouncementModal({
     </Modal>
   );
 }
+
