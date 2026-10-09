@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertCircle, ArrowLeft, Mail } from 'lucide-react';
 import { AuthShell } from '../../components/layout/AuthShell';
-import { useAuthStore, setDeviceToken } from '../../store/auth';
+import { useAuthStore, setDeviceToken, getMemberRemember, setMemberRemember } from '../../store/auth';
 import { supabase } from '../../lib/supabase/client';
 import { fetchMemberByEmail } from '../members/api';
 import { isValidEmail } from '../../lib/validators';
@@ -11,6 +11,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [remember, setRemember] = useState<boolean>(() => getMemberRemember());
   const setMember = useAuthStore((state) => state.setMember);
   const navigate = useNavigate();
 
@@ -52,8 +53,9 @@ export default function LoginPage() {
         setError('هذا البريد الإلكتروني غير مسجل في فريق وصلة. يرجى مراجعة الإدارة.');
       } else {
         // لا نخزّن session_token في الواجهة لتقليل أثر سرقة الجلسة (يظل محفوظاً في قاعدة البيانات فقط).
-        setDeviceToken(deviceToken);
-        setMember(member);
+        setMemberRemember(remember);
+        setDeviceToken(deviceToken, remember);
+        setMember(member, remember);
         navigate('/portal');
       }
     } catch (cause) {
@@ -77,6 +79,16 @@ export default function LoginPage() {
           <span className="auth-input-wrap"><Mail size={17} aria-hidden="true" /><input id="member-email" type="email" dir="ltr" autoComplete="email" required placeholder="name@wasla.com" value={email} onChange={(event) => { setEmail(event.target.value); if (error) setError(''); }} aria-invalid={Boolean(error) || undefined} aria-describedby={error ? 'member-email-error' : undefined} /></span>
         </label>
         {email.trim() && !isValidEmail(email.trim().toLowerCase()) && <p className="text-xs font-bold text-amber-700 dark:text-amber-300" role="note">تحقق من الصيغة: يجب أن يحتوي على @ ونطاق صحيح.</p>}
+        <label className="auth-remember" htmlFor="member-remember">
+          <input
+            id="member-remember"
+            type="checkbox"
+            checked={remember}
+            onChange={(event) => setRemember(event.target.checked)}
+          />
+          <span className="auth-remember-box" aria-hidden="true" />
+          <span>حفظ تسجيل الدخول على هذا الجهاز</span>
+        </label>
         <button type="submit" className="auth-submit" disabled={loading} aria-busy={loading || undefined}>
           {loading ? 'جاري التحقق...' : 'دخول مساحة العمل'}
           {!loading && <ArrowLeft size={18} aria-hidden="true" />}

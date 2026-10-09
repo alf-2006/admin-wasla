@@ -2,14 +2,15 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AlertCircle, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { AuthShell } from '../../components/layout/AuthShell';
-import { useAuthStore } from '../../store/auth';
-import { supabase } from '../../lib/supabase/client';
+import { useAuthStore, getAdminRemember, setAdminRemember } from '../../store/auth';
+import { supabase, syncAdminSessionStorage } from '../../lib/supabase/client';
 import { isValidEmail } from '../../lib/validators';
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [remember, setRemember] = useState<boolean>(() => getAdminRemember());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const setSession = useAuthStore((state) => state.setSession);
@@ -29,6 +30,10 @@ export default function AdminLoginPage() {
     }
     setLoading(true);
     setError('');
+    // ثبّت اختيار الحفظ قبل تسجيل الدخول حتى يكتبه Supabase في المخزن الصحيح.
+    // ملاحظة: تنظيف المخزن المقابل يتم بعد نجاح الدخول فقط — حتى لا تضيع
+    // جلسة صالحة قديمة عند فشل محاولة دخول جديدة.
+    setAdminRemember(remember);
     try {
       const { data, error: loginError } = await supabase.auth.signInWithPassword({
         email: cleanEmail,
@@ -36,6 +41,7 @@ export default function AdminLoginPage() {
       });
       if (loginError) setError('بيانات الدخول غير صحيحة. يرجى التحقق من البريد وكلمة المرور.');
       else if (data.session) {
+        syncAdminSessionStorage(remember);
         setSession(data.session);
         navigate('/admin/dashboard');
       }
@@ -72,6 +78,20 @@ export default function AdminLoginPage() {
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </span>
+        </label>
+        <label className="auth-remember" htmlFor="admin-remember">
+          <input
+            id="admin-remember"
+            type="checkbox"
+            checked={remember}
+            onChange={(event) => {
+              const next = event.target.checked;
+              setRemember(next);
+              setAdminRemember(next);
+            }}
+          />
+          <span className="auth-remember-box" aria-hidden="true" />
+          <span>حفظ تسجيل الدخول على هذا الجهاز</span>
         </label>
         <button type="submit" className="auth-submit" disabled={loading} aria-busy={loading || undefined}>
           {loading ? 'جاري التحقق من الصلاحيات...' : 'دخول مركز الإدارة'}

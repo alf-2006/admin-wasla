@@ -21,24 +21,57 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
-    // تقليل أثر سرقة الجلسة: نخزن جلسة Supabase في sessionStorage بدل localStorage.
-    // supabase-js يتوقع كائن Storage-like.
+    // حفظ الجلسة حسب اختيار "تذكرني": localStorage للدائم، sessionStorage للمؤقت.
+    // يُقرأ العلم في كل عملية (وليس مرة واحدة) حتى يبدّل المستخدم اختياره قبل الدخول.
     storage: {
       getItem: (key: string) => {
         try {
-          return sessionStorage.getItem(key);
+          const remember = localStorage.getItem('wasla_admin_remember') !== '0';
+          if (!remember) {
+            try {
+              return sessionStorage.getItem(key);
+            } catch {
+              return null;
+            }
+          }
+          return localStorage.getItem(key);
         } catch {
           return null;
         }
       },
       setItem: (key: string, value: string) => {
         try {
-          sessionStorage.setItem(key, value);
+          let remember = true;
+          try {
+            remember = localStorage.getItem('wasla_admin_remember') !== '0';
+          } catch {
+            remember = true;
+          }
+          if (remember) {
+            localStorage.setItem(key, value);
+            try {
+              sessionStorage.removeItem(key);
+            } catch {
+              // ignore
+            }
+          } else {
+            sessionStorage.setItem(key, value);
+            try {
+              localStorage.removeItem(key);
+            } catch {
+              // ignore
+            }
+          }
         } catch {
           // ignore
         }
       },
       removeItem: (key: string) => {
+        try {
+          localStorage.removeItem(key);
+        } catch {
+          // ignore
+        }
         try {
           sessionStorage.removeItem(key);
         } catch {
@@ -48,3 +81,50 @@ export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
     } as any,
   },
 });
+
+/** ينظّف نسخة الجلسة من المخزن غير المستخدم حسب اختيار التذكر — يمنع بقاء جلسة دائمة بعد اختيار مؤقت */
+export const syncAdminSessionStorage = (remember: boolean): void => {
+  try {
+    if (remember) {
+      // سنحفظ دائماً: انقل أي جلسة مؤقتة إلى الدائم
+      const keys: string[] = [];
+      try {
+        for (let i = 0; i < sessionStorage.length; i++) {
+          const k = sessionStorage.key(i);
+          if (k && k.startsWith('sb-')) keys.push(k);
+        }
+      } catch {
+        // ignore
+      }
+      for (const k of keys) {
+        try {
+          const v = sessionStorage.getItem(k);
+          if (v !== null) localStorage.setItem(k, v);
+          sessionStorage.removeItem(k);
+        } catch {
+          // ignore
+        }
+      }
+    } else {
+      // جلسة مؤقتة: احذف أي نسخ دائمة قديمة حتى لا تُبعث بعد قفل المتصفح
+      const keys: string[] = [];
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith('sb-')) keys.push(k);
+        }
+      } catch {
+        // ignore
+      }
+      for (const k of keys) {
+        try {
+          localStorage.removeItem(k);
+        } catch {
+          // ignore
+        }
+      }
+    }
+  } catch {
+    // ignore
+  }
+};
