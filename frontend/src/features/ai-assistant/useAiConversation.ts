@@ -37,6 +37,7 @@ export function useAiConversation(members: Member[], tasks: Task[]) {
     members: members.slice(0, 50).map((member) => ({
       id: member.id, name: member.full_name, email: member.email,
       device: member.device, can_go_alexandria: member.can_go_alexandria,
+      bio: (member.bio ?? '').slice(0, 200),
     })),
     tasks: tasks.slice(0, 20).map((task) => ({ id: task.id, title: task.title, deadline: task.deadline_date, tracking: task.tracking })),
   });
@@ -125,26 +126,33 @@ export function useAiConversation(members: Member[], tasks: Task[]) {
           can_go_alexandria: false,
         });
       } else if (actionType === 'update_member') {
-        const targetName = action.name;
+        const targetName = action.name?.trim();
         const patch = action.patch;
         if (!targetName || !patch) {
           throw new Error('بيانات العضو أو التعديل غير مكتملة في رد المساعد.');
         }
-        
-        // Find the member by name
-        const member = members.find((m) => m.full_name === targetName);
+
+        // Find the member by name — exact, then contains, then first-name match
+        // (AI often returns first name only, e.g. "حنين" instead of full name).
+        const normalized = targetName.replace(/\s+/g, ' ');
+        const member = members.find((m) => m.full_name === normalized)
+          ?? members.find((m) => m.full_name.includes(normalized) || normalized.includes(m.full_name))
+          ?? members.find((m) => m.full_name.split(/\s+/)[0] === normalized.split(/\s+/)[0]);
         if (!member) {
           throw new Error(`لم يتم العثور على عضو باسم: ${targetName}`);
         }
-        
+
         await updateMember.mutateAsync({
           id: member.id,
           ...patch,
         });
       } else if (actionType === 'delete_member') {
-        const targetName = action.name ?? stringValue(payload.name);
+        const targetName = action.name?.trim() ?? stringValue(payload.name);
         if (!targetName) throw new Error('اسم العضو مطلوب.');
-        const member = members.find((m) => m.full_name === targetName);
+        const normalized = targetName.replace(/\s+/g, ' ');
+        const member = members.find((m) => m.full_name === normalized)
+          ?? members.find((m) => m.full_name.includes(normalized) || normalized.includes(m.full_name))
+          ?? members.find((m) => m.full_name.split(/\s+/)[0] === normalized.split(/\s+/)[0]);
         if (!member) throw new Error(`لم يتم العثور على عضو باسم: ${targetName}`);
         await deleteMember.mutateAsync(member.id);
       } else {

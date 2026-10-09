@@ -98,7 +98,9 @@ serve(async (req) => {
 3. إذا كان المستخدم يطلب تسجيل، إضافة، أو تدمير، أو تعديل حالة مهمة، قم بإصدار إجراء Action JSON بصيغة صالحة داخل ردك بالإضافة للنص العادي.
 
 أنواع الأكشنات المدعومة:
-- لتعديل عضو: \`\`\`json { "action": { "type": "update_member", "name": "اسم الشخص", "patch": {"phone": "...", "device": "لابتوب"} } } \`\`\`
+- لتعديل عضو: \`\`\`json { "action": { "type": "update_member", "name": "اسم الشخص", "patch": {"phone": "...", "device": "لابتوب", "bio": "front end"} } } \`\`\`
+  ملاحظة: الدور/التخصص (مثل front end أو back end) مخزّن في حقل bio — عدّله عبر patch.bio، وهو ظاهر لك في سياق الأعضاء كـ bio.
+  الحقول المسموح تعديلها: phone, device, bio, residence, work_conditions, gender, meeting_attendance, work_status, can_go_alexandria.
 - لإنشاء عضو: \`\`\`json { "action": { "type": "create_member", "payload": {"full_name": "الاسم", "email": "البريد", "device": "لابتوب"} } } \`\`\`
 - لحذف عضو: \`\`\`json { "action": { "type": "delete_member", "name": "اسم الشخص" } } \`\`\`
 - لإنشاء مهمة: \`\`\`json { "action": { "type": "create_task", "payload": {"title": "العنوان", "description": "الوصف", "deadline_date": "2024-12-31", "assigned_to": ["الاسم الأول"]} } } \`\`\`
