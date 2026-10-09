@@ -2,7 +2,7 @@ import { createServer, type IncomingMessage, type ServerResponse } from 'node:ht
 import { config, isConfigured } from './config.js';
 import { requireAdmin } from './adminAuth.js';
 import { disableBridge, enableBridge, getStatus, revokeSession, sendText, setDryRun } from './connection.js';
-import { resolveTaskMessage } from './taskMessage.js';
+import { resolveAnnouncementMessage, resolveTaskMessage } from './taskMessage.js';
 
 type JsonRecord = Record<string, unknown>;
 const send = (res: ServerResponse, status: number, body: JsonRecord, origin = '') => {
@@ -60,6 +60,30 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
       }
       return send(res, 200, { ...((lastResult as Record<string, unknown>) || {}), sent: sentCount, failed: results.length, errors: results }, origin);
     }
+    if (url.pathname === '/v1/send-announcement') {
+      const body = await readBody(req);
+      if (!Number.isInteger(body.announcementId) || !Array.isArray(body.memberIds)) return send(res, 400, { error: 'اختر الإعلان والأعضاء.' }, origin);
+      
+      const results: string[] = [];
+      let sentCount = 0;
+      let lastResult: unknown = {};
+      
+      for (const id of body.memberIds) {
+        try {
+          const memberIdNum = Number(id);
+          if (!Number.isInteger(memberIdNum)) continue;
+          
+          const baseUrl = origin || 'http://localhost:5173';
+          const message = await resolveAnnouncementMessage(admin, Number(body.announcementId), memberIdNum, baseUrl);
+          const result = await sendText(message.phone, message.text);
+          sentCount++;
+          lastResult = { ...result, memberName: message.memberName, announcementTitle: message.announcementTitle };
+        } catch (err) {
+          results.push(`عضو #${id}: ${(err as Error).message}`);
+        }
+      }
+      return send(res, 200, { ...((lastResult as Record<string, unknown>) || {}), sent: sentCount, failed: results.length, errors: results }, origin);
+    }
     return send(res, 404, { error: 'المسار غير موجود.' }, origin);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'تعذر تنفيذ طلب واتساب.';
@@ -69,6 +93,6 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
 }
 
 setDryRun(config.dryRun);
-createServer((req, res) => { void handle(req, res); }).listen(config.port, () => {
+createServer((req, res) => { void handle(req, res); }).listen(config.port, '0.0.0.0', () => {
   console.info(`WhatsApp QR bridge listening on port ${config.port}; dry-run=${config.dryRun}; configured=${isConfigured()}`);
 });

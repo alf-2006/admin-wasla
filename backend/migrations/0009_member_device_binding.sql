@@ -66,7 +66,7 @@ BEGIN
     END IF;
     -- الصفوف القديمة التي لم تُمنح رمزاً بعد: امنحها رمز المتصل الأول.
     IF v_current_token = '' OR v_current_token IS NULL THEN
-        UPDATE public.members SET session_token = p_device_token WHERE id = p_member_id;
+        UPDATE public.members SET session_token = p_device_token WHERE public.members.id = p_member_id;
         RETURN;
     END IF;
     IF v_current_token <> p_device_token THEN
@@ -126,7 +126,7 @@ BEGIN
     IF v_current_token IS NOT NULL AND v_current_token <> '' AND v_current_token <> p_device_token THEN
       RAISE EXCEPTION 'DEVICE_CONFLICT: This account is currently in use on another device. Please log out from the first device.';
     END IF;
-    UPDATE public.members SET session_token = p_device_token WHERE id = v_member_id;
+    UPDATE public.members SET session_token = p_device_token WHERE public.members.id = v_member_id;
   END IF;
 
   RETURN QUERY
@@ -270,7 +270,7 @@ BEGIN
     RAISE EXCEPTION 'INVALID_VALUE: قيمة الجاهزية غير صالحة.';
   END IF;
   PERFORM public.assert_member_device(p_member_id, p_device_token);
-  UPDATE public.members SET can_go_alexandria = p_can_go WHERE id = p_member_id;
+  UPDATE public.members SET can_go_alexandria = p_can_go WHERE public.members.id = p_member_id;
   RETURN TRUE;
 END;
 $$;
@@ -433,7 +433,7 @@ DECLARE
     v_actual_email TEXT;
 BEGIN
   PERFORM public.assert_member_device(p_member_id, p_device_token);
-  SELECT lower(btrim(email)) INTO v_actual_email FROM public.members WHERE id = p_member_id;
+  SELECT lower(btrim(email)) INTO v_actual_email FROM public.members WHERE public.members.id = p_member_id;
   IF v_actual_email IS NULL OR v_actual_email <> lower(btrim(p_email)) THEN
     RAISE EXCEPTION 'UNAUTHORIZED: بيانات المطابقة غير صحيحة.';
   END IF;
@@ -446,7 +446,7 @@ BEGIN
   IF coalesce(p_subscription ->> 'endpoint', '') NOT LIKE 'https://%' THEN
     RAISE EXCEPTION 'INVALID_SUBSCRIPTION: نقطة نهاية الاشتراك غير صالحة.';
   END IF;
-  UPDATE public.members SET push_subscription = p_subscription WHERE id = p_member_id;
+  UPDATE public.members SET push_subscription = p_subscription WHERE public.members.id = p_member_id;
   RETURN TRUE;
 END;
 $$;
@@ -459,7 +459,7 @@ SET search_path = public
 AS $$
 BEGIN
   PERFORM public.assert_member_device(p_member_id, p_device_token);
-  UPDATE public.members SET session_token = NULL WHERE id = p_member_id;
+  UPDATE public.members SET session_token = NULL WHERE public.members.id = p_member_id;
   RETURN TRUE;
 END;
 $$;

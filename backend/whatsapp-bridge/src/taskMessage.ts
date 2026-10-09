@@ -36,3 +36,20 @@ export async function resolveTaskMessage(admin: AdminRequest, taskId: number, me
   const text = `مرحباً بك ${member.full_name} 👋،\n\nنود إعلامك بأنه قد تم إسناد تكليف جديد إليك في منظومة وصلة بعنوان:\n📌 *«${task.title}»*${due}\n\nيرجى التكرم بالدخول إلى بوابة وصلة لمراجعة تفاصيل المهمة والبدء في التنفيذ:\n🔗 ${baseUrl}/login\n\nتمنياتنا لك بالتوفيق،\nفريق إدارة وصلة.`;
   return { phone: normalizePhone(member.phone)!, memberName: member.full_name, taskTitle: task.title, text };
 }
+
+export async function resolveAnnouncementMessage(admin: AdminRequest, announcementId: number, memberId: number, baseUrl: string) {
+  const client = createClient(config.supabaseUrl, config.supabaseAnonKey, { auth: { persistSession: false }, global: { headers: { Authorization: `Bearer ${admin.token}` } } });
+  const [{ data: annData, error: annError }, { data: memberData, error: memberError }] = await Promise.all([
+    client.from('announcements').select('id,title,content,priority').eq('id', announcementId).single(),
+    client.from('members').select('id,full_name,phone,work_status').eq('id', memberId).single(),
+  ]);
+  const ann = annData as { id: number, title: string, content: string, priority: string } | null;
+  const member = memberData as MemberRecord | null;
+  if (annError || !ann) throw new Error('الإعلان غير موجود أو لا يمكن الوصول إليه.');
+  if (memberError || !member) throw new Error('العضو غير موجود أو لا يمكن الوصول إليه.');
+  if (!member.phone || !normalizePhone(member.phone)) throw new Error('رقم العضو غير صالح.');
+  
+  const icon = ann.priority === 'urgent' ? '🚨' : ann.priority === 'high' ? '⚠️' : '📢';
+  const text = `مرحباً بك ${member.full_name} 👋،\n\n${icon} *إعلان إداري هام!*\n📌 *«${ann.title}»*\n\n${ann.content}\n\nيرجى الدخول إلى بوابة وصلة لمزيد من التفاصيل:\n🔗 ${baseUrl}/login\n\nإدارة وصلة.`;
+  return { phone: normalizePhone(member.phone)!, memberName: member.full_name, announcementTitle: ann.title, text };
+}
