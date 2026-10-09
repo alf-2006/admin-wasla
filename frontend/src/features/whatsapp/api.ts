@@ -34,6 +34,7 @@ const ALLOWED_BRIDGE_PATHS = new Set([
   '/v1/disconnect',
   '/v1/revoke',
   '/v1/send-task',
+  '/v1/send-announcement',
   '/v1/diagnostics',
 ]);
 
@@ -85,13 +86,17 @@ async function request<T>(path: string, body?: Record<string, unknown>): Promise
   if (!ALLOWED_BRIDGE_PATHS.has(path)) throw new Error('مسار خدمة واتساب غير مسموح.');
   if (body) {
     const taskId = (body as { taskId?: unknown }).taskId;
+    const announcementId = (body as { announcementId?: unknown }).announcementId;
     const memberIds = (body as { memberIds?: unknown }).memberIds;
     if (taskId !== undefined && (!Number.isInteger(taskId) || (taskId as number) <= 0)) {
       throw new Error('معرّف المهمة غير صالح.');
     }
+    if (announcementId !== undefined && (!Number.isInteger(announcementId) || (announcementId as number) <= 0)) {
+      throw new Error('معرّف الإعلان غير صالح.');
+    }
     if (memberIds !== undefined) {
-      if (!Array.isArray(memberIds) || memberIds.length < 1 || memberIds.length > 50) {
-        throw new Error('قائمة الأعضاء غير صالحة (1-50).');
+      if (!Array.isArray(memberIds) || memberIds.length < 1 || memberIds.length > 1000) {
+        throw new Error('قائمة الأعضاء غير صالحة (1-1000).');
       }
       const ids = memberIds as unknown[];
       if (!ids.every((id) => Number.isInteger(id) && (id as number) > 0) || new Set(ids).size !== ids.length) {
@@ -124,6 +129,8 @@ export const disconnectWhatsApp = () => request<WhatsAppStatus>('/v1/disconnect'
 export const revokeWhatsAppSession = () => request<WhatsAppStatus>('/v1/revoke', {});
 export const sendWhatsAppTask = (taskId: number, memberIds: number[], consentConfirmed: boolean) =>
   request<WhatsAppSendResult>('/v1/send-task', { taskId, memberIds, consentConfirmed });
+export const sendWhatsAppAnnouncement = (announcementId: number, memberIds: number[]) =>
+  request<WhatsAppSendResult>('/v1/send-announcement', { announcementId, memberIds });
 
 // --- Meta Cloud API Functions ---
 export type CloudStatus = {
