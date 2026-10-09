@@ -98,9 +98,13 @@ serve(async (req) => {
 3. إذا كان المستخدم يطلب تسجيل، إضافة، أو تدمير، أو تعديل حالة مهمة، قم بإصدار إجراء Action JSON بصيغة صالحة داخل ردك بالإضافة للنص العادي.
 
 أنواع الأكشنات المدعومة:
-- لتعديل عضو (إذا ذُكر اسمه): \`\`\`json { "action": { "type": "update_member", "name": "اسم الشخص", "patch": {"hasLaptop": false, "canGoAlexandria": true} } } \`\`\`
-- لحذف/تدمير عضو: \`\`\`json { "action": { "type": "delete_member", "name": "اسم الشخص" } } \`\`\`
-- لإضافة ملاحظة: \`\`\`json { "action": { "type": "add_note", "text": "نص الملاحظة", "targetName": "اسم المستهدف إن وُجد" } } \`\`\`
+- لتعديل عضو: \`\`\`json { "action": { "type": "update_member", "name": "اسم الشخص", "patch": {"phone": "...", "device": "لابتوب"} } } \`\`\`
+- لإنشاء عضو: \`\`\`json { "action": { "type": "create_member", "payload": {"full_name": "الاسم", "email": "البريد", "device": "لابتوب"} } } \`\`\`
+- لحذف عضو: \`\`\`json { "action": { "type": "delete_member", "name": "اسم الشخص" } } \`\`\`
+- لإنشاء مهمة: \`\`\`json { "action": { "type": "create_task", "payload": {"title": "العنوان", "description": "الوصف", "deadline_date": "2024-12-31", "assigned_to": ["الاسم الأول"]} } } \`\`\`
+- لحذف مهمة: \`\`\`json { "action": { "type": "delete_task", "title": "عنوان المهمة" } } \`\`\`
+- لإضافة ملاحظة: \`\`\`json { "action": { "type": "add_note", "payload": {"text": "نص الملاحظة", "targetName": "الاسم"} } } \`\`\`
+- لحذف ملاحظة: \`\`\`json { "action": { "type": "delete_note", "id": "رقم الملاحظة" } } \`\`\`
 
 السياق المتوفر:
 ${context}`;

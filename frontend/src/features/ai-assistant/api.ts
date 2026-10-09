@@ -9,9 +9,12 @@ import { useMutation } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase/client';
 
 export interface AiAction {
-  type: 'create_task' | 'update_member' | 'add_note' | 'assign_task' | 'delete_member';
-  payload: Record<string, unknown>;
+  type: string;
+  payload?: Record<string, unknown>;
+  name?: string;
+  patch?: Record<string, unknown>;
   description?: string;
+  id?: number | string;
 }
 
 /** دور محادثة واحد موجه لدى الـ Edge Function */

@@ -1,14 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAskWaslaAi, type AiAction, type AiMessage } from './api';
-import { useCreateTask } from '../tasks/api';
-import { useCreateNote } from '../notes/api';
+import { useCreateTask, useDeleteTask } from '../tasks/api';
+import { useCreateNote, useDeleteNote } from '../notes/api';
+import { useAddMember, useUpdateMember, useDeleteMember } from '../members/api';
 import { toast } from '../../store/toast';
 import type { Member, Task } from '../../types/db';
 
 export function useAiConversation(members: Member[], tasks: Task[]) {
   const ask = useAskWaslaAi();
   const createTask = useCreateTask();
+  const deleteTask = useDeleteTask();
   const createNote = useCreateNote();
+  const deleteNote = useDeleteNote();
+  const addMember = useAddMember();
+  const updateMember = useUpdateMember();
+  const deleteMember = useDeleteMember();
   const [messages, setMessages] = useState<AiMessage[]>([{
     id: 'welcome',
     sender: 'assistant',
@@ -74,6 +80,18 @@ export function useAiConversation(members: Member[], tasks: Task[]) {
           assigned_to: assignedTo,
           tracking: {},
         });
+      } else if (action.type === 'delete_task') {
+        const taskIdStr = stringValue(action.id) ?? stringValue(payload.id);
+        const taskId = Number(taskIdStr);
+        if (!taskIdStr || isNaN(taskId)) {
+          // Try finding by title if id is not provided
+          const title = stringValue(action.title) ?? stringValue(payload.title) ?? action.name;
+          const task = tasks.find((t) => t.title === title);
+          if (!task) throw new Error('لم يتم العثور على المهمة للحذف.');
+          await deleteTask.mutateAsync(task.id);
+        } else {
+          await deleteTask.mutateAsync(taskId);
+        }
       } else if (action.type === 'add_note') {
         await createNote.mutateAsync({
           text: stringValue(payload.text) ?? 'ملاحظة من مساعد وصلة الذكي (بدون نص).',
@@ -82,6 +100,43 @@ export function useAiConversation(members: Member[], tasks: Task[]) {
           target_member_id: null,
           target_name: stringValue(payload.targetName),
         });
+      } else if (action.type === 'delete_note') {
+        const noteId = Number(stringValue(action.id) ?? stringValue(payload.id));
+        if (isNaN(noteId)) throw new Error('رقم الملاحظة غير صالح.');
+        await deleteNote.mutateAsync(noteId);
+      } else if (action.type === 'create_member') {
+        if (!payload.full_name || !payload.email) throw new Error('الاسم والبريد مطلوبان لإنشاء عضو.');
+        await addMember.mutateAsync({
+          full_name: stringValue(payload.full_name)!,
+          email: stringValue(payload.email)!,
+          phone: stringValue(payload.phone),
+          device: stringValue(payload.device) ?? 'بدون',
+          bio: stringValue(payload.bio),
+          completion_rank: 0,
+        });
+      } else if (action.type === 'update_member') {
+        const targetName = action.name;
+        const patch = action.patch;
+        if (!targetName || !patch) {
+          throw new Error('بيانات العضو أو التعديل غير مكتملة في رد المساعد.');
+        }
+        
+        // Find the member by name
+        const member = members.find((m) => m.full_name === targetName);
+        if (!member) {
+          throw new Error(`لم يتم العثور على عضو باسم: ${targetName}`);
+        }
+        
+        await updateMember.mutateAsync({
+          id: member.id,
+          ...patch,
+        });
+      } else if (action.type === 'delete_member') {
+        const targetName = action.name ?? stringValue(payload.name);
+        if (!targetName) throw new Error('اسم العضو مطلوب.');
+        const member = members.find((m) => m.full_name === targetName);
+        if (!member) throw new Error(`لم يتم العثور على عضو باسم: ${targetName}`);
+        await deleteMember.mutateAsync(member.id);
       } else {
         toast.warning(`نوع الإجراء "${action.type}" غير مدعوم للتنفيذ التلقائي بعد — نفّذ التعديل يدوياً من صفحات الإدارة.`);
         return;
