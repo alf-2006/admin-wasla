@@ -11,6 +11,7 @@ export function NoteEditor({ isOpen, members, onClose }: { isOpen: boolean; memb
   const [author, setAuthor] = useState('إدارة وصلة');
   const [targetType, setTargetType] = useState<'all' | 'member'>('all');
   const [targetMemberId, setTargetMemberId] = useState<number | null>(null);
+  const [points, setPoints] = useState<number>(0);
   const [formError, setFormError] = useState('');
   const createNote = useCreateNote();
 
@@ -19,7 +20,14 @@ export function NoteEditor({ isOpen, members, onClose }: { isOpen: boolean; memb
     setAuthor('إدارة وصلة');
     setTargetType('all');
     setTargetMemberId(null);
+    setPoints(0);
     setFormError('');
+  };
+
+  const pickPoints = (value: number) => {
+    setPoints(value);
+    // البونص يُحتسب لعضو محدد فقط — اختياره ينقل الاستهداف تلقائياً لعضو
+    if (value !== 0) setTargetType('member');
   };
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
@@ -28,9 +36,15 @@ export function NoteEditor({ isOpen, members, onClose }: { isOpen: boolean; memb
       setFormError('محتوى الملاحظة مطلوب.');
       return;
     }
+    if (points !== 0 && targetMemberId == null) {
+      setFormError('البونص يُسجَّل لعضو محدد — اختر العضو المستهدف أو اجعل القيمة صفراً.');
+      return;
+    }
     const targetMember = members.find((member) => member.id === targetMemberId);
+    // نفس صيغة النظام القديم: صفر = نص صافٍ، وغيره وسم [B:±N] يُحتسب في الترتيب
+    const tag = points === 0 ? '' : points > 0 ? `[B:+${points}]` : `[B:${points}]`;
     const payload: NoteInsert = {
-      text: text.trim(),
+      text: tag ? `${text.trim()} ${tag}` : text.trim(),
       author: author.trim() || 'الإدارة',
       author_role: 'Admin',
       date: new Date().toLocaleDateString('ar-EG', { dateStyle: 'medium' }),
@@ -64,6 +78,19 @@ export function NoteEditor({ isOpen, members, onClose }: { isOpen: boolean; memb
           </label>
         </div>
         {targetType === 'member' && <label className="grid gap-2 text-sm font-bold">العضو المستهدف<select required value={targetMemberId ?? ''} onChange={(event) => setTargetMemberId(Number(event.target.value))} className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3"><option value="">اختر عضوًا</option>{members.map((member) => <option key={member.id} value={member.id}>{member.full_name}</option>)}</select></label>}
+        <fieldset className="grid gap-2">
+          <legend className="text-sm font-bold">نقاط البونص (اختياري — تُحتسب في الترتيب عند استهداف عضو)</legend>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <button type="button" onClick={() => pickPoints(0)} className={`min-h-11 px-3 rounded-xl text-sm font-black transition-colors ${points === 0 ? 'bg-[var(--primary)] text-white' : 'border border-[var(--border)] bg-[var(--bg)] hover:border-[var(--primary)]'}`}>0 — بدون</button>
+            {[1, 2, 3, 4, 5].map((val) => (
+              <button type="button" key={`pos-${val}`} onClick={() => pickPoints(val)} className={`min-h-11 min-w-11 px-3 rounded-xl text-sm font-black transition-colors ${points === val ? 'bg-emerald-600 text-white' : 'border border-[var(--border)] bg-[var(--bg)] hover:border-emerald-400'}`}>+{val}</button>
+            ))}
+            {[-1, -2, -3, -4, -5].map((val) => (
+              <button type="button" key={`neg-${val}`} onClick={() => pickPoints(val)} className={`min-h-11 min-w-11 px-3 rounded-xl text-sm font-black transition-colors ${points === val ? 'bg-red-600 text-white' : 'border border-[var(--border)] bg-[var(--bg)] hover:border-red-400'}`}>{val}</button>
+            ))}
+          </div>
+          <p className="text-xs font-semibold text-[var(--text-muted)]">{points === 0 ? 'ملاحظة توثيقية بدون نقاط.' : `سيُسجَّل الوسم ${points > 0 ? `[B:+${points}]` : `[B:${points}]`} ويُحتسب في ترتيب العضو.`}</p>
+        </fieldset>
         <div className="flex flex-col-reverse gap-2 border-t border-[var(--border)] pt-4 sm:flex-row sm:justify-end"><Button type="button" variant="secondary" onClick={onClose} fullOnMobile>إلغاء</Button><Button type="submit" isLoading={createNote.isPending} loadingText="جارٍ الحفظ..." fullOnMobile>حفظ الملاحظة</Button></div>
       </form>
     </Modal>

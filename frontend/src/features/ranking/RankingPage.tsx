@@ -129,6 +129,7 @@ export default function RankingPage() {
       <BonusAdjustmentModal
         isOpen={isAdjustModalOpen}
         member={adjustingMember}
+        members={members}
         onClose={() => {
           setIsAdjustModalOpen(false);
           setAdjustingMember(null);

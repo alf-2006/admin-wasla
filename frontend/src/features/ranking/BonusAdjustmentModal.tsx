@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Award, Plus, Minus, AlertCircle } from 'lucide-react';
 import type { Member, NoteInsert } from '../../types/db';
@@ -9,18 +9,31 @@ import { useCreateNote } from '../notes/api';
 interface BonusAdjustmentModalProps {
   isOpen: boolean;
   member: Member | null;
+  members: Member[];
   onClose: () => void;
   onSuccess?: () => void;
 }
 
-export function BonusAdjustmentModal({ isOpen, member, onClose, onSuccess }: BonusAdjustmentModalProps) {
+export function BonusAdjustmentModal({ isOpen, member, members, onClose, onSuccess }: BonusAdjustmentModalProps) {
+  const [selectedId, setSelectedId] = useState<number | null>(null);
   const [points, setPoints] = useState<number>(1);
   const [reason, setReason] = useState<string>('');
   const [author, setAuthor] = useState<string>('إدارة وصلة');
   const [error, setError] = useState<string>('');
   const createNote = useCreateNote();
 
-  if (!member) return null;
+  // مزامنة العضو المختار مع كل فتح (القادم من الجدول/المنصة أو الافتراضي)
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedId(member?.id ?? members[0]?.id ?? null);
+      setPoints(1);
+      setReason('');
+      setError('');
+    }
+  }, [isOpen, member, members]);
+
+  const selectedMember = members.find((m) => m.id === selectedId) ?? member ?? null;
+  if (!selectedMember) return null;
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -29,21 +42,17 @@ export function BonusAdjustmentModal({ isOpen, member, onClose, onSuccess }: Bon
       return;
     }
 
-    if (points === 0) {
-      setError('يرجى تحديد عدد نقاط البونص أو الخصم (من 1 إلى 5).');
-      return;
-    }
-
-    const tag = points > 0 ? `[B:+${points}]` : `[B:${points}]`;
-    const fullText = `${reason.trim()} ${tag}`;
+    // صفر = توثيق ملاحظة بدون نقاط (مسموح — لا وسم بونص)
+    const tag = points === 0 ? '' : points > 0 ? `[B:+${points}]` : `[B:${points}]`;
+    const fullText = tag ? `${reason.trim()} ${tag}` : reason.trim();
 
     const payload: NoteInsert = {
       text: fullText,
       author: author.trim() || 'إدارة وصلة',
       author_role: 'Admin',
       date: new Date().toISOString().slice(0, 10),
-      target_member_id: member.id,
-      target_name: member.full_name,
+      target_member_id: selectedMember.id,
+      target_name: selectedMember.full_name,
     };
 
     try {
@@ -71,14 +80,26 @@ export function BonusAdjustmentModal({ isOpen, member, onClose, onSuccess }: Bon
           </p>
         )}
 
-        {/* Member preview header */}
+        {/* Member selector + preview header */}
+        <label className="grid gap-1.5 text-sm font-bold text-[var(--text)]">
+          العضو المستهدف
+          <select
+            value={selectedMember.id}
+            onChange={(event) => setSelectedId(Number(event.target.value))}
+            className="min-h-11 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 text-sm font-normal"
+          >
+            {members.map((m) => (
+              <option key={m.id} value={m.id}>{m.full_name}</option>
+            ))}
+          </select>
+        </label>
         <div className="flex items-center gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] p-3">
           <div className="grid size-11 place-items-center rounded-xl bg-[var(--primary)] text-white font-black text-base">
-            {member.full_name.charAt(0)}
+            {selectedMember.full_name.charAt(0)}
           </div>
           <div>
-            <div className="font-black text-sm text-[var(--text)]">{member.full_name}</div>
-            <div className="text-xs text-[var(--text-muted)]" dir="ltr">{member.email}</div>
+            <div className="font-black text-sm text-[var(--text)]">{selectedMember.full_name}</div>
+            <div className="text-xs text-[var(--text-muted)]" dir="ltr">{selectedMember.email}</div>
           </div>
         </div>
 
@@ -88,6 +109,20 @@ export function BonusAdjustmentModal({ isOpen, member, onClose, onSuccess }: Bon
             قيمة التقييم المضافة أو المخصومة
           </label>
           <div className="grid gap-2">
+            {/* Zero (document only) */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => setPoints(0)}
+                className={`min-h-11 px-3 rounded-xl text-sm font-black transition-colors ${
+                  points === 0
+                    ? 'bg-[var(--primary)] text-white shadow-sm'
+                    : 'border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] hover:border-[var(--primary)]'
+                }`}
+              >
+                0 — توثيق بدون نقاط
+              </button>
+            </div>
             {/* Positive Options */}
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 ms-1">
@@ -134,7 +169,11 @@ export function BonusAdjustmentModal({ isOpen, member, onClose, onSuccess }: Bon
           <div className="mt-2 text-xs font-semibold text-[var(--text-muted)] flex items-center gap-1">
             <Award size={14} className="text-[var(--primary)]" />
             <span>
-              القيمة المحددة: <b className={points > 0 ? 'text-emerald-600' : 'text-red-600'}>{points > 0 ? `+${points}` : points} نقطة</b> (سيتم تسجيل الوسم {points > 0 ? `[B:+${points}]` : `[B:${points}]`})
+              {points === 0 ? (
+                <>توثيق ملاحظة بدون نقاط (لن تتأثر نتيجة الترتيب)</>
+              ) : (
+                <>القيمة المحددة: <b className={points > 0 ? 'text-emerald-600' : 'text-red-600'}>{points > 0 ? `+${points}` : points} نقطة</b> (سيتم تسجيل الوسم {points > 0 ? `[B:+${points}]` : `[B:${points}]`})</>
+              )}
             </span>
           </div>
         </div>
