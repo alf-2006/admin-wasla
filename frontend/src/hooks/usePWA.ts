@@ -3,6 +3,27 @@ import { supabase } from '../lib/supabase/client';
 import { getDeviceToken } from '../store/auth';
 import { toast } from '../store/toast';
 
+/** بصمة المفتاح العام الحالي — لكشف الاشتراكات المبنية على مفتاح قديم بعد تدوير VAPID */
+const PUSH_KEY_FP_STORE = 'wasla_push_key_fp';
+const currentKeyFingerprint = (): string | null => {
+  const key = (import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined) ?? '';
+  return key.length >= 12 ? key.slice(0, 12) : null;
+};
+const storedKeyFingerprint = (): string | null => {
+  try {
+    return localStorage.getItem(PUSH_KEY_FP_STORE);
+  } catch {
+    return null;
+  }
+};
+const storeKeyFingerprint = (fp: string): void => {
+  try {
+    localStorage.setItem(PUSH_KEY_FP_STORE, fp);
+  } catch {
+    // ignore
+  }
+};
+
 export function usePWA({ memberId, memberEmail }: { memberId?: number; memberEmail?: string }) {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstallable, setIsInstallable] = useState(false);
@@ -40,16 +61,32 @@ export function usePWA({ memberId, memberEmail }: { memberId?: number; memberEma
     if (error) throw error;
   };
 
-  const createSubscription = async () => {
-    const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
-    if (!vapidPublicKey) {
-      throw new Error('لم يتم تكوين مفتاح الإشعارات في النظام.');
-    }
+  /**
+   * اشتراك سليم دائماً: يعيد استخدام اشتراك المتصفح فقط إذا كان مبنياً على
+   * مفتاح VAPID الحالي، وإلا يلغي القديم وينشئ جديداً (بعد تدوير المفاتيح
+   * الاشتراك القديم ميت عند المزود — الاحتفاظ به يعني زراً أخضر كاذباً).
+   */
+  const ensureFreshSubscription = async (): Promise<PushSubscription> => {
     const reg = await navigator.serviceWorker.ready;
-    return reg.pushManager.subscribe({
+    const fp = currentKeyFingerprint();
+    if (!fp) throw new Error('لم يتم تكوين مفتاح الإشعارات في النظام.');
+    const existing = await reg.pushManager.getSubscription().catch(() => null);
+    if (existing && storedKeyFingerprint() === fp) return existing;
+    if (existing) {
+      await existing.unsubscribe().catch(() => undefined);
+    }
+    const fresh = await reg.pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey: vapidPublicKey,
+      applicationServerKey: import.meta.env.VITE_VAPID_PUBLIC_KEY,
     });
+    return fresh;
+  };
+
+  const markSubscribed = async (subscription: PushSubscription) => {
+    await saveSubscription(subscription);
+    const fp = currentKeyFingerprint();
+    if (fp) storeKeyFingerprint(fp);
+    setIsSubscribed(true);
   };
 
   // إعادة اشتراك صامتة: الـ PWA أحياناً يفقد اشتراك المتصفح بعد تحديث
@@ -63,13 +100,20 @@ export function usePWA({ memberId, memberEmail }: { memberId?: number; memberEma
     navigator.serviceWorker.ready
       .then((reg) => reg.pushManager.getSubscription())
       .then(async (sub) => {
-        if (sub) {
+        const fp = currentKeyFingerprint();
+        // اشتراك موجود ومبني على المفتاح الحالي — أكّد حفظه في القاعدة
+        // (قد يكون مُسح من جهة الخادم) ثم اعتبره مفعلاً.
+        if (sub && fp && storedKeyFingerprint() === fp) {
+          try {
+            await saveSubscription(sub);
+          } catch {
+            // سيُعاد المحاولة عند الضغط اليدوي — لا تزعج العضو
+          }
           setIsSubscribed(true);
           return;
         }
-        const fresh = await createSubscription();
-        await saveSubscription(fresh);
-        setIsSubscribed(true);
+        const fresh = await ensureFreshSubscription();
+        await markSubscribed(fresh);
       })
       .catch(() => {
         // الفشل الصامت مقصود — يبقى الزر اليدوي هو طريق التفعيل
@@ -96,12 +140,11 @@ export function usePWA({ memberId, memberEmail }: { memberId?: number; memberEma
         return;
       }
 
-      const subscription = await createSubscription();
+      const subscription = await ensureFreshSubscription();
 
       // Save to Supabase using our new RPC
-      await saveSubscription(subscription);
+      await markSubscribed(subscription);
 
-      setIsSubscribed(true);
       toast.success('تم تفعيل الإشعارات بنجاح!');
     } catch (err: any) {
       console.error(err);
