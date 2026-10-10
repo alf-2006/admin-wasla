@@ -49,11 +49,30 @@ function ProtectedMemberRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+/** الجذر: وجّه الجلسات المحفوظة (تذكرني) مباشرة بدل رمي الجميع على الدخول */
+function RootRedirect() {
+  const member = useAuthStore((s) => s.currentMember);
+  const user = useAuthStore((s) => s.user);
+  const ready = useAuthStore((s) => s.ready);
+  if (member) return <Navigate to="/portal" replace />;
+  if (!ready) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg)]" dir="rtl">
+        <span className="text-xs font-bold text-[var(--text-muted)] animate-pulse">
+          جارٍ التحقق من الجلسة...
+        </span>
+      </div>
+    );
+  }
+  if (user) return <Navigate to="/admin/dashboard" replace />;
+  return <Navigate to="/login" replace />;
+}
+
 export const router = createBrowserRouter([
   // Member Portal Routes
   {
     path: '/',
-    element: <Navigate to="/login" replace />,
+    element: <RootRedirect />,
   },
   {
     path: '/login',

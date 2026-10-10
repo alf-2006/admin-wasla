@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, Navigate } from 'react-router-dom';
 import { AlertCircle, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import { AuthShell } from '../../components/layout/AuthShell';
 import { useAuthStore, getAdminRemember, setAdminRemember } from '../../store/auth';
@@ -7,6 +7,8 @@ import { supabase, syncAdminSessionStorage } from '../../lib/supabase/client';
 import { isValidEmail } from '../../lib/validators';
 
 export default function AdminLoginPage() {
+  const sessionUser = useAuthStore((state) => state.user);
+  const sessionReady = useAuthStore((state) => state.ready);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -16,6 +18,19 @@ export default function AdminLoginPage() {
   const setSession = useAuthStore((state) => state.setSession);
   const setMockSession = useAuthStore((state) => state.setMockSession);
   const navigate = useNavigate();
+
+  // جلسة إدارة محفوظة (تذكرني) — لا تعرض نموذج الدخول أصلاً.
+  // ننتظر فحص الجلسة الأولي حتى لا نومض نموذج الدخول لجزء من الثانية.
+  if (!sessionReady) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg)]" dir="rtl">
+        <span className="text-xs font-bold text-[var(--text-muted)] animate-pulse">جارٍ التحقق من الجلسة...</span>
+      </div>
+    );
+  }
+  if (sessionUser) {
+    return <Navigate to="/admin/dashboard" replace />;
+  }
 
   const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();

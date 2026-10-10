@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import { AlertCircle, ArrowLeft, Mail } from 'lucide-react';
 import { AuthShell } from '../../components/layout/AuthShell';
 import { useAuthStore, setDeviceToken, getMemberRemember, setMemberRemember } from '../../store/auth';
@@ -8,12 +8,18 @@ import { fetchMemberByEmail } from '../members/api';
 import { isValidEmail } from '../../lib/validators';
 
 export default function LoginPage() {
+  const currentMember = useAuthStore((state) => state.currentMember);
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [remember, setRemember] = useState<boolean>(() => getMemberRemember());
   const setMember = useAuthStore((state) => state.setMember);
   const navigate = useNavigate();
+
+  // جلسة عضو محفوظة (تذكرني) — لا تعرض نموذج الدخول أصلاً
+  if (currentMember) {
+    return <Navigate to="/portal" replace />;
+  }
 
   const handleMemberLogin = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
