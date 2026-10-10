@@ -200,7 +200,7 @@ test('WhatsApp bridge URL is validated', async (t) => {
     const api = src('src/features/whatsapp/api.ts');
     assert.match(api, /ALLOWED_BRIDGE_PATHS/);
     assert.match(api, /parsed\.protocol !== 'https:'/);
-    assert.match(api, /memberIds\.length > 50/);
+    assert.match(api, /memberIds\.length > 1000/);
     assert.match(api, /consentConfirmed/);
   });
   await t.test('misconfigured bridge fails per-request, never at module load', () => {
