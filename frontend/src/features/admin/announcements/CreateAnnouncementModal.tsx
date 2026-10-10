@@ -110,11 +110,26 @@ export default function CreateAnnouncementModal({
 
       if (dataToSubmit.send_push) {
         try {
-          // split into chunks of 50 if needed, but push-notify handles it if we modify it, 
-          // wait, push-notify has a limit of 50! Let's chunk the push notifications.
+          // push-notify حدها 50 عضو للطلب — نقسم الدفعات ونجمع النتيجة
+          // (الدالة تُرجع 200 حتى مع sent=0، فلا بد من قراءة الأرقام لا الاكتفاء بعدم الخطأ)
+          let pushSent = 0;
+          let pushFailed = 0;
+          let pushNote = '';
           for (let i = 0; i < mIds.length; i += 50) {
             const chunk = mIds.slice(i, i + 50);
-            await sendPushNotification(dataToSubmit.title, dataToSubmit.content.substring(0, 100), chunk, '/announcements');
+            const res = await sendPushNotification(dataToSubmit.title, dataToSubmit.content.substring(0, 100), chunk, '/announcements') as { sent?: number; failed?: number; message?: string } | null;
+            pushSent += Number(res?.sent ?? 0);
+            pushFailed += Number(res?.failed ?? 0);
+            if (typeof res?.message === 'string' && res.message && !pushNote) pushNote = res.message;
+          }
+          if (pushSent > 0 && pushFailed === 0) {
+            toast.success(`وصل الإشعار الفوري إلى ${pushSent} عضو.`);
+          } else if (pushSent > 0) {
+            toast.warning(`وصل الإشعار الفوري إلى ${pushSent} عضو وفشل لـ ${pushFailed}.`);
+          } else if (pushFailed > 0) {
+            toast.error(`فشل الإشعار الفوري لجميع الأعضاء (${pushFailed}). ${pushNote}`);
+          } else {
+            toast.warning(pushNote || 'لا يوجد أعضاء مفعّلين للإشعارات الفورية — اطلب من الأعضاء تفعيلها من بوابتهم ثم أعد النشر.');
           }
         } catch (pushErr) {
           toast.error('لم يتم إرسال الإشعارات: ' + (pushErr instanceof Error ? pushErr.message : ''));
