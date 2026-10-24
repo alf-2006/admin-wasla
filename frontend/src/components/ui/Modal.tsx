@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
 interface ModalProps {
@@ -54,7 +55,7 @@ export const Modal: React.FC<ModalProps> = ({
 
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[var(--z-modal)] flex items-end justify-center bg-slate-950/50 md:items-center md:p-4" role="presentation">
       <button type="button" className="absolute inset-0 cursor-default" onClick={onClose} aria-label="إغلاق النافذة" />
       <section ref={dialogRef} className={`relative z-10 flex max-h-[90dvh] w-full flex-col overflow-hidden rounded-t-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] shadow-[var(--shadow-lg)] md:max-h-[calc(100dvh-2rem)] md:rounded-[var(--radius-lg)] ${maxWidths[maxWidth]}`} role="dialog" aria-modal="true" aria-labelledby="modal-title" dir="rtl">
@@ -69,6 +70,7 @@ export const Modal: React.FC<ModalProps> = ({
         </header>
         <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-6">{children}</div>
       </section>
-    </div>
+    </div>,
+    document.body,
   );
 };
