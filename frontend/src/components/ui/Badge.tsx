@@ -36,7 +36,7 @@ export const Badge: React.FC<BadgeProps> = ({
   }[size];
 
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full border ${variantStyles} ${sizeStyles}`}>
+    <span className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full border ${variantStyles} ${sizeStyles}`}>
       <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotStyles}`} />
       <span>{children}</span>
     </span>
@@ -46,15 +46,15 @@ export const Badge: React.FC<BadgeProps> = ({
 export const TaskStatusBadge: React.FC<{ status: TaskStatus }> = ({ status }) => {
   switch (status) {
     case 'pending':
-      return <Badge variant="neutral">لم يبدأ</Badge>;
+      return <Badge variant="neutral">لسه مبدأش</Badge>;
     case 'in_progress':
-      return <Badge variant="info">قيد التنفيذ</Badge>;
+      return <Badge variant="info">تحت التنفيذ</Badge>;
     case 'under_review':
-      return <Badge variant="warning">مراجعة</Badge>;
+      return <Badge variant="warning">تحت المراجعة</Badge>;
     case 'approved':
-      return <Badge variant="success">مكتمل</Badge>;
+      return <Badge variant="success">اتعتمدت</Badge>;
     case 'revision_requested':
-      return <Badge variant="danger">مطلوب تعديل</Badge>;
+      return <Badge variant="danger">محتاجة تعديل</Badge>;
     default:
       return <Badge variant="neutral">{status}</Badge>;
   }

@@ -21,8 +21,8 @@ export function MemberEditor({ isOpen, isSaving, member, value, error, onChange,
         {selectField('work_status', 'حالة الحساب', ['active', 'inactive'])}
       </div>
       {textField('bio', 'نبذة / الدور')}
-      <label className="flex min-h-11 items-center gap-3 rounded-xl border border-[var(--border)] p-3 text-sm font-bold"><input type="checkbox" checked={value.can_go_alexandria} onChange={(event) => onChange({ ...value, can_go_alexandria: event.target.checked })} />متاح للنزول الميداني واجتماعات الإسكندرية</label>
-      <div className="flex flex-col-reverse gap-2 border-t border-[var(--border)] pt-4 sm:flex-row sm:justify-end"><Button type="button" variant="secondary" onClick={onClose} fullOnMobile>إلغاء</Button><Button type="submit" isLoading={isSaving} loadingText="جارٍ الحفظ..." fullOnMobile>{member ? 'حفظ التعديلات' : 'إضافة العضو'}</Button></div>
+      <label className="flex min-h-11 items-center gap-3 rounded-xl border border-[var(--border)] p-3 text-sm font-bold"><input type="checkbox" checked={value.can_go_alexandria} onChange={(event) => onChange({ ...value, can_go_alexandria: event.target.checked })} />جاهز للنزول الميداني واجتماعات الإسكندرية</label>
+      <div className="flex flex-col-reverse gap-2 border-t border-[var(--border)] pt-4 sm:flex-row sm:justify-end"><Button type="button" variant="secondary" onClick={onClose} fullOnMobile>إلغاء</Button><Button type="submit" isLoading={isSaving} loadingText="بنحفظ..." fullOnMobile>{member ? 'حفظ التعديلات' : 'إضافة العضو'}</Button></div>
     </form>
   </Modal>;
 }

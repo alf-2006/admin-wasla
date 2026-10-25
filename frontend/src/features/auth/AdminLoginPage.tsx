@@ -24,7 +24,7 @@ export default function AdminLoginPage() {
   if (!sessionReady) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[var(--bg)]" dir="rtl">
-        <span className="text-xs font-bold text-[var(--text-muted)] animate-pulse">جارٍ التحقق من الجلسة...</span>
+        <span className="text-xs font-bold text-[var(--text-muted)] animate-pulse">بنتأكد من الجلسة...</span>
       </div>
     );
   }
@@ -36,11 +36,11 @@ export default function AdminLoginPage() {
     event.preventDefault();
     const cleanEmail = email.trim().toLowerCase();
     if (!isValidEmail(cleanEmail)) {
-      setError('صيغة البريد الإلكتروني غير صحيحة. مثال: admin@wasla.com');
+      setError('صيغة البريد الإلكتروني مش صحيحة. مثال: admin@wasla.com');
       return;
     }
     if (password.length < 6) {
-      setError('كلمة المرور قصيرة جداً — يجب أن تكون 6 أحرف على الأقل.');
+      setError('كلمة المرور قصيرة قوي — لازم تكون 6 أحرف على الأقل.');
       return;
     }
     setLoading(true);
@@ -54,14 +54,14 @@ export default function AdminLoginPage() {
         email: cleanEmail,
         password,
       });
-      if (loginError) setError('بيانات الدخول غير صحيحة. يرجى التحقق من البريد وكلمة المرور.');
+      if (loginError) setError('بيانات الدخول مش صحيحة. اتأكد من البريد وكلمة المرور.');
       else if (data.session) {
         syncAdminSessionStorage(remember);
         setSession(data.session);
         navigate('/admin/dashboard');
       }
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'حدث خطأ أثناء الاتصال بالخادم.');
+      setError(cause instanceof Error ? cause.message : 'حصلت مشكلة وإحنا بنتصل بالخادم.');
     } finally {
       setLoading(false);
     }
@@ -75,9 +75,9 @@ export default function AdminLoginPage() {
   return (
     <AuthShell
       audience="admin"
-      badge="منطقة المسؤولين المعتمدين"
-      title="تسجيل دخول الإدارة"
-      description="أدخل بياناتك للوصول إلى مركز إدارة الفريق."
+      badge="مساحة المسؤولين المعتمدين"
+      title="دخول الإدارة"
+      description="اكتب بياناتك عشان تدخل مركز إدارة الفريق."
       footer={<Link to="/login" className="auth-inline-link"><span>بوابة الأعضاء</span><ArrowLeft size={16} /></Link>}
     >
       {error && <div className="auth-error" role="alert"><AlertCircle size={18} aria-hidden="true" /><span>{error}</span></div>}
@@ -85,11 +85,11 @@ export default function AdminLoginPage() {
         <label className="auth-field" htmlFor="admin-email">البريد الإلكتروني
           <span className="auth-input-wrap"><input id="admin-email" type="email" dir="ltr" autoComplete="username" required placeholder="admin@wasla.com" value={email} onChange={(event) => { setEmail(event.target.value); if (error) setError(''); }} aria-invalid={Boolean(error) || undefined} /></span>
         </label>
-        {email.trim() && !isValidEmail(email.trim().toLowerCase()) && <p className="text-xs font-bold text-amber-700 dark:text-amber-300" role="note">تحقق من الصيغة: يجب أن يحتوي على @ ونطاق صحيح.</p>}
+        {email.trim() && !isValidEmail(email.trim().toLowerCase()) && <p className="text-xs font-bold text-amber-700 dark:text-amber-300" role="note">اتأكد من الصيغة: لازم يبقى فيه @ ونطاق صحيح.</p>}
         <label className="auth-field" htmlFor="admin-password">كلمة المرور
           <span className="auth-input-wrap">
             <input id="admin-password" type={showPassword ? 'text' : 'password'} dir="ltr" autoComplete="current-password" required minLength={6} placeholder="••••••••" value={password} onChange={(event) => { setPassword(event.target.value); if (error) setError(''); }} />
-            <button type="button" className="auth-password-toggle" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'} aria-pressed={showPassword}>
+            <button type="button" className="auth-password-toggle" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? 'خبّي كلمة المرور' : 'ورّي كلمة المرور'} aria-pressed={showPassword}>
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </span>
@@ -106,14 +106,14 @@ export default function AdminLoginPage() {
             }}
           />
           <span className="auth-remember-box" aria-hidden="true" />
-          <span>حفظ تسجيل الدخول على هذا الجهاز</span>
+          <span>احفظ تسجيل الدخول على الجهاز ده</span>
         </label>
         <button type="submit" className="auth-submit" disabled={loading} aria-busy={loading || undefined}>
-          {loading ? 'جاري التحقق من الصلاحيات...' : 'دخول مركز الإدارة'}
+          {loading ? 'بنتأكد من الصلاحيات...' : 'ادخل مركز الإدارة'}
           {!loading && <ArrowLeft size={18} aria-hidden="true" />}
         </button>
       </form>
-      {import.meta.env.DEV && <button type="button" onClick={mockLogin} className="auth-inline-link auth-demo"><span>دخول تجريبي للمعاينة</span></button>}
+      {import.meta.env.DEV && <button type="button" onClick={mockLogin} className="auth-inline-link auth-demo"><span>دخول تجريبي للعرض</span></button>}
     </AuthShell>
   );
 }

@@ -16,9 +16,9 @@ const STATUS_META: Record<DiagCheck['status'], { icon: typeof CheckCircle2; labe
 const CATEGORY_LABELS: Record<DiagCheck['category'], string> = {
   env: 'إعدادات الخادم',
   network: 'الشبكة',
-  auth: 'المصادقة',
+  auth: 'تسجيل الدخول',
   service: 'الخدمة',
-  cloud: 'السحابة المعتمدة',
+  cloud: 'السحابة الرسمية',
 };
 
 function verdict(data: BridgeDiagnostics | undefined): string {
@@ -26,10 +26,10 @@ function verdict(data: BridgeDiagnostics | undefined): string {
   const firstFail = data.checks.find((c) => c.status === 'fail');
   if (!firstFail) {
     return data.summary.warns > 0
-      ? 'الجسر يعمل — توجد تحذيرات غير حرجة بالأسفل.'
-      : 'كل الفحوصات سليمة — الجسر جاهز للربط والإرسال.';
+      ? 'الجسر شغال — فيه تحذيرات بسيطة تحت.'
+      : 'كل الفحوصات تمام — الجسر جاهز للربط والإرسال.';
   }
-  return `السبب الأرجح للعطل: ${firstFail.label} — ${firstFail.detail}`;
+  return `أقرب سبب للعطل: ${firstFail.label} — ${firstFail.detail}`;
 }
 
 export default function WhatsAppDiagnostics() {
@@ -50,16 +50,16 @@ export default function WhatsAppDiagnostics() {
   const copyReport = async () => {
     if (!diag.data) return;
     const lines = [
-      `تقرير تشخيص جسر واتساب — ${new Date(diag.data.generatedAt).toLocaleString('ar-EG')} (وضع ${diag.data.mode})`,
+      `تقرير فحص جسر واتساب — ${new Date(diag.data.generatedAt).toLocaleString('ar-EG-u-nu-latn')} (وضع ${diag.data.mode})`,
       `الملخص: ${diag.data.summary.total} فحص — أعطال ${diag.data.summary.fails} — تحذيرات ${diag.data.summary.warns}`,
       '',
       ...diag.data.checks.map((c) => `[${c.status === 'ok' ? 'سليم' : c.status === 'warn' ? 'تحذير' : 'عطل'}] ${c.label}: ${c.detail}${c.fix ? ` | الحل: ${c.fix}` : ''}`),
     ];
     try {
       await navigator.clipboard.writeText(lines.join('\n'));
-      toast.success('نُسخ التقرير — لا يحمل أي أسرار.');
+      toast.success('التقرير اتنسخ — مفيهوش أي أسرار.');
     } catch {
-      toast.error('تعذر النسخ من المتصفح.');
+      toast.error('منعرفناش ننسخ من المتصفح.');
     }
   };
 
@@ -70,9 +70,9 @@ export default function WhatsAppDiagnostics() {
           <Activity />
         </span>
         <div>
-          <h2 className="text-[var(--fs-xl)] font-black">التشخيص الدقيق للجسر</h2>
+          <h2 className="text-[var(--fs-xl)] font-black">فحص الجسر بالتفصيل</h2>
           <p className="mt-1 text-sm text-[var(--text-muted)]">
-            يفحص كل طبقة (إعدادات، شبكة، مصادقة، خدمة، سحابة) ويحدد السبب بدقة — التقرير لا يحمل أي أسرار.
+            بيفحص كل طبقة (إعدادات، شبكة، تسجيل دخول، خدمة، سحابة) وبيحدد السبب بدقة — التقرير مفيهوش أي أسرار.
           </p>
         </div>
       </header>
@@ -85,11 +85,11 @@ export default function WhatsAppDiagnostics() {
             : <span className="text-[var(--danger)]">{BRIDGE_MISCONFIGURED_MESSAGE}</span>}
         </span>
         <span className="text-xs text-[var(--text-muted)]">
-          جلسة الإدارة: {sessionOk === null ? '…' : sessionOk ? 'موجودة' : 'غائبة — سجّل الدخول'}
+          جلسة الإدارة: {sessionOk === null ? '…' : sessionOk ? 'موجودة' : 'مش موجودة — سجّل الدخول'}
         </span>
         <span className="ms-auto flex gap-2">
-          <Button variant="secondary" onClick={() => void diag.refetch()} isLoading={diag.isFetching} loadingText="يفحص..." icon={<RefreshCw size={16} />}>
-            إعادة الفحص
+          <Button variant="secondary" onClick={() => void diag.refetch()} isLoading={diag.isFetching} loadingText="بنَفحص..." icon={<RefreshCw size={16} />}>
+            افحص تاني
           </Button>
           <Button variant="secondary" onClick={() => void copyReport()} disabled={!diag.data} icon={<Copy size={16} />}>
             نسخ التقرير
@@ -98,17 +98,17 @@ export default function WhatsAppDiagnostics() {
       </Card>
 
       {diag.isPending ? (
-        <Card><p className="text-sm text-[var(--text-muted)]" role="status">جارٍ فحص الجسر…</p></Card>
+        <Card><p className="text-sm text-[var(--text-muted)]" role="status">بنَفحص الجسر…</p></Card>
       ) : diag.isError ? (
         <Card>
           <p role="alert" className="flex items-start gap-2 text-sm font-bold text-[var(--danger)]">
             <XCircle size={18} className="mt-0.5 shrink-0" />
-            تعذر الوصول للجسر: {diag.error.message}
+            منقدرناش نوصل للجسر: {diag.error.message}
           </p>
           <ul className="mt-3 grid gap-1.5 text-sm leading-6 text-[var(--text-2)]">
-            <li>• إن كانت الرسالة عن اتصال مرفوض: الجسر مطفأ — شغّله على نفس العنوان أعلاه.</li>
-            <li>• إن كانت 401: الجسر يعمل لكن بلا مفاتيح تحقق — راجع `.env.local` وأعد تشغيله.</li>
-            <li>• إن كانت 403: جلستك صالحة لكن بريدك ليس ضمن مدراء الجسر.</li>
+            <li>• لو الرسالة عن اتصال مرفوض: الجسر مطفي — شغّله على نفس العنوان اللي فوق.</li>
+            <li>• لو كانت 401: الجسر شغال بس من غير مفاتيح تحقق — راجع `.env.local` وشغّله تاني.</li>
+            <li>• لو كانت 403: جلستك صالحة بس إيميلك مش ضمن مديري الجسر.</li>
           </ul>
         </Card>
       ) : diag.data ? (

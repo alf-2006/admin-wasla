@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Bell, Eye, Clock, AlertTriangle, Info } from 'lucide-react';
+import { Bell, Check, CheckCheck, EyeOff, Clock, AlertTriangle, Info } from 'lucide-react';
 import AnnouncementsAPI from '../../../lib/api/announcements';
 import type { MemberAnnouncement } from '../../../types/db';
 import { Card } from '../../../components/ui/Card';
@@ -9,6 +9,7 @@ import { ErrorState } from '../../../components/ui/ErrorState';
 import { EmptyState } from '../../../components/ui/EmptyState';
 import { CardSkeletons } from '../../../components/ui/Skeleton';
 import { toast } from '../../../store/toast';
+import { AR, arCount } from '../../../lib/arabic';
 
 interface MemberAnnouncementsProps {
   memberId: number;
@@ -32,7 +33,7 @@ export default function MemberAnnouncements({ memberId }: MemberAnnouncementsPro
         void AnnouncementsAPI.markAnnouncementViewed(ann.id, memberId).catch(() => {});
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'حدث خطأ في تحميل الإعلانات');
+      setError(err instanceof Error ? err.message : 'حصلت مشكلة وإحنا بنحمّل الإعلانات');
     } finally {
       setLoading(false);
     }
@@ -60,10 +61,10 @@ export default function MemberAnnouncements({ memberId }: MemberAnnouncementsPro
               : ann
           )
         );
-        toast.success('تم تعليم الإعلان كمقروء.');
+        toast.success('الإعلان اتعلّم كمقروء.');
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'تعذر تعليم الإعلان كمقروء.');
+      toast.error(err instanceof Error ? err.message : 'معرفناش نعلّم الإعلان كمقروء.');
     } finally {
       setActionsLoading(prev => {
         const newSet = new Set(prev);
@@ -84,10 +85,10 @@ export default function MemberAnnouncements({ memberId }: MemberAnnouncementsPro
         setAnnouncements(prev =>
           prev.filter(ann => ann.id !== announcementId)
         );
-        toast.success('تم مسح الإعلان.');
+      toast.success('الإعلان اتخفى.');
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'تعذر مسح الإعلان.');
+      toast.error(err instanceof Error ? err.message : 'معرفناش نخفي الإعلان.');
     } finally {
       setActionsLoading(prev => {
         const newSet = new Set(prev);
@@ -120,7 +121,7 @@ export default function MemberAnnouncements({ memberId }: MemberAnnouncementsPro
   };
 
   const formatDate = (dateString: string) => {
-    return new Intl.DateTimeFormat('ar-EG', {
+    return new Intl.DateTimeFormat('ar-EG-u-nu-latn', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -133,7 +134,7 @@ export default function MemberAnnouncements({ memberId }: MemberAnnouncementsPro
 
   if (loading) {
     return (
-      <div dir="rtl" aria-label="جاري تحميل الإعلانات">
+      <div dir="rtl" aria-label="بنحمّل الإعلانات">
         <CardSkeletons count={2} />
       </div>
     );
@@ -148,30 +149,30 @@ export default function MemberAnnouncements({ memberId }: MemberAnnouncementsPro
   }
 
   return (
-    <div className="grid gap-4" dir="rtl">
+    <section className="grid gap-3" dir="rtl" aria-labelledby="member-announcements-title">
       {/* Header */}
       <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <span className="grid size-10 place-items-center rounded-xl bg-[var(--primary-soft)] text-[var(--link)]">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[var(--primary-soft)] text-[var(--link)]">
             <Bell size={20} aria-hidden="true" />
           </span>
-          <h2 className="text-xl font-black text-[var(--text)]">الإعلانات</h2>
+          <h2 id="member-announcements-title" className="text-lg font-black text-[var(--text)]">الإعلانات</h2>
           {unreadCount > 0 && (
             <Badge variant="danger">
-              {unreadCount} جديد
+              {unreadCount === 1 ? 'جديد' : `${unreadCount} جديدة`}
             </Badge>
           )}
         </div>
 
         {announcements.length > 0 && (
-          <p className="text-sm text-[var(--text-muted)]">
-            {announcements.length} إعلان
+          <p className="shrink-0 text-sm text-[var(--text-muted)]">
+            {arCount(announcements.length, AR.announcement)}
           </p>
         )}
       </div>
 
       {announcements.length === 0 ? (
-        <EmptyState title="لا توجد إعلانات" description="ستظهر هنا الإعلانات الجديدة من الإدارة." />
+        <EmptyState title="مفيش إعلانات" description="هتظهر هنا الإعلانات الجديدة من الإدارة." />
       ) : (
         <div className="grid gap-3">
           {announcements.map((announcement) => (
@@ -213,23 +214,22 @@ export default function MemberAnnouncements({ memberId }: MemberAnnouncementsPro
                 </p>
 
                 {/* Actions */}
-                <div className="flex flex-col gap-2 border-t border-[var(--border)] pt-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center justify-between gap-2 border-t border-[var(--border)] pt-3">
                   <div>
                     {!announcement.is_read ? (
                       <Button
                         variant="secondary"
                         onClick={() => handleMarkAsRead(announcement.id)}
                         isLoading={actionsLoading.has(announcement.id)}
-                        loadingText="جارٍ..."
-                        icon={<Eye size={16} aria-hidden="true" />}
-                        fullOnMobile
+                        loadingText="بنحمّل..."
+                        icon={<Check size={16} aria-hidden="true" />}
                       >
-                        تمت القراءة
+                        علّم كمقروء
                       </Button>
                     ) : (
-                      <span className="flex min-h-11 items-center gap-2 text-sm font-bold text-emerald-700 dark:text-emerald-400">
-                        <Eye size={16} aria-hidden="true" />
-                        تمت القراءة
+                      <span className="flex min-h-11 items-center gap-1.5 text-sm font-bold text-emerald-700 dark:text-emerald-400">
+                        <CheckCheck size={16} aria-hidden="true" />
+                        اتقرا
                       </span>
                     )}
                   </div>
@@ -238,16 +238,17 @@ export default function MemberAnnouncements({ memberId }: MemberAnnouncementsPro
                     variant="ghost"
                     onClick={() => handleDismiss(announcement.id)}
                     isLoading={actionsLoading.has(announcement.id)}
-                    loadingText="جارٍ المسح..."
-                    fullOnMobile
+                    loadingText="بنخفي..."
+                    icon={<EyeOff size={16} aria-hidden="true" />}
+                    aria-label={`خبّي إعلان ${announcement.title}`}
                   >
-                    مسح
+                    خبّي
                   </Button>
                 </div>
             </Card>
           ))}
         </div>
       )}
-    </div>
+    </section>
   );
 }

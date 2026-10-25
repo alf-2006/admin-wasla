@@ -1,4 +1,5 @@
 import type { Member, Task, Note } from '../../types/db';
+import { isOverdue } from '../../lib/dateUtils';
 
 export interface ActivityItem {
   id: string;
@@ -73,15 +74,14 @@ export function getDashboardMetrics(members: Member[], tasks: Task[], notes: Not
   let notStarted = 0;
   const lateMembers: { member: Member; taskTitle: string }[] = [];
 
-  const now = new Date();
-
   tasks.forEach((task) => {
     const assignedIds = task.assigned_to === 'ALL' 
       ? members.map(m => m.id) 
       : (Array.isArray(task.assigned_to) ? task.assigned_to.map(Number) : []);
     
     let localLate = 0;
-    const isDeadlinePassed = task.has_deadline && task.deadline_date && new Date(task.deadline_date) < now;
+    // الموعد بدون وقت = نهاية اليوم المحلي (isOverdue) — لا تظهر مهمة "اليوم" متأخرة من الصباح
+    const isDeadlinePassed = Boolean(task.has_deadline && isOverdue(task.deadline_date));
 
     Object.entries(task.tracking ?? {}).forEach(([mId, entry]) => {
       const status = entry.status;
@@ -91,15 +91,17 @@ export function getDashboardMetrics(members: Member[], tasks: Task[], notes: Not
       else if (status === 'under_review') {
         underReview++;
       }
-      else if (status === 'in_progress') {
-        inProgress++;
-        if (isDeadlinePassed) {
-          const m = members.find(x => x.id === Number(mId));
-          if (m) lateMembers.push({ member: m, taskTitle: task.title });
-        }
-      }
       else if (isDeadlinePassed) {
+        // كل من لم يسلّم بعد انتهاء الموعد متأخر (لم يبدأ / قيد التنفيذ / مطلوب تعديل) — يُعد مرة واحدة
         localLate++;
+        const m = members.find(x => x.id === Number(mId));
+        if (m) lateMembers.push({ member: m, taskTitle: task.title });
+      }
+      else if (status === 'in_progress' || status === 'revision_requested') {
+        inProgress++;
+      }
+      else {
+        notStarted++;
       }
     });
 
@@ -145,7 +147,7 @@ export function getDashboardMetrics(members: Member[], tasks: Task[], notes: Not
     recentActivity.push({
       id: `n-${n.id}`,
       type: 'note',
-      title: `${n.author} أضاف ملاحظة لـ ${n.target_name || 'عضو'}`,
+      title: `${n.author} ضاف ملاحظة لـ ${n.target_name || 'عضو'}`,
       description: n.text || '',
       date: new Date(n.created_at || Date.now()),
       meta: 'الملاحظات'
@@ -156,8 +158,8 @@ export function getDashboardMetrics(members: Member[], tasks: Task[], notes: Not
     recentActivity.push({
       id: `t-${t.id}`,
       type: 'task',
-      title: `تم تكليف مهمة جديدة: ${t.title}`,
-      description: t.description || 'بدون وصف',
+      title: `اتعمل تكليف جديد: ${t.title}`,
+      description: t.description || 'مفيش وصف',
       date: new Date(t.created_at || Date.now()),
       meta: 'المهام'
     });
@@ -167,8 +169,8 @@ export function getDashboardMetrics(members: Member[], tasks: Task[], notes: Not
     recentActivity.push({
       id: `m-${m.id}`,
       type: 'member',
-      title: `انضمام عضو جديد: ${m.full_name}`,
-      description: `الموقع: ${m.residence || 'غير محدد'}`,
+      title: `عضو جديد انضم: ${m.full_name}`,
+      description: `مكان الإقامة: ${m.residence || 'مش محدد'}`,
       date: new Date(m.created_at || Date.now()),
       meta: 'الأعضاء'
     });
@@ -191,7 +193,7 @@ export function getDashboardMetrics(members: Member[], tasks: Task[], notes: Not
 
   const sortedDates = Object.keys(dateMap).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
   const recentDates = sortedDates.slice(-7);
-  const timelineData = recentDates.length > 0 ? recentDates.map(d => ({ date: d, bonus: dateMap[d] })) : [{ date: 'اليوم', bonus: 0 }];
+  const timelineData = recentDates.length > 0 ? recentDates.map(d => ({ date: d, bonus: dateMap[d] })) : [{ date: 'النهارده', bonus: 0 }];
 
   return {
     totalMembers,

@@ -21,28 +21,28 @@ export function handleSupabaseError(error: PostgrestError | Error | unknown): Ap
 
     // أخطاء شائعة
     const errorMessages: Record<string, string> = {
-      '23505': 'البريد الإلكتروني مُستخدم بالفعل',
-      '23503': 'لا يمكن حذف هذا السجل لوجود بيانات مرتبطة به',
-      '42501': 'لا تملك الصلاحية لتنفيذ هذا الإجراء',
-      'PGRST116': 'لا يوجد صف يطابق هذا المعرّف',
-      'PGRST301': 'انتهت صلاحية الجلسة - يرجى تسجيل الدخول مجدداً',
+      '23505': 'الإيميل مستخدم قبل كده',
+      '23503': 'مينفعش تمسح السجل ده عشان فيه بيانات مرتبطة بيه',
+      '42501': 'معندكش صلاحية تعمل الإجراء ده',
+      'PGRST116': 'مفيش صف مطابق للمعرّف ده',
+      'PGRST301': 'الجلسة انتهت - سجل دخولك تاني',
     };
 
     return {
-      message: errorMessages[pgError.code] || 'حدث خطأ في قاعدة البيانات',
+      message: errorMessages[pgError.code] || 'حصلت مشكلة في قاعدة البيانات',
     };
   }
   
   // خطأ عادي من JavaScript
   if (error instanceof Error) {
     return {
-      message: error.message || 'حدث خطأ غير متوقع',
+      message: error.message || 'حصلت مشكلة غير متوقعة',
     };
   }
   
   // خطأ غير معروف
   return {
-    message: 'حدث خطأ غير متوقع',
+    message: 'حصلت مشكلة غير متوقعة',
   };
 }
 

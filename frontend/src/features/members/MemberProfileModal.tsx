@@ -7,6 +7,7 @@ import type { Member, Note } from '../../types/db';
 import { Modal } from '../../components/ui/Modal';
 import { Button } from '../../components/ui/Button';
 import { calculateBonus } from '../dashboard/metrics';
+import { formatSigned } from '../../lib/arabic';
 
 interface MemberProfileModalProps {
   isOpen: boolean;
@@ -43,16 +44,16 @@ export function MemberProfileModal({
   const hasLaptop = d.includes('لاب') || d.includes('الاثنان') || d.includes('laptop');
 
   const infoItems = [
-    { icon: Phone, label: 'رقم الهاتف', val: member.phone || 'غير مسجل', dir: 'ltr' as const },
-    { icon: MapPin, label: 'محل الإقامة', val: member.residence || 'غير محدد' },
-    { icon: Laptop, label: 'العتاد وجاهزية اللابتوب', val: `${member.device || 'بدون جهاز'} ${hasLaptop ? '(يمتلك لابتوب)' : ''}` },
-    { icon: member.can_go_alexandria ? CheckCircle2 : XCircle, label: 'النزول لاجتماع الإسكندرية', val: member.can_go_alexandria ? 'متاح للنزول الميداني' : 'غير متاح حالياً', isAlex: true },
-    { icon: Briefcase, label: 'ظروف العمل / الدراسة', val: member.work_conditions || 'لا توجد تفاصيل' },
-    { icon: Shield, label: 'رتبة الإنجاز', val: member.completion_rank ? `#${member.completion_rank}` : 'غير محدد' },
+    { icon: Phone, label: 'رقم الهاتف', val: member.phone || 'مش متسجل', dir: 'ltr' as const },
+    { icon: MapPin, label: 'محل الإقامة', val: member.residence || 'مش محدد' },
+    { icon: Laptop, label: 'العتاد وجاهزية اللابتوب', val: `${member.device || 'بدون جهاز'} ${hasLaptop ? '(معاه لابتوب)' : ''}` },
+    { icon: member.can_go_alexandria ? CheckCircle2 : XCircle, label: 'النزول لاجتماع الإسكندرية', val: member.can_go_alexandria ? 'جاهز للنزول الميداني' : 'مش متاح دلوقتي', isAlex: true },
+    { icon: Briefcase, label: 'ظروف العمل / الدراسة', val: member.work_conditions || 'مفيش تفاصيل' },
+    { icon: Shield, label: 'رتبة الإنجاز', val: member.completion_rank ? `#${member.completion_rank}` : 'مش محدد' },
   ];
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="الملف الشخصي للعضو" maxWidth="3xl">
+    <Modal isOpen={isOpen} onClose={onClose} title="ملف العضو" maxWidth="3xl">
       <div className="grid gap-5 text-start" dir="rtl">
         {/* Header Summary */}
         <div className="flex flex-col gap-4 rounded-xl border border-[var(--border)] bg-[var(--surface-2)] p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -83,7 +84,7 @@ export function MemberProfileModal({
                   : 'border-[var(--border)] bg-[var(--surface)] text-[var(--text-muted)]'
               }`}>
                 <Award size={15} />
-                {bonus > 0 ? `+${bonus}` : bonus} نقطة
+                {formatSigned(bonus)} نقطة
               </span>
               {onAdjustBonus && (
                 <button
@@ -124,7 +125,7 @@ export function MemberProfileModal({
         {/* Team Notes */}
         {member.team_notes && (
           <div className="rounded-xl border border-violet-200 bg-violet-50/50 p-3.5 dark:border-violet-900/50 dark:bg-violet-950/20">
-            <span className="block text-xs font-bold text-[var(--primary)]">ملاحظات الإدارة عن العضو</span>
+            <span className="block text-xs font-bold text-[var(--primary)]">ملاحظات الإدارة على العضو</span>
             <p className="mt-1 text-sm leading-relaxed text-[var(--text)]">{member.team_notes}</p>
           </div>
         )}
@@ -133,7 +134,7 @@ export function MemberProfileModal({
         <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3.5">
           <span className="mb-2 flex items-center gap-2 text-xs font-bold text-[var(--text-muted)]">
             <FileText size={14} />
-            سجل الملاحظات الخاصة بالعضو ({memberNotes.length})
+            سجل ملاحظات العضو ({memberNotes.length})
           </span>
           {memberNotes.length > 0 ? (
             <div className="max-h-36 divide-y divide-[var(--border)] overflow-y-auto">
@@ -148,7 +149,7 @@ export function MemberProfileModal({
               ))}
             </div>
           ) : (
-            <p className="text-xs text-[var(--text-muted)]">لا توجد ملاحظات مسجلة لهذا العضو بعد.</p>
+            <p className="text-xs text-[var(--text-muted)]">مفيش ملاحظات متسجلة للعضو ده لسه.</p>
           )}
         </div>
 
@@ -183,7 +184,7 @@ export function MemberProfileModal({
               fullOnMobile 
               className="text-[var(--danger)] border-red-200 hover:bg-red-50 hover:border-red-300 dark:border-red-900/30 dark:hover:bg-red-950/30 min-h-11"
             >
-              حذف العضو
+              مسح العضو
             </Button>
           )}
         </div>

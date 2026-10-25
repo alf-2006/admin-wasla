@@ -12,6 +12,9 @@ import { MemberHero } from './MemberHero';
 import { MemberTasks } from './MemberTasks';
 import { SubmissionModal } from './SubmissionModal';
 import MemberAnnouncements from './announcements/MemberAnnouncements';
+import { SubmissionSuccessModal, type SubmissionCelebration } from './SubmissionSuccessModal';
+import { useMemberBonus } from './useMemberBonus';
+import { taskBonus } from '../tasks/taskMeta';
 
 export default function MemberPortalPage() {
   const member = useAuthStore((state) => state.currentMember);
@@ -24,6 +27,8 @@ export default function MemberPortalPage() {
   const [submissionNote, setSubmissionNote] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isTogglingReadiness, setIsTogglingReadiness] = useState(false);
+  const [celebration, setCelebration] = useState<SubmissionCelebration | null>(null);
+  const bonusQuery = useMemberBonus(member?.id);
 
   if (!member) return <Navigate to="/login" replace />;
 
@@ -42,10 +47,12 @@ export default function MemberPortalPage() {
 
   const startTask = async (task: Task) => {
     try {
-      await updateTask.mutateAsync({ taskId: task.id, memberId: member.id, status: 'in_progress', currentTracking: task.tracking ?? {} });
-      toast.success('بدأت المهمة — بالتوفيق.');
+      // الخادم يستبدل الملاحظة والرابط بما يصله — نمرر الموجود حتى لا يُمسح
+      const current = task.tracking?.[String(member.id)];
+      await updateTask.mutateAsync({ taskId: task.id, memberId: member.id, status: 'in_progress', note: current?.note ?? '', submissionUrl: current?.submission_url ?? '', currentTracking: task.tracking ?? {} });
+      toast.success('بدأت المهمة — بالتوفيق!');
     } catch (cause) {
-      toast.error(handleSupabaseError(cause).message || 'تعذر بدء المهمة — لم يتغير شيء.');
+      toast.error(handleSupabaseError(cause).message || 'معرفناش نبدأ المهمة — مفيش حاجة اتغيرت.');
     }
   };
 
@@ -62,12 +69,22 @@ export default function MemberPortalPage() {
         note: submissionNote.trim(),
         currentTracking: selectedTask.tracking ?? {},
       });
+      const submitted = selectedTask;
       setSelectedTask(null);
       setSubmissionUrl('');
       setSubmissionNote('');
-      toast.success('تم تسليم المهمة للمراجعة.');
+      void bonusQuery.refetch();
+      setCelebration({
+        taskId: submitted.id,
+        taskTitle: submitted.title,
+        firstName: member.full_name.trim().split(/\s+/)[0] || member.full_name,
+        bonus: taskBonus(submitted),
+        deadline: submitted.has_deadline ? submitted.deadline_date : null,
+        submittedAt: new Date().toISOString(),
+        isResubmission: submitted.tracking?.[memberId]?.status === 'revision_requested',
+      });
     } catch (cause) {
-      toast.error(handleSupabaseError(cause).message || 'تعذر تسليم المهمة — حاول مرة أخرى.');
+      toast.error(handleSupabaseError(cause).message || 'معرفناش نسلّم المهمة — جرّب تاني.');
     } finally {
       setIsSubmitting(false);
     }
@@ -79,9 +96,9 @@ export default function MemberPortalPage() {
     try {
       await updateMemberReadiness(member.id, canGo);
       useAuthStore.getState().setMember({ ...member, can_go_alexandria: canGo });
-      toast.success(canGo ? 'تم تفعيل جاهزية النزول الميداني.' : 'تم إيقاف جاهزية النزول الميداني.');
+      toast.success(canGo ? 'جاهزية النزول الميداني اتفعّلت.' : 'جاهزية النزول الميداني اتوقفت.');
     } catch (cause) {
-      toast.error(handleSupabaseError(cause).message || 'تعذر تحديث حالة الاستعداد.');
+      toast.error(handleSupabaseError(cause).message || 'معرفناش نحدّث حالة الجاهزية.');
     } finally {
       setIsTogglingReadiness(false);
     }
@@ -97,11 +114,12 @@ export default function MemberPortalPage() {
     <div className="min-h-dvh bg-[var(--bg)] text-[var(--text)]" dir="rtl">
       <PortalHeader onLogout={logout} />
       <main className="mx-auto grid w-full max-w-[var(--content-max)] gap-6 px-4 pb-8 pt-5 sm:px-6 sm:pt-7">
-        <MemberHero member={member} onToggleField={toggleFieldReadiness} isUpdating={isTogglingReadiness} />
-        <MemberAnnouncements memberId={member.id} />
+        <MemberHero member={member} onToggleField={toggleFieldReadiness} isUpdating={isTogglingReadiness} totalBonus={bonusQuery.data ?? null} bonusLoading={bonusQuery.isLoading} />
         <MemberTasks tasks={myTasks} memberId={memberId} isLoading={tasksQuery.isLoading} isError={tasksQuery.isError} onRetry={() => { void tasksQuery.refetch(); }} onStart={startTask} onSubmit={openSubmission} />
+        <MemberAnnouncements memberId={member.id} />
       </main>
       <SubmissionModal task={selectedTask} url={submissionUrl} note={submissionNote} isSubmitting={isSubmitting} onUrlChange={setSubmissionUrl} onNoteChange={setSubmissionNote} onClose={() => setSelectedTask(null)} onSubmit={submitTask} />
+      <SubmissionSuccessModal celebration={celebration} totalBonus={bonusQuery.data} totalLoading={bonusQuery.isLoading || bonusQuery.isFetching} onClose={() => setCelebration(null)} />
     </div>
   );
 }

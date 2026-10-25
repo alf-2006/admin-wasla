@@ -38,7 +38,7 @@ export function BonusAdjustmentModal({ isOpen, member, members, onClose, onSucce
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!reason.trim()) {
-      setError('يرجى كتابة سبب التقييم لتوثيق الملاحظة في السجل.');
+      setError('اكتب سبب التقييم عشان نوثّق الملاحظة في السجل.');
       return;
     }
 
@@ -63,7 +63,7 @@ export function BonusAdjustmentModal({ isOpen, member, members, onClose, onSucce
       onSuccess?.();
       onClose();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'تعذر تسجيل نقاط التقييم.');
+      setError(cause instanceof Error ? cause.message : 'معرفناش نسجل نقاط التقييم.');
     }
   };
 
@@ -82,7 +82,7 @@ export function BonusAdjustmentModal({ isOpen, member, members, onClose, onSucce
 
         {/* Member selector + preview header */}
         <label className="grid gap-1.5 text-sm font-bold text-[var(--text)]">
-          العضو المستهدف
+          العضو المطلوب تقييمه
           <select
             value={selectedMember.id}
             onChange={(event) => setSelectedId(Number(event.target.value))}
@@ -106,7 +106,7 @@ export function BonusAdjustmentModal({ isOpen, member, members, onClose, onSucce
         {/* Bonus selection */}
         <div>
           <label className="block text-sm font-bold text-[var(--text)] mb-2">
-            قيمة التقييم المضافة أو المخصومة
+            قيمة التقييم اللي هتتضاف أو تتخصم
           </label>
           <div className="grid gap-2">
             {/* Zero (document only) */}
@@ -120,7 +120,7 @@ export function BonusAdjustmentModal({ isOpen, member, members, onClose, onSucce
                     : 'border border-[var(--border)] bg-[var(--surface)] text-[var(--text)] hover:border-[var(--primary)]'
                 }`}
               >
-                0 — توثيق بدون نقاط
+                0 — توثيق من غير نقاط
               </button>
             </div>
             {/* Positive Options */}
@@ -170,9 +170,9 @@ export function BonusAdjustmentModal({ isOpen, member, members, onClose, onSucce
             <Award size={14} className="text-[var(--primary)]" />
             <span>
               {points === 0 ? (
-                <>توثيق ملاحظة بدون نقاط (لن تتأثر نتيجة الترتيب)</>
+                <>توثيق ملاحظة من غير نقاط (الترتيب مش هيتأثر)</>
               ) : (
-                <>القيمة المحددة: <b className={points > 0 ? 'text-emerald-600' : 'text-red-600'}>{points > 0 ? `+${points}` : points} نقطة</b> (سيتم تسجيل الوسم {points > 0 ? `[B:+${points}]` : `[B:${points}]`})</>
+                <>القيمة اللي اخترتها: <b className={points > 0 ? 'text-emerald-600' : 'text-red-600'}>{points > 0 ? `+${points}` : points} نقطة</b> (هيتسجل الوسم {points > 0 ? `[B:+${points}]` : `[B:${points}]`})</>
               )}
             </span>
           </div>
@@ -180,13 +180,13 @@ export function BonusAdjustmentModal({ isOpen, member, members, onClose, onSucce
 
         {/* Reason / Note text */}
         <label className="grid gap-1.5 text-sm font-bold text-[var(--text)]">
-          سبب التقييم والملاحظة الموثقة *
+          سبب التقييم والملاحظة المسجلة *
           <textarea
             required
             rows={3}
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder="مثال: التزام ممتاز بتسليم المهمة قبل الموعد، أو تفاعل إيجابي في الاجتماع..."
+            placeholder="مثال: التزام ممتاز بتسليم المهمة قبل الموعد، أو تفاعل كويس في الاجتماع..."
             className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] p-3 text-sm leading-relaxed"
           />
         </label>
@@ -207,7 +207,7 @@ export function BonusAdjustmentModal({ isOpen, member, members, onClose, onSucce
           <Button type="button" variant="secondary" onClick={onClose} fullOnMobile className="min-h-11">
             إلغاء
           </Button>
-          <Button type="submit" isLoading={createNote.isPending} loadingText="جارٍ التسجيل..." fullOnMobile className="min-h-11">
+          <Button type="submit" isLoading={createNote.isPending} loadingText="بنسجل..." fullOnMobile className="min-h-11">
             حفظ التقييم والملاحظة
           </Button>
         </div>

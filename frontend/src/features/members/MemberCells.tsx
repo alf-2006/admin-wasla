@@ -45,7 +45,7 @@ export function ReadinessChip({ ready }: { ready: boolean }) {
       جاهز للنزول
     </StatusChip>
   ) : (
-    <StatusChip tone="muted">غير متاح</StatusChip>
+    <StatusChip tone="muted">مش متاح</StatusChip>
   );
 }
 
@@ -141,7 +141,7 @@ export function MemberRowMenu({
             onClick={(e) => { e.stopPropagation(); setOpen(false); onDelete(member); }}
             className={`${itemClass} text-[var(--danger)] hover:bg-red-50 dark:hover:bg-red-950/30`}
           >
-            <Trash2 size={16} aria-hidden="true" /> حذف
+            <Trash2 size={16} aria-hidden="true" /> مسح
           </button>
         </div>,
         document.body

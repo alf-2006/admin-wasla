@@ -1,77 +1,134 @@
-import { Clock3, Eye, Trash2, AlertCircle } from 'lucide-react';
-import type { Member, Task, TaskTrackingEntry, TaskStatus } from '../../types/db';
-import { TaskStatusBadge } from '../../components/ui/Badge';
-import { formatDate, isOverdue, daysRemaining } from '../../lib/dateUtils';
+import { useState } from 'react';
+import { CheckCircle2, Eye, Loader2, Trash2, Users } from 'lucide-react';
+import type { Member, Task, TaskStatus, TaskTrackingEntry } from '../../types/db';
+import { formatDate } from '../../lib/dateUtils';
+import { AR, arCount } from '../../lib/arabic';
+import { toast } from '../../store/toast';
+import { handleSupabaseError } from '../../lib/errorHandler';
 import { useUpdateTaskStatus } from './api';
+import { ADMIN_SETTABLE_STATUSES, BonusChip, DeadlineChip, STATUS_META, TaskProgress, summarizeTask, taskBonus } from './taskMeta';
 
-export function TaskCard({ task, members, onReview, onDelete }: { task: Task; members: Member[]; onReview: (item: { task: Task; memberId: number; entry: TaskTrackingEntry }) => void; onDelete: (task: Task) => void }) {
+type ReviewItem = { task: Task; memberId: number; entry: TaskTrackingEntry };
+
+/** ترتيب العرض: ما يحتاج تدخل الإدارة أولاً */
+const STATUS_ORDER: Record<TaskStatus, number> = { under_review: 0, revision_requested: 1, in_progress: 2, pending: 3, approved: 4 };
+
+export function TaskCard({ task, members, onReview, onDelete }: { task: Task; members: Member[]; onReview: (item: ReviewItem) => void; onDelete: (task: Task) => void }) {
   const updateStatus = useUpdateTaskStatus();
-  const entries = Object.entries(task.tracking ?? {});
-  const approved = entries.filter(([, entry]) => entry.status === 'approved').length;
-  const awaitingReview = entries.filter(([, entry]) => entry.status === 'under_review');
-  const overdue = isOverdue(task.deadline_date);
-  const daysLeft = daysRemaining(task.deadline_date);
-  
-  return <article className="grid content-between gap-4 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-sm)] sm:p-5">
-    <div className="grid gap-3">
-      <div className="flex items-start justify-between gap-3"><h3 className="text-base font-black leading-6">{task.title}</h3><button type="button" className="grid size-11 shrink-0 place-items-center rounded-lg border border-[var(--border)] text-[var(--danger)]" aria-label={`حذف ${task.title}`} onClick={() => onDelete(task)}><Trash2 size={17} /></button></div>
-      {task.description && <p className="text-sm leading-6 text-[var(--text-2)]">{task.description}</p>}
-      {task.has_deadline && task.deadline_date && (
-        <p className={`flex items-center gap-2 text-sm font-bold ${overdue ? 'text-red-700 dark:text-red-400' : 'text-amber-800 dark:text-amber-300'}`}>
-          {overdue ? <AlertCircle size={16} /> : <Clock3 size={16} />}
-          {overdue ? 'متأخر: ' : 'الموعد: '}
-          {formatDate(task.deadline_date)}
-          {daysLeft !== null && !overdue && daysLeft <= 3 && (
-            <span className="text-xs">({daysLeft} {daysLeft === 1 ? 'يوم' : 'أيام'} متبقية)</span>
-          )}
-        </p>
-      )}
-      <p className="text-sm font-bold text-[var(--text-muted)]">الإنجاز: {approved} من {entries.length} مكتمل</p>
-      <div className="flex max-h-[260px] flex-col gap-1 overflow-y-auto border-t border-[var(--border)] pt-3 pe-2">
-        {entries.map(([id, entry]) => {
-          const memberId = Number(id);
-          const member = members.find((candidate) => candidate.id === memberId);
-          const memberName = member?.full_name || `عضو #${id}`;
-          
-          return <div key={id} className="flex items-center justify-between gap-2 border-b border-[var(--border)] py-2 last:border-0">
-            <span className="truncate text-sm font-medium">{memberName}</span>
-            <span className="flex shrink-0 items-center gap-2">
-              <TaskStatusBadge status={entry.status} />
-              
-              <select
-                className="h-8 min-h-0 cursor-pointer rounded-md border border-[var(--border)] bg-[var(--bg)] px-2 text-xs font-bold text-[var(--text)] transition-colors hover:border-[var(--primary)] focus:border-[var(--primary)] focus:outline-none disabled:opacity-50"
-                value={entry.status}
-                onChange={(e) => updateStatus.mutate({ taskId: task.id, memberId, status: e.target.value as TaskStatus, currentTracking: task.tracking ?? {} })}
-                disabled={updateStatus.isPending}
-              >
-                <option value="pending">لم يبدأ</option>
-                <option value="in_progress">قيد التنفيذ</option>
-                <option value="under_review">مراجعة</option>
-                <option value="approved">مكتمل</option>
-              </select>
+  const [busyMember, setBusyMember] = useState<number | null>(null);
+  const summary = summarizeTask(task);
+  const nameOf = (id: string) => members.find((candidate) => String(candidate.id) === id)?.full_name || `عضو #${id}`;
+  const rows = [...summary.entries].sort(([idA, a], [idB, b]) => (STATUS_ORDER[a.status] - STATUS_ORDER[b.status]) || nameOf(idA).localeCompare(nameOf(idB), 'ar'));
 
+  const changeStatus = async (memberId: number, entry: TaskTrackingEntry, next: TaskStatus | 'approve') => {
+    if (next === entry.status) return;
+    // الاعتماد يمنح نقاطاً ولا يمكن التراجع عنه — يمر دائماً عبر نافذة المراجعة للتأكيد
+    if (next === 'approve') { onReview({ task, memberId, entry }); return; }
+    setBusyMember(memberId);
+    try {
+      // نمرر ملاحظة العضو ورابط تسليمه كما هما: الخادم يستبدل الحقلين بما يصله
+      await updateStatus.mutateAsync({
+        taskId: task.id,
+        memberId,
+        status: next,
+        note: entry.note ?? '',
+        submissionUrl: entry.submission_url ?? '',
+        currentTracking: task.tracking ?? {},
+      });
+      toast.success(`اتحدّثت حالة ${nameOf(String(memberId))} لـ «${STATUS_META[next].label}».`);
+    } catch (cause) {
+      toast.error(handleSupabaseError(cause).message || 'معرفناش نحدّث الحالة — مفيش حاجة اتغيرت.');
+    } finally {
+      setBusyMember(null);
+    }
+  };
+
+  return (
+    <article className="flex min-w-0 flex-col gap-4 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-sm)] sm:p-5">
+      <header className="grid gap-2.5">
+        <div className="flex items-start justify-between gap-3">
+          <h3 className="min-w-0 break-words text-base font-black leading-7">{task.title}</h3>
+          <button
+            type="button"
+            className="grid size-10 min-h-0 min-w-0 shrink-0 place-items-center rounded-lg border border-transparent text-[var(--text-muted)] transition-colors hover:border-red-200 hover:bg-red-50 hover:text-[var(--danger)] dark:hover:border-red-900 dark:hover:bg-red-950/40"
+            aria-label={`امسح مهمة ${task.title}`}
+            title="امسح المهمة"
+            onClick={() => onDelete(task)}
+          >
+            <Trash2 size={17} aria-hidden="true" />
+          </button>
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <DeadlineChip task={task} summary={summary} />
+          <BonusChip points={taskBonus(task)} />
+          <span className="inline-flex min-h-7 items-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--surface)] px-2.5 py-0.5 text-xs font-bold text-[var(--text-2)]">
+            <Users size={14} aria-hidden="true" />
+            {task.assigned_to === 'ALL' ? 'كل الفريق' : arCount(summary.total, AR.member)}
+          </span>
+          {summary.awaitingReview > 0 && (
+            <span className={`inline-flex min-h-7 items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-bold ${STATUS_META.under_review.tone}`}>
+              <Eye size={14} aria-hidden="true" />
+              {arCount(summary.awaitingReview, AR.submission)} للمراجعة
+            </span>
+          )}
+        </div>
+        {task.description && <p className="line-clamp-3 whitespace-pre-line text-sm leading-6 text-[var(--text-2)]" title={task.description}>{task.description}</p>}
+      </header>
+
+      <TaskProgress summary={summary} />
+
+      <ul className="flex max-h-72 min-w-0 flex-col gap-0.5 overflow-y-auto overflow-x-hidden overscroll-contain border-t border-[var(--border)] pt-2 pe-1" aria-label={`حالة اللي اتكلفوا بمهمة ${task.title}`}>
+        {rows.length === 0 && <li className="py-3 text-center text-sm text-[var(--text-muted)]">مفيش حد مكلف بالمهمة دي.</li>}
+        {rows.map(([id, entry]) => {
+          const memberId = Number(id);
+          const name = nameOf(id);
+          const meta = STATUS_META[entry.status] ?? STATUS_META.pending;
+          const isBusy = busyMember === memberId;
+          return (
+            <li key={id} className="flex min-h-12 min-w-0 items-center gap-2 rounded-lg py-1.5">
+              <span className="min-w-0 flex-1 truncate text-sm font-medium" title={name}>{name}</span>
               {entry.status === 'under_review' && (
-                <button 
-                  type="button" 
-                  className="flex h-8 items-center gap-1 rounded-lg bg-amber-700 px-2 text-xs font-bold text-white transition-colors hover:bg-amber-800" 
+                <button
+                  type="button"
+                  className="inline-flex h-9 min-h-0 shrink-0 items-center gap-1 rounded-lg bg-[var(--primary)] px-2.5 text-xs font-bold text-white transition-colors hover:bg-[var(--primary-hover)]"
                   onClick={() => onReview({ task, memberId, entry })}
+                  aria-label={`مراجعة تسليم ${name}`}
                 >
-                  <Eye size={14} />
-                  عرض
+                  <Eye size={14} aria-hidden="true" />
+                  مراجعة
                 </button>
               )}
-            </span>
-          </div>;
+              {entry.status === 'approved' ? (
+                <span className={`inline-flex h-9 shrink-0 items-center gap-1 rounded-lg border px-2.5 text-xs font-bold ${meta.tone}`} title="الاعتماد نهائي ومينفعش يتغير">
+                  <CheckCircle2 size={14} aria-hidden="true" />
+                  {meta.label}
+                </span>
+              ) : (
+                <span className="relative shrink-0">
+                  <select
+                    className={`h-9 min-h-0 w-[8.5rem] cursor-pointer appearance-none rounded-lg border ps-2.5 pe-7 text-xs font-bold transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--primary-soft)] disabled:cursor-wait disabled:opacity-70 ${meta.tone}`}
+                    value={entry.status}
+                    onChange={(event) => void changeStatus(memberId, entry, event.target.value as TaskStatus | 'approve')}
+                    disabled={isBusy}
+                    aria-label={`حالة ${name}`}
+                  >
+                    {ADMIN_SETTABLE_STATUSES.map((status) => <option key={status} value={status}>{STATUS_META[status].label}</option>)}
+                    <option value="approve">اعتمد…</option>
+                  </select>
+                  <span className="pointer-events-none absolute inset-y-0 end-2 my-auto grid place-items-center" aria-hidden="true">
+                    {isBusy ? <Loader2 size={13} className="animate-spin" /> : <svg width="10" height="6" viewBox="0 0 10 6" fill="none"><path d="M1 1l4 4 4-4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>}
+                  </span>
+                </span>
+              )}
+            </li>
+          );
         })}
-      </div>
-    </div>
-    <p className="border-t border-[var(--border)] pt-3 text-xs text-[var(--text-muted)]">
-      تاريخ التكليف: {formatDate(task.created_at, 'dd MMM yyyy')}
-      {awaitingReview.length > 0 && (
-        <strong className="ms-2 text-amber-800 dark:text-amber-300">
-          {awaitingReview.length} تسليم للمراجعة
-        </strong>
-      )}
-    </p>
-  </article>;
+      </ul>
+
+      <footer className="mt-auto flex items-center justify-between gap-2 border-t border-[var(--border)] pt-3 text-xs text-[var(--text-muted)]">
+        <span>اتسندت في {formatDate(task.created_at, 'd MMMM yyyy')}</span>
+        {summary.isComplete && <span className="inline-flex items-center gap-1 font-bold text-emerald-700 dark:text-emerald-300"><CheckCircle2 size={14} aria-hidden="true" />مكتملة</span>}
+      </footer>
+    </article>
+  );
 }

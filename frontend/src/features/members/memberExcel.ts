@@ -11,7 +11,7 @@ const cell = (row: Row, names: string[]) => names.map((name) => row[name]).find(
 export function parseMemberWorkbook(buffer: ArrayBuffer, knownMembers: Member[]) {
   const workbook = XLSX.read(buffer, { type: 'array' });
   const sheet = workbook.Sheets[workbook.SheetNames[0]];
-  if (!sheet) throw new Error('الملف لا يحتوي على ورقة بيانات.');
+  if (!sheet) throw new Error('الملف مفيهوش ورقة بيانات.');
   const rows = XLSX.utils.sheet_to_json<unknown>(sheet).filter(isRow);
   const imported: MemberInsert[] = [];
   const seenNames = new Set<string>();

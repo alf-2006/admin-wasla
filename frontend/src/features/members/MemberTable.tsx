@@ -15,7 +15,7 @@ export function MemberTable({
   return (
     <div className="w-full overflow-x-auto border-y border-[var(--border)]">
       <table className="w-full min-w-[56rem] table-fixed border-collapse text-start text-sm">
-        <caption className="sr-only">جدول الأعضاء — اضغط على أي صف لعرض التفاصيل</caption>
+        <caption className="sr-only">جدول الأعضاء — دوس على أي صف عشان تشوف التفاصيل</caption>
         <thead className="sticky top-0 z-10 bg-[var(--surface-2)]">
           <tr>
             <th scope="col" className="w-[30%] px-4 py-3 text-start text-xs font-black text-[var(--text-muted)]">العضو</th>
@@ -34,7 +34,7 @@ export function MemberTable({
               className="group h-[72px] cursor-pointer transition-colors hover:bg-[var(--primary-soft)] focus-visible:bg-[var(--primary-soft)] focus-visible:outline-none" 
               tabIndex={0}
               onKeyDown={(event) => { if (event.key === 'Enter') onView(member); }}
-              aria-label={`عرض تفاصيل ${member.full_name}`}
+              aria-label={`شوف تفاصيل ${member.full_name}`}
             >
               <td className="px-4 py-2">
                 <div className="flex items-center gap-3 overflow-hidden">
@@ -54,7 +54,7 @@ export function MemberTable({
               <td className="px-4 py-2"><WorkStatusChip status={member.work_status} /></td>
               <td className="px-4 py-2"><DeviceChips device={member.device} /></td>
               <td className="px-4 py-2">
-                <span className="block truncate text-sm font-semibold text-[var(--text)]" title={member.residence || 'غير محدد'}>{member.residence || '—'}</span>
+                <span className="block truncate text-sm font-semibold text-[var(--text)]" title={member.residence || 'مش محدد'}>{member.residence || '—'}</span>
               </td>
               <td className="px-4 py-2 whitespace-nowrap"><ReadinessChip ready={member.can_go_alexandria} /></td>
               <td className="sticky inline-end-0 bg-[var(--surface)] px-2 py-2 text-center group-hover:bg-[var(--primary-soft)] shadow-[1px_0_0_var(--border)]" onClick={(event) => event.stopPropagation()}>

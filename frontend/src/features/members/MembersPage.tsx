@@ -34,7 +34,7 @@ const emptyMember: MemberInsert = {
   can_go_alexandria: false,
 };
 
-const PAGE_SIZES = [10, 20, 50] as const;
+const PAGE_SIZES = [12, 24, 48] as const;
 const DELETE_UNDO_MS = 5000;
 
 export default function MembersPage() {
@@ -51,7 +51,7 @@ export default function MembersPage() {
   const [formError, setFormError] = useState('');
   const [memberToDelete, setMemberToDelete] = useState<Member | null>(null);
   const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState<number>(10);
+  const [pageSize, setPageSize] = useState<number>(12);
   const deleteTimer = useRef<number | null>(null);
 
   useEffect(() => () => {
@@ -107,18 +107,18 @@ export default function MembersPage() {
     const trimmedEmail = form.email.trim().toLowerCase();
 
     if (!trimmedName || !trimmedEmail) {
-      setFormError('الاسم والبريد الإلكتروني حقول إجبارية.');
+      setFormError('الاسم والبريد الإلكتروني لازم يتكتبوا.');
       return;
     }
 
     if (!isValidEmail(trimmedEmail)) {
-      setFormError('البريد الإلكتروني غير صالح. يجب أن يحتوي على @ ونطاق صحيح.');
+      setFormError('البريد الإلكتروني مش صالح. لازم يكون فيه @ ونطاق صحيح.');
       return;
     }
 
     const trimmedPhone = (form.phone || '').trim();
     if (trimmedPhone && !isValidEgyptianPhone(trimmedPhone)) {
-      setFormError('رقم الهاتف غير صالح. استخدم رقم مصري صحيح: 01xxxxxxxxx أو +20xxxxxxxxxx.');
+      setFormError('رقم الهاتف مش صالح. استخدم رقم مصري صحيح: 01xxxxxxxxx أو +20xxxxxxxxxx.');
       return;
     }
 
@@ -134,7 +134,7 @@ export default function MembersPage() {
       if (editing) await update.mutateAsync({ id: editing.id, ...cleanedForm });
       else await add.mutateAsync(cleanedForm);
       setDialogOpen(false);
-      toast.success(editing ? 'تم حفظ بيانات العضو بنجاح.' : 'تم تسجيل العضو الجديد بنجاح.');
+      toast.success(editing ? 'بيانات العضو اتحفظت بنجاح.' : 'العضو الجديد اتسجّل بنجاح.');
     } catch (cause) {
       logError(cause, 'MembersPage.save');
       const error = handleSupabaseError(cause);
@@ -151,17 +151,17 @@ export default function MembersPage() {
     deleteTimer.current = window.setTimeout(() => {
       deleteTimer.current = null;
       void remove.mutateAsync(target.id).then(
-        () => toast.success(`تم حذف ${target.full_name} نهائياً.`),
-        (cause: unknown) => toast.error(handleSupabaseError(cause).message || 'تعذر حذف العضو.'),
+        () => toast.success(`${target.full_name} اتمسح نهائيًا.`),
+        (cause: unknown) => toast.error(handleSupabaseError(cause).message || 'معرفناش نمسح العضو.'),
       );
     }, DELETE_UNDO_MS);
-    toast.success(`تم حذف ${target.full_name}.`, {
+    toast.success(`${target.full_name} اتمسح.`, {
       durationMs: DELETE_UNDO_MS,
       action: {
         label: 'تراجع',
         onClick: () => {
           if (deleteTimer.current !== null) { window.clearTimeout(deleteTimer.current); deleteTimer.current = null; }
-          toast.info('تم التراجع عن الحذف.');
+          toast.info('اتلغى الحذف.');
         },
       },
     });
@@ -169,46 +169,45 @@ export default function MembersPage() {
 
   const askDelete = (member: Member) => { setDrawerMember(null); setMemberToDelete(member); };
 
-  return <section className="flex min-w-0 w-full flex-col gap-6" id="page-members" dir="rtl">
+  return <section className="flex min-w-0 w-full flex-col gap-4" id="page-members" dir="rtl">
     
     {/* Brand Header */}
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 rounded-[var(--radius-lg)] bg-[var(--surface)] p-6 shadow-[var(--shadow-sm)] border border-[var(--border)]">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold text-[var(--text)] flex items-center gap-3 m-0">
-          <span className="flex items-center justify-center size-12 rounded-[var(--radius)] bg-[var(--primary-soft)] text-[var(--primary)]">
-            <Users size={24} />
-          </span>
-          دليل وجاهزية الأعضاء
-        </h1>
-        <p className="text-[var(--text-muted)] mt-1">
-          سجل الحالة التشغيلية، الأجهزة، وتوفر الكوادر للنزول الميداني. العدد الحالي: <span className="font-bold text-[var(--primary)]">{query.data?.length ?? 0}</span> عضو.
-        </p>
+    <div className="grid gap-4 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-sm)] sm:p-6 lg:flex lg:items-center lg:justify-between">
+      <div className="flex min-w-0 items-start gap-3.5">
+        <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-[var(--primary-soft)] text-[var(--link)]" aria-hidden="true">
+          <Users size={24} />
+        </span>
+        <div className="min-w-0">
+          <h1 className="m-0 text-[var(--fs-xl)] font-black text-[var(--text)]">دليل الأعضاء وجاهزيتهم</h1>
+          <p className="mt-1 text-sm leading-6 text-[var(--text-muted)]">
+            حالة الشغل والأجهزة والاستعداد للنزول الميداني — <span className="font-bold tabular-nums text-[var(--link)]">{query.data?.length ?? 0}</span> عضو مسجّل.
+          </p>
+        </div>
       </div>
-      <div className="flex items-center gap-3 shrink-0">
-        <MemberExcelActions members={query.data ?? []} />
-        <Button onClick={openNew} icon={<UserPlus size={18} aria-hidden="true" />} variant="primary">
-          تسجيل عضو جديد
+      <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0 sm:items-center">
+        <Button onClick={openNew} icon={<UserPlus size={18} aria-hidden="true" />} variant="primary" className="order-first col-span-2 whitespace-nowrap sm:order-last">
+          إضافة عضو
         </Button>
+        <MemberExcelActions members={query.data ?? []} />
       </div>
     </div>
-
     {/* Filters Section */}
-    <div className="rounded-[var(--radius-lg)] bg-[var(--surface)] p-4 shadow-[var(--shadow-sm)] border border-[var(--border)]">
+    <div className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-3 shadow-[var(--shadow-sm)] sm:p-4">
       <MemberToolbar workConditions={workConditions} value={filters} onChange={setFilters} resultCount={visibleMembers.length} totalCount={query.data?.length ?? 0} />
     </div>
 
     {/* Main Content Area */}
     <div className="min-w-0 w-full rounded-[var(--radius-lg)] bg-transparent">
       {query.isLoading ? <div className="py-6"><CardSkeletons count={6} /></div>
-        : query.isError ? <div className="py-6"><ErrorState message="تعذر تحميل سجلات الأعضاء." onRetry={() => { void query.refetch(); }} /></div>
+        : query.isError ? <div className="py-6"><ErrorState message="معرفناش نحمّل سجلات الأعضاء." onRetry={() => { void query.refetch(); }} /></div>
           : visibleMembers.length ? <>
-            <div className="mb-6">
+            <div className="mb-4">
               <MemberCards members={pageMembers} onView={setDrawerMember} onEdit={openEdit} onDelete={askDelete} />
             </div>
             
             {/* Pagination */}
-            <div className="flex flex-wrap items-center justify-between gap-4 rounded-[var(--radius-lg)] bg-[var(--surface)] shadow-[var(--shadow-sm)] border border-[var(--border)] px-6 py-4" aria-label="ترقيم الصفحات">
-              <div className="flex items-center gap-4">
+            <nav className="flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] px-4 py-3 shadow-[var(--shadow-sm)] sm:px-6" aria-label="التنقل بين الصفحات">
+              <div className="flex flex-wrap items-center gap-3">
                 <label className="flex items-center gap-2 text-sm font-bold text-[var(--text-muted)]" htmlFor="member-page-size">
                   لكل صفحة
                   <select
@@ -233,21 +232,21 @@ export default function MembersPage() {
                   <ChevronLeft size={18} aria-hidden="true" />
                 </button>
               </span>
-            </div>
+            </nav>
           </>
-            : <div className="py-12"><EmptyState title="لا يوجد تطابق" description="لم نجد أي عضو يطابق معايير التصفية." /></div>}
+            : <div className="py-12"><EmptyState title="مفيش تطابق" description="ملقيناش عضو مطابق لمعايير التصفية." /></div>}
     </div>
 
     <ConfirmDialog
       isOpen={Boolean(memberToDelete)}
       onClose={() => setMemberToDelete(null)}
       onConfirm={confirmDelete}
-      title="تأكيد حذف العضو"
+      title="تأكيد مسح العضو"
       itemName={memberToDelete?.full_name}
-      description={memberToDelete ? `سيتم حذف ${memberToDelete.full_name} نهائياً. يمكنك التراجع خلال 5 ثوانٍ من إشعار التأكيد.` : undefined}
-      confirmLabel="حذف نهائي"
+      description={memberToDelete ? `هيتم مسح ${memberToDelete.full_name} نهائيًا. تقدر تلغي الحذف خلال 5 ثواني من إشعار التأكيد.` : undefined}
+      confirmLabel="مسح نهائي"
       isPending={false}
-      pendingLabel="جارٍ الحذف..."
+      pendingLabel="بنمسح..."
     />
 
     <MemberProfileModal

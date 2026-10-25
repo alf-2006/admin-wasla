@@ -27,8 +27,8 @@ export function WhatsAppConfirmModal({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="تأكيد بدء الإرسال التجريبي عبر واتساب"
-      subtitle={`إلى ${recipientCount} عضو بخصوص «${taskTitle}»`}
+      title="أكد بدء البعت التجريبي عن طريق واتساب"
+      subtitle={`لـ ${recipientCount} عضو بخصوص «${taskTitle}»`}
       maxWidth="lg"
     >
       <div className="grid gap-4" dir="rtl">
@@ -38,14 +38,14 @@ export function WhatsAppConfirmModal({
             <Users className="text-[var(--primary)]" size={20} aria-hidden="true" />
             <div>
               <p className="text-xs text-[var(--text-muted)]">إجمالي المستلمين:</p>
-              <p className="text-sm font-extrabold text-[var(--text)]">{recipientCount} عضو مؤكد</p>
+              <p className="text-sm font-extrabold text-[var(--text)]">{recipientCount} عضو متأكد منهم</p>
             </div>
           </div>
           <div className="flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50/60 p-3 dark:border-emerald-900/60 dark:bg-emerald-950/20">
             <CheckCircle2 className="text-emerald-600 dark:text-emerald-400" size={20} aria-hidden="true" />
             <div>
-              <p className="text-xs text-emerald-800 dark:text-emerald-300">إقرار الموافقة الصريحة:</p>
-              <p className="text-sm font-extrabold text-emerald-900 dark:text-emerald-200">مؤكد ومُعتمد إدارياً</p>
+              <p className="text-xs text-emerald-800 dark:text-emerald-300">تأكيد الموافقة الصريحة:</p>
+              <p className="text-sm font-extrabold text-emerald-900 dark:text-emerald-200">متأكد ومعتمد إداريًا</p>
             </div>
           </div>
         </div>
@@ -53,8 +53,8 @@ export function WhatsAppConfirmModal({
         {/* Message Preview Box */}
         <div className="rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 text-sm leading-6">
           <div className="mb-2 flex items-center justify-between">
-            <span className="font-extrabold text-[var(--text)]">معاينة الرسالة الموجهة:</span>
-            <span className="text-xs text-[var(--text-muted)]">نموذج العضو: {previewMemberName}</span>
+            <span className="font-extrabold text-[var(--text)]">معاينة الرسالة:</span>
+            <span className="text-xs text-[var(--text-muted)]">مثال العضو: {previewMemberName}</span>
           </div>
           <div className="rounded-lg border border-[var(--border)] bg-[var(--surface-2)] p-3 font-sans whitespace-pre-wrap text-xs leading-6 text-[var(--text)]">
             {messagePreview}
@@ -65,7 +65,7 @@ export function WhatsAppConfirmModal({
         <div className="flex items-start gap-2.5 rounded-xl border border-[var(--primary)] bg-[var(--primary-soft)] p-3 text-xs leading-5 text-[var(--text)]">
           <ShieldAlert className="mt-0.5 shrink-0 text-[var(--link)]" size={17} aria-hidden="true" />
           <p>
-            سيتم تنفيذ هذا الإرسال بنمط المحاكاة المعزول (Baileys Mock) دون إرسال حزم فعلية عبر شبكة واتساب، وذلك لاختبار مسار المهام وسجلات التسليم الداخلية.
+            هيتم تنفيذ البعت ده في وضع المحاكاة المنفصل (Baileys Mock) من غير ما نبعت فعليًا على شبكة واتساب، عشان نختبر مسار المهام وسجلات التسليم الداخلية.
           </p>
         </div>
 
@@ -81,7 +81,7 @@ export function WhatsAppConfirmModal({
             onClick={onConfirm}
             fullOnMobile
           >
-            {isPending ? 'جارٍ الإرسال التجريبي...' : 'تأكيد وبدء الإرسال التجريبي'}
+            {isPending ? 'بنَبعت تجريبي...' : 'أكد وابدأ البعت التجريبي'}
           </Button>
         </div>
       </div>

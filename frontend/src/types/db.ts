@@ -34,6 +34,8 @@ export interface TaskTrackingEntry {
   note?: string;
   submission_url?: string;
   updated_at?: string;
+  /** البونص الممنوح فعلياً عند الاعتماد (migration 0012) */
+  bonus_awarded?: number;
 }
 
 export type Task = {
@@ -47,6 +49,8 @@ export type Task = {
   assigned_to: string[] | string | null;
   /** JSONB: { [memberId: string]: TaskTrackingEntry } */
   tracking: Record<string, TaskTrackingEntry> | null;
+  /** بونص يُمنح لكل عضو عند اعتماد تسليمه (0-50) — migration 0012. قد يغيب قبل تطبيقها. */
+  bonus_points?: number | null;
 }
 
 export type TaskInsert = Omit<Task, 'id' | 'created_at'>;

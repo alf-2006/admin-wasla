@@ -18,8 +18,8 @@ export function useAiConversation(members: Member[], tasks: Task[]) {
   const [messages, setMessages] = useState<AiMessage[]>([{
     id: 'welcome',
     sender: 'assistant',
-    text: 'أهلاً بك! أنا مساعد وصلة الذكي. اسألني عن الفريق والمهام أو اطلب مني إنشاء مهمة أو ملاحظة.',
-    timestamp: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
+    text: 'أهلاً بيك! أنا مساعد وصلة الذكي. اسألني عن الفريق والمهام أو اطلب مني أعمل مهمة أو ملاحظة.',
+    timestamp: new Date().toLocaleTimeString('ar-EG-u-nu-latn', { hour: '2-digit', minute: '2-digit' }),
   }]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -47,21 +47,21 @@ export function useAiConversation(members: Member[], tasks: Task[]) {
     if (!text || ask.isPending) return;
     const userMessage: AiMessage = {
       id: Date.now().toString(), sender: 'user', text,
-      timestamp: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
+      timestamp: new Date().toLocaleTimeString('ar-EG-u-nu-latn', { hour: '2-digit', minute: '2-digit' }),
     };
     setMessages((current) => [...current, userMessage]);
     try {
       const response = await ask.mutateAsync({ question: text, context: buildContext() });
       setMessages((current) => [...current, {
-        id: (Date.now() + 1).toString(), sender: 'assistant', text: response.answer || 'تمت معالجة طلبك.',
-        timestamp: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
+        id: (Date.now() + 1).toString(), sender: 'assistant', text: response.answer || 'اتنفّذ طلبك.',
+        timestamp: new Date().toLocaleTimeString('ar-EG-u-nu-latn', { hour: '2-digit', minute: '2-digit' }),
         action: response.action || null, actionExecuted: false,
       }]);
     } catch (cause) {
       setMessages((current) => [...current, {
         id: (Date.now() + 1).toString(), sender: 'assistant',
-        text: `عذراً، حدث خطأ أثناء معالجة الطلب: ${cause instanceof Error ? cause.message : 'تعذر الوصول إلى المساعد الذكي.'}`,
-        timestamp: new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }),
+        text: `آسف، حصلت مشكلة وأنا بعالج طلبك: ${cause instanceof Error ? cause.message : 'معرفناش نوصل للمساعد الذكي.'}`,
+        timestamp: new Date().toLocaleTimeString('ar-EG-u-nu-latn', { hour: '2-digit', minute: '2-digit' }),
       }]);
     }
   };
@@ -89,7 +89,7 @@ export function useAiConversation(members: Member[], tasks: Task[]) {
           // Try finding by title if id is not provided
           const title = stringValue(action.title) ?? stringValue(payload.title) ?? action.name;
           const task = tasks.find((t) => t.title === title);
-          if (!task) throw new Error('لم يتم العثور على المهمة للحذف.');
+          if (!task) throw new Error('ملقيناش المهمة عشان نمسحها.');
           await deleteTask.mutateAsync(task.id);
         } else {
           await deleteTask.mutateAsync(taskId);
@@ -98,18 +98,18 @@ export function useAiConversation(members: Member[], tasks: Task[]) {
         await createNote.mutateAsync({
           text: stringValue(payload.text) ?? 'ملاحظة من مساعد وصلة الذكي (بدون نص).',
           author: 'مساعد وصلة الذكي (AI)', author_role: 'AI Assistant',
-          date: new Date().toLocaleDateString('ar-EG', { dateStyle: 'medium' }),
+          date: new Date().toLocaleDateString('ar-EG-u-nu-latn', { dateStyle: 'medium' }),
           target_member_id: null,
           target_name: stringValue(payload.targetName),
         });
       } else if (actionType === 'delete_note') {
         const noteId = Number(stringValue(action.id) ?? stringValue(payload.id));
-        if (isNaN(noteId)) throw new Error('رقم الملاحظة غير صالح.');
+        if (isNaN(noteId)) throw new Error('رقم الملاحظة مش صحيح.');
         await deleteNote.mutateAsync(noteId);
       } else if (actionType === 'create_member') {
         const fullName = stringValue(payload.full_name);
         const email = stringValue(payload.email)?.toLowerCase();
-        if (!fullName || !email) throw new Error('الاسم والبريد مطلوبان لإنشاء عضو.');
+        if (!fullName || !email) throw new Error('اكتب الاسم والبريد عشان نعمل عضو.');
         await addMember.mutateAsync({
           full_name: fullName,
           email,
@@ -129,7 +129,7 @@ export function useAiConversation(members: Member[], tasks: Task[]) {
         const targetName = action.name?.trim();
         const patch = action.patch;
         if (!targetName || !patch) {
-          throw new Error('بيانات العضو أو التعديل غير مكتملة في رد المساعد.');
+          throw new Error('بيانات العضو أو التعديل ناقصة في رد المساعد.');
         }
 
         // Find the member by name — exact, then contains, then first-name match
@@ -139,7 +139,7 @@ export function useAiConversation(members: Member[], tasks: Task[]) {
           ?? members.find((m) => m.full_name.includes(normalized) || normalized.includes(m.full_name))
           ?? members.find((m) => m.full_name.split(/\s+/)[0] === normalized.split(/\s+/)[0]);
         if (!member) {
-          throw new Error(`لم يتم العثور على عضو باسم: ${targetName}`);
+          throw new Error(`ملقيناش عضو اسمه: ${targetName}`);
         }
 
         await updateMember.mutateAsync({
@@ -148,21 +148,21 @@ export function useAiConversation(members: Member[], tasks: Task[]) {
         });
       } else if (actionType === 'delete_member') {
         const targetName = action.name?.trim() ?? stringValue(payload.name);
-        if (!targetName) throw new Error('اسم العضو مطلوب.');
+        if (!targetName) throw new Error('اكتب اسم العضو.');
         const normalized = targetName.replace(/\s+/g, ' ');
         const member = members.find((m) => m.full_name === normalized)
           ?? members.find((m) => m.full_name.includes(normalized) || normalized.includes(m.full_name))
           ?? members.find((m) => m.full_name.split(/\s+/)[0] === normalized.split(/\s+/)[0]);
-        if (!member) throw new Error(`لم يتم العثور على عضو باسم: ${targetName}`);
+        if (!member) throw new Error(`ملقيناش عضو اسمه: ${targetName}`);
         await deleteMember.mutateAsync(member.id);
       } else {
-        toast.warning(`نوع الإجراء "${action.type}" غير مدعوم للتنفيذ التلقائي بعد — نفّذ التعديل يدوياً من صفحات الإدارة.`);
+        toast.warning(`نوع الإجراء "${action.type}" مش مدعوم للتنفيذ التلقائي دلوقتي — نفّذ التعديل يدويًا من صفحات الإدارة.`);
         return;
       }
       setMessages((current) => current.map((message) => message.id === messageId ? { ...message, actionExecuted: true } : message));
-      toast.success('تم تنفيذ الإجراء فعلياً في قاعدة البيانات.');
+      toast.success('اتنفّذ الإجراء فعليًا في قاعدة البيانات.');
     } catch (cause) {
-      toast.error(`فشل تنفيذ الإجراء: ${cause instanceof Error ? cause.message : 'خطأ غير معروف'} — لم يُكتب شيء في قاعدة البيانات.`);
+      toast.error(`معرفناش ننفّذ الإجراء: ${cause instanceof Error ? cause.message : 'مشكلة مش معروفة'} — مفيش حاجة اتكتبت في قاعدة البيانات.`);
     }
   };
 

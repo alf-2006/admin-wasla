@@ -1,5 +1,6 @@
 import { Trophy, Medal, Award, User } from 'lucide-react';
 import type { Member } from '../../types/db';
+import { formatSigned } from '../../lib/arabic';
 
 export interface RankedMember extends Member {
   totalBonus: number;
@@ -39,7 +40,7 @@ export function RankingPodium({ topMembers, onSelectMember, onAdjustBonus }: Ran
                 <Icon size={18} />
               </div>
               <span className="text-xs font-bold">{label}</span>
-              <span className="text-[11px] text-[var(--text-muted)] mt-1">شاغر حالياً</span>
+              <span className="text-[11px] text-[var(--text-muted)] mt-1">لسه فاضي</span>
             </div>
           );
         }
@@ -75,7 +76,7 @@ export function RankingPodium({ topMembers, onSelectMember, onAdjustBonus }: Ran
 
               {/* Bonus score */}
               <div className="mt-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-violet-500/10 border border-violet-200 dark:border-violet-900 text-violet-700 dark:text-violet-300 font-black text-sm">
-                <span>{member.totalBonus > 0 ? `+${member.totalBonus}` : member.totalBonus}</span>
+                <span>{formatSigned(member.totalBonus)}</span>
                 <span className="text-xs font-semibold">نقطة</span>
               </div>
             </div>

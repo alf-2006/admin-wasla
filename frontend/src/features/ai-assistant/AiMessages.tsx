@@ -12,16 +12,16 @@ export function AiMessages({ messages, isPending, onExecute, endRef }: { message
           <div className={`rounded-2xl p-3 text-sm leading-6 sm:p-4 ${isUser ? 'bg-[var(--primary)] text-white' : 'border border-[var(--border)] bg-[var(--bg)] text-[var(--text)]'}`}>
             <p className="whitespace-pre-line">{message.text}</p>
             {action && <div className="mt-3 grid gap-3 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-3 text-[var(--text)]">
-              <p className="flex items-center gap-2 text-sm font-bold text-[var(--link)]"><Sparkles size={17} />إجراء مقترح من المساعد</p>
+              <p className="flex items-center gap-2 text-sm font-bold text-[var(--link)]"><Sparkles size={17} />اقتراح من المساعد</p>
               <pre className="max-h-44 overflow-auto rounded-lg bg-[var(--bg)] p-3 text-xs leading-5" dir="ltr">{JSON.stringify(action, null, 2)}</pre>
-              {message.actionExecuted ? <p className="flex items-center gap-2 text-sm font-bold text-emerald-800 dark:text-emerald-300"><CheckCircle2 size={17} />تم تنفيذ الإجراء</p>
-                : <button type="button" onClick={() => onExecute(message.id, action)} className="min-h-11 rounded-lg bg-[var(--primary)] px-3 text-sm font-bold text-white">تنفيذ الإجراء</button>}
+              {message.actionExecuted ? <p className="flex items-center gap-2 text-sm font-bold text-emerald-800 dark:text-emerald-300"><CheckCircle2 size={17} />اتنفّذ الإجراء</p>
+                : <button type="button" onClick={() => onExecute(message.id, action)} className="min-h-11 rounded-lg bg-[var(--primary)] px-3 text-sm font-bold text-white">نفّذ الإجراء</button>}
             </div>}
           </div>
           <time className="px-2 text-xs text-[var(--text-muted)]">{message.timestamp}</time>
         </article>;
       })}
-      {isPending && <p className="flex min-h-11 items-center gap-2 self-start rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 text-sm text-[var(--text-muted)]" role="status"><Bot size={17} className="animate-pulse" />مساعد وصلة يحلل بيانات الفريق...</p>}
+      {isPending && <p className="flex min-h-11 items-center gap-2 self-start rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 text-sm text-[var(--text-muted)]" role="status"><Bot size={17} className="animate-pulse" />مساعد وصلة بيحلّل بيانات الفريق...</p>}
       <div ref={endRef} />
     </div>
   );

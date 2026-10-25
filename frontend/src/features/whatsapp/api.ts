@@ -25,7 +25,7 @@ function resolveBridgeUrl(): string | null {
 const bridgeUrl = resolveBridgeUrl();
 
 export const BRIDGE_MISCONFIGURED_MESSAGE =
-  'عنوان خدمة واتساب غير مضبوط — اضبط VITE_WHATSAPP_BRIDGE_URL برابط https للجسر ثم أعد النشر.';
+  'رابط خدمة واتساب مش مضبوط — ظبّط VITE_WHATSAPP_BRIDGE_URL برابط https للجسر وبعدين انشر تاني.';
 
 const ALLOWED_BRIDGE_PATHS = new Set([
   '/v1/status',
@@ -83,33 +83,33 @@ export const getBridgeDiagnostics = () => request<BridgeDiagnostics>('/v1/diagno
 
 async function request<T>(path: string, body?: Record<string, unknown>): Promise<T> {
   if (!bridgeUrl) throw new Error(BRIDGE_MISCONFIGURED_MESSAGE);
-  if (!ALLOWED_BRIDGE_PATHS.has(path)) throw new Error('مسار خدمة واتساب غير مسموح.');
+  if (!ALLOWED_BRIDGE_PATHS.has(path)) throw new Error('مسار خدمة واتساب مش مسموح.');
   if (body) {
     const taskId = (body as { taskId?: unknown }).taskId;
     const announcementId = (body as { announcementId?: unknown }).announcementId;
     const memberIds = (body as { memberIds?: unknown }).memberIds;
     if (taskId !== undefined && (!Number.isInteger(taskId) || (taskId as number) <= 0)) {
-      throw new Error('معرّف المهمة غير صالح.');
+      throw new Error('معرّف المهمة مش صالح.');
     }
     if (announcementId !== undefined && (!Number.isInteger(announcementId) || (announcementId as number) <= 0)) {
-      throw new Error('معرّف الإعلان غير صالح.');
+      throw new Error('معرّف الإعلان مش صالح.');
     }
     if (memberIds !== undefined) {
       if (!Array.isArray(memberIds) || memberIds.length < 1 || memberIds.length > 1000) {
-        throw new Error('قائمة الأعضاء غير صالحة (1-1000).');
+        throw new Error('قائمة الأعضاء مش صالحة (1-1000).');
       }
       const ids = memberIds as unknown[];
       if (!ids.every((id) => Number.isInteger(id) && (id as number) > 0) || new Set(ids).size !== ids.length) {
-        throw new Error('قائمة الأعضاء تحتوي قيماً غير صالحة أو مكررة.');
+        throw new Error('قائمة الأعضاء فيها قيم مش صالحة أو مكررة.');
       }
       if ('consentConfirmed' in body && (body as { consentConfirmed?: unknown }).consentConfirmed !== true) {
-        throw new Error('يلزم تأكيد موافقة الأعضاء قبل الإرسال.');
+        throw new Error('لازم تأكد موافقة الأعضاء قبل البعت.');
       }
     }
   }
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
-  if (!token) throw new Error('سجّل دخول الإدارة أولًا لفتح إعدادات واتساب.');
+  if (!token) throw new Error('سجّل دخول الإدارة الأول عشان تفتح إعدادات واتساب.');
   const response = await fetch(`${bridgeUrl}${path}`, {
     method: body ? 'POST' : 'GET',
     cache: 'no-store',
@@ -117,7 +117,7 @@ async function request<T>(path: string, body?: Record<string, unknown>): Promise
     ...(body ? { body: JSON.stringify(body) } : {}),
   });
   const result = await response.json() as T & { error?: string };
-  if (!response.ok) throw new Error(result.error ?? 'تعذر الاتصال بخدمة واتساب.');
+  if (!response.ok) throw new Error(result.error ?? 'منقدرناش نتصل بخدمة واتساب.');
   return result;
 }
 
@@ -148,7 +148,7 @@ export async function getCloudStatus(): Promise<CloudStatus> {
   const { data, error } = await supabase.functions.invoke('whatsapp-tasks', {
     body: { action: 'status' },
   });
-  if (error) throw new Error(error.message || 'تعذر الاتصال بـ Cloud API');
+  if (error) throw new Error(error.message || 'منقدرناش نتصل بـ Cloud API');
   if (data?.error) throw new Error(data.error);
   return data as CloudStatus;
 }
@@ -157,7 +157,7 @@ export async function setCloudEnabled(enabled: boolean): Promise<CloudStatus> {
   const { data, error } = await supabase.functions.invoke('whatsapp-tasks', {
     body: { action: 'set-enabled', enabled },
   });
-  if (error) throw new Error(error.message || 'تعذر تعديل حالة البوت');
+  if (error) throw new Error(error.message || 'منقدرناش نغيّر حالة البوت');
   if (data?.error) throw new Error(data.error);
   return data as CloudStatus;
 }
@@ -166,7 +166,7 @@ export async function sendCloudTasks(taskId: number, memberIds: number[], consen
   const { data, error } = await supabase.functions.invoke('whatsapp-tasks', {
     body: { action: 'send', taskId, memberIds, consentConfirmed },
   });
-  if (error) throw new Error(error.message || 'تعذر الإرسال');
+  if (error) throw new Error(error.message || 'منقدرناش نبعت');
   if (data?.error) throw new Error(data.error);
   return data as CloudSendResult;
 }

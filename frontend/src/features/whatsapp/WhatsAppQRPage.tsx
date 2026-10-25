@@ -74,9 +74,9 @@ export default function WhatsAppQRPage() {
           <MessageCircle />
         </span>
         <div>
-          <h2 className="text-[var(--fs-xl)] font-black">ربط واتساب عبر QR (Baileys Mock)</h2>
+          <h2 className="text-[var(--fs-xl)] font-black">ربط واتساب عن طريق QR (Baileys Mock)</h2>
           <p className="mt-1 text-sm text-[var(--text-muted)]">
-            اربط رقم الإرسال الثاني عبر محاكاة Baileys، ثم اختر الأعضاء لإرسال التكليفات إليهم دفعة واحدة.
+            اربط رقم البعت التاني باستخدام محاكاة Baileys، وبعد كده اختار الأعضاء عشان تبعت لهم التكليفات مرة واحدة.
           </p>
         </div>
       </header>
@@ -94,7 +94,7 @@ export default function WhatsAppQRPage() {
 
       <Card className="grid gap-4">
         <label className="grid gap-2 text-sm font-bold">
-          اختر المهمة
+          اختار المهمة
           <select
             className="min-h-11 rounded-xl border border-[var(--border)] bg-[var(--surface)] px-3 text-base"
             value={taskId}
@@ -104,7 +104,7 @@ export default function WhatsAppQRPage() {
               dispatch.reset();
             }}
           >
-            <option value="">اختر مهمة...</option>
+            <option value="">اختار مهمة...</option>
             {(tasks.data ?? []).map((item) => (
               <option key={item.id} value={item.id}>
                 {item.title}
@@ -115,9 +115,9 @@ export default function WhatsAppQRPage() {
 
         {tasks.isError && (
           <p role="alert" className="text-sm text-[var(--danger)]">
-            تعذر تحميل المهام.{' '}
+            منعرفناش نحمّل المهام.{' '}
             <button className="underline" onClick={() => void tasks.refetch()}>
-              إعادة المحاولة
+              جرّب تاني
             </button>
           </p>
         )}
@@ -149,7 +149,7 @@ export default function WhatsAppQRPage() {
       <Card className="flex items-start gap-3 bg-amber-50 text-sm leading-6 text-amber-950 dark:bg-amber-950/30 dark:text-amber-100">
         <AlertTriangle className="mt-1 shrink-0" size={18} />
         <p>
-          تنبيه: Baileys عميل غير رسمي، واستخدامه قد يخالف إرشادات واتساب ويعرّض الرقم للإيقاف. استخدمه على مسؤوليتك، وللتواصل الداخلي الموافق عليه فقط. لا توجد رسائل تلقائية أو إرسال جماعي؛ راجع موافقة العضو ونمط كل رسالة قبل تأكيدها.
+          تنبيه: Baileys عميل مش رسمي، واستخدامه ممكن يخالف إرشادات واتساب ويعرّض الرقم للإيقاف. استخدمه على مسؤوليتك، وللتواصل الداخلي المسموح بس. مفيش رسائل تلقائية أو بعت جماعي؛ راجع موافقة العضو وشكل كل رسالة قبل ما تأكدها.
         </p>
       </Card>
     </section>

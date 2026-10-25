@@ -17,7 +17,7 @@ export const useNotes = () => {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw toAppError(error, 'حدث خطأ أثناء تحميل الملاحظات.');
+      if (error) throw toAppError(error, 'حصلت مشكلة وإحنا بنحمّل الملاحظات.');
       return (data ?? []) as Note[];
     },
   });
@@ -32,7 +32,7 @@ export const useCreateNote = () => {
         .insert(newNote)
         .select()
         .single();
-      if (error) throw toAppError(error, 'فشل حفظ الملاحظة.');
+      if (error) throw toAppError(error, 'معرفناش نحفظ الملاحظة.');
       return data as Note;
     },
     onSettled: () => qc.invalidateQueries({ queryKey: ['notes'] }),
@@ -44,7 +44,7 @@ export const useDeleteNote = () => {
   return useMutation({
     mutationFn: async (id: number) => {
       const { error } = await supabase.from(TABLES.notes).delete().eq('id', id);
-      if (error) throw toAppError(error, 'تعذر حذف الملاحظة.');
+      if (error) throw toAppError(error, 'معرفناش نمسح الملاحظة.');
       return id;
     },
     onSettled: () => qc.invalidateQueries({ queryKey: ['notes'] }),

@@ -2,6 +2,7 @@ import { Trophy, Medal, Award, User, Edit3 } from 'lucide-react';
 import type { Member } from '../../types/db';
 import type { RankedMember } from './RankingPodium';
 import { formatDate } from '../../lib/dateUtils';
+import { formatSigned } from '../../lib/arabic';
 
 interface RankingTableProps {
   members: RankedMember[];
@@ -14,8 +15,8 @@ export function RankingTable({ members, onSelectMember, onAdjustBonus }: Ranking
     return (
       <div className="flex flex-col items-center justify-center p-12 text-center text-[var(--text-muted)] bg-[var(--surface)] rounded-[var(--radius-lg)] border border-[var(--border)]">
         <Trophy size={36} className="mb-3 opacity-30 text-[var(--primary)]" />
-        <h4 className="font-black text-base text-[var(--text)] mb-1">لا يوجد أعضاء في الترتيب</h4>
-        <p className="text-xs text-[var(--text-muted)]">لم يتم العثور على أعضاء يطابقون معايير التصفية الحالية.</p>
+        <h4 className="font-black text-base text-[var(--text)] mb-1">مفيش أعضاء في الترتيب</h4>
+        <p className="text-xs text-[var(--text-muted)]">ملقيناش أعضاء مطابقين لفلترة دلوقتي.</p>
       </div>
     );
   }
@@ -98,7 +99,7 @@ export function RankingTable({ members, onSelectMember, onAdjustBonus }: Ranking
                         : 'border-[var(--border)] bg-[var(--surface-2)] text-[var(--text-muted)]'
                     }`}
                   >
-                    {member.totalBonus > 0 ? `+${member.totalBonus}` : member.totalBonus} نقطة
+                    {formatSigned(member.totalBonus)} نقطة
                   </span>
                 </td>
 
@@ -108,8 +109,8 @@ export function RankingTable({ members, onSelectMember, onAdjustBonus }: Ranking
                 </td>
 
                 {/* Date */}
-                <td data-label="تاريخ الانضمام" className="text-xs text-[var(--text-muted)] font-medium" dir="ltr">
-                  {member.created_at ? formatDate(member.created_at, 'dd MMM yyyy') : '—'}
+                <td data-label="تاريخ الانضمام" className="whitespace-nowrap text-xs font-medium text-[var(--text-muted)]">
+                  {member.created_at ? formatDate(member.created_at, 'd MMMM yyyy') : '—'}
                 </td>
 
                 {/* Actions */}
@@ -117,7 +118,7 @@ export function RankingTable({ members, onSelectMember, onAdjustBonus }: Ranking
                   <span className="flex items-center gap-1.5 sm:justify-end">
                     <button
                       type="button"
-                      aria-label={`عرض الملف الشخصي لـ ${member.full_name}`}
+                      aria-label={`اعرض الملف الشخصي لـ ${member.full_name}`}
                       onClick={(e) => {
                         e.stopPropagation();
                         onSelectMember?.(member);
@@ -129,7 +130,7 @@ export function RankingTable({ members, onSelectMember, onAdjustBonus }: Ranking
                     {onAdjustBonus && (
                       <button
                         type="button"
-                        aria-label={`تعديل نقاط البونص لـ ${member.full_name}`}
+                        aria-label={`عدّل نقاط البونص لـ ${member.full_name}`}
                         onClick={(e) => {
                           e.stopPropagation();
                           onAdjustBonus(member);

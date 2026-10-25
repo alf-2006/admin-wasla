@@ -16,7 +16,7 @@ const WhatsAppTasksPage = lazy(() => import('../features/whatsapp/WhatsAppTasksP
 const AnnouncementsPage = lazy(() => import('../features/admin/announcements/AnnouncementsPage'));
 
 function PageFallback() {
-  return <div className="grid min-h-40 place-items-center text-sm font-bold text-[var(--text-muted)]" role="status">جارٍ تحميل الصفحة...</div>;
+  return <div className="grid min-h-40 place-items-center text-sm font-bold text-[var(--text-muted)]" role="status">بنحمّل الصفحة...</div>;
 }
 
 function Page({ children }: { children: React.ReactNode }) {
@@ -33,7 +33,7 @@ function ProtectedAdminRoute({ children }: { children: React.ReactNode }) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[var(--bg)]" dir="rtl">
         <span className="text-xs font-bold text-[var(--text-muted)] animate-pulse">
-          جارٍ التحقق من الجلسة...
+          بنتأكد من الجلسة...
         </span>
       </div>
     );
@@ -59,7 +59,7 @@ function RootRedirect() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[var(--bg)]" dir="rtl">
         <span className="text-xs font-bold text-[var(--text-muted)] animate-pulse">
-          جارٍ التحقق من الجلسة...
+          بنتأكد من الجلسة...
         </span>
       </div>
     );

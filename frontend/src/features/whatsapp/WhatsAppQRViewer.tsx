@@ -47,19 +47,19 @@ export function WhatsAppQRViewer({
             <div className="flex items-center gap-2">
               <span className="font-extrabold text-[var(--text)]">حالة اتصال واتساب:</span>
               {loading ? (
-                <Badge variant="neutral">جارٍ الفحص...</Badge>
+                <Badge variant="neutral">بنراجع...</Badge>
               ) : connectionState === 'connected' ? (
                 <Badge variant="success">متصل بنجاح</Badge>
               ) : connectionState === 'qr_ready' ? (
-                <Badge variant="warning">بانتظار المسح</Badge>
+                <Badge variant="warning">مستني المسح</Badge>
               ) : connectionState === 'connecting' ? (
-                <Badge variant="info">جارٍ الاتصال...</Badge>
+                <Badge variant="info">بنتصل...</Badge>
               ) : (
-                <Badge variant="neutral">غير متصل</Badge>
+                <Badge variant="neutral">مش متصل</Badge>
               )}
             </div>
             <p className="mt-0.5 text-xs text-[var(--text-muted)]">
-              {status?.phone ? `الرقم المرتبط: ${status.phone}` : 'المعمارية: خادم Baileys التجريبي المستقل'}
+              {status?.phone ? `الرقم المرتبط: ${status.phone}` : 'النظام: سيرفر Baileys التجريبي المستقل'}
             </p>
           </div>
         </div>
@@ -85,9 +85,9 @@ export function WhatsAppQRViewer({
         <div className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-950 dark:border-emerald-800/60 dark:bg-emerald-950/20 dark:text-emerald-200">
           <CheckCircle2 className="mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400" size={20} aria-hidden="true" />
           <div className="text-sm leading-6">
-            <p className="font-extrabold">جلسة واتساب متصلة ونشطة ({status?.phone ?? 'رقم الإدارة'})</p>
+            <p className="font-extrabold">جلسة واتساب متصلة وشغالة ({status?.phone ?? 'رقم الإدارة'})</p>
             <p className="mt-1 text-xs text-emerald-800 dark:text-emerald-300">
-              يمكنك الآن تحديد التكليف واختيار الأعضاء المؤكدين لإرسال إشعارات المهام إليهم.
+              تقدر دلوقتي تختار المهمة وتحدد الأعضاء اللي أكدوا استقبالهم عشان تبعت لهم إشعارات المهام.
             </p>
           </div>
         </div>
@@ -109,7 +109,7 @@ export function WhatsAppQRViewer({
             onClick={onConnect}
             fullOnMobile
           >
-            تفعيل الربط وطلب رمز QR
+            فعّل الربط واطلب رمز QR
           </Button>
         )}
 
@@ -123,7 +123,7 @@ export function WhatsAppQRViewer({
               onClick={onDisconnect}
               fullOnMobile
             >
-              إيقاف الاتصال
+              اقفل الاتصال
             </Button>
             <Button
               type="button"
@@ -133,7 +133,7 @@ export function WhatsAppQRViewer({
               onClick={onRevoke}
               fullOnMobile
             >
-              فصل الرقم وإلغاء الجلسة نهائياً
+              افصل الرقم والغي الجلسة نهائيًا
             </Button>
           </>
         )}

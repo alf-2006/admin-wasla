@@ -113,13 +113,13 @@ export function AppSidebar({
           <button
             type="button"
             onClick={() => void logout()}
-            title="تسجيل الخروج"
-            aria-label="تسجيل الخروج"
-            data-tip="تسجيل الخروج"
+            title="سجّل الخروج"
+            aria-label="سجّل الخروج"
+            data-tip="سجّل الخروج"
             className="app-sidebar-item app-sidebar-tip app-sidebar-logout"
           >
             <LogOut size={20} aria-hidden="true" />
-            <span className="app-sidebar-item-label">تسجيل الخروج</span>
+            <span className="app-sidebar-item-label">سجّل الخروج</span>
           </button>
         </div>
       </aside>
@@ -142,7 +142,7 @@ export function AppSidebar({
             className="app-sidebar-item app-sidebar-logout app-drawer-nav"
           >
             <LogOut size={20} aria-hidden="true" />
-            <span className="app-sidebar-item-label">تسجيل الخروج</span>
+            <span className="app-sidebar-item-label">سجّل الخروج</span>
           </button>
           <span className="sr-only">{userName}</span>
         </nav>

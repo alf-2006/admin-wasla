@@ -69,7 +69,7 @@ export function usePWA({ memberId, memberEmail }: { memberId?: number; memberEma
   const ensureFreshSubscription = async (): Promise<PushSubscription> => {
     const reg = await navigator.serviceWorker.ready;
     const fp = currentKeyFingerprint();
-    if (!fp) throw new Error('لم يتم تكوين مفتاح الإشعارات في النظام.');
+    if (!fp) throw new Error('مفتاح الإشعارات مش متظبط في النظام.');
     const existing = await reg.pushManager.getSubscription().catch(() => null);
     if (existing && storedKeyFingerprint() === fp) return existing;
     if (existing) {
@@ -136,7 +136,7 @@ export function usePWA({ memberId, memberEmail }: { memberId?: number; memberEma
     try {
       const permission = await Notification.requestPermission();
       if (permission !== 'granted') {
-        toast.warning('يرجى السماح بالإشعارات من إعدادات المتصفح.');
+        toast.warning('اسمح بالإشعارات من إعدادات المتصفح.');
         return;
       }
 
@@ -145,10 +145,10 @@ export function usePWA({ memberId, memberEmail }: { memberId?: number; memberEma
       // Save to Supabase using our new RPC
       await markSubscribed(subscription);
 
-      toast.success('تم تفعيل الإشعارات بنجاح!');
+      toast.success('الإشعارات اتفعلت بنجاح!');
     } catch (err: any) {
       console.error(err);
-      toast.error('تعذر تفعيل الإشعارات: ' + err.message);
+      toast.error('معرفناش نفعل الإشعارات: ' + err.message);
     }
   };
 

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Users, User, Send, AlertCircle } from 'lucide-react';
 import AnnouncementsAPI from '../../../lib/api/announcements';
 import { supabase } from '../../../lib/supabase/client';
@@ -56,7 +56,7 @@ export default function CreateAnnouncementModal({
       if (membersError) throw membersError;
       setMembers(data ?? []);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'تعذر تحميل الأعضاء.');
+      toast.error(err instanceof Error ? err.message : 'معرفناش نحمّل الأعضاء.');
     } finally {
       setMembersLoading(false);
     }
@@ -71,12 +71,12 @@ export default function CreateAnnouncementModal({
     e.preventDefault();
 
     if (!formData.title.trim() || !formData.content.trim()) {
-      setError('يرجى ملء جميع الحقول المطلوبة');
+      setError('اكتب كل البيانات المطلوبة');
       return;
     }
 
     if (formData.target_audience.type === 'specific' && selectedMembers.length === 0) {
-      setError('يرجى اختيار عضو واحد على الأقل');
+      setError('اختار عضو واحد على الأقل');
       return;
     }
 
@@ -104,7 +104,7 @@ export default function CreateAnnouncementModal({
           mIds = [];
         }
         if (mIds.length === 0) {
-          throw new Error('تعذر تحديد الأعضاء المستلمين (القائمة فارغة) — أعد تحميل الصفحة وحاول مجدداً.');
+          throw new Error('معرفناش نحدد الأعضاء اللي هيوصلهم الإعلان (القائمة فاضية) — اعمل إعادة تحميل للصفحة وجرّب تاني.');
         }
       }
 
@@ -123,16 +123,16 @@ export default function CreateAnnouncementModal({
             if (typeof res?.message === 'string' && res.message && !pushNote) pushNote = res.message;
           }
           if (pushSent > 0 && pushFailed === 0) {
-            toast.success(`وصل الإشعار الفوري إلى ${pushSent} عضو.`);
+            toast.success(`الإشعار الفوري وصل لـ ${pushSent} عضو.`);
           } else if (pushSent > 0) {
-            toast.warning(`وصل الإشعار الفوري إلى ${pushSent} عضو وفشل لـ ${pushFailed}.`);
+            toast.warning(`الإشعار الفوري وصل لـ ${pushSent} عضو ومجاش لـ ${pushFailed}.`);
           } else if (pushFailed > 0) {
-            toast.error(`فشل الإشعار الفوري لجميع الأعضاء (${pushFailed}). ${pushNote}`);
+            toast.error(`الإشعار الفوري موصلش لأي عضو (${pushFailed}). ${pushNote}`);
           } else {
-            toast.warning(pushNote || 'لا يوجد أعضاء مفعّلين للإشعارات الفورية — اطلب من الأعضاء تفعيلها من بوابتهم ثم أعد النشر.');
+            toast.warning(pushNote || 'مفيش أعضاء مفعّلين للإشعارات الفورية — اطلب من الأعضاء يفعّلوها من بوابتهم وبعدين ابعت الإعلان تاني.');
           }
         } catch (pushErr) {
-          toast.error('لم يتم إرسال الإشعارات: ' + (pushErr instanceof Error ? pushErr.message : ''));
+          toast.error('الإشعارات ما اتبعتتش: ' + (pushErr instanceof Error ? pushErr.message : ''));
         }
       }
 
@@ -153,21 +153,21 @@ export default function CreateAnnouncementModal({
             // توثيق النتيجة ثانوي — لا يحجب رسالة النتيجة نفسها
           }
           if (sent > 0 && failed === 0) {
-            toast.success(`تم نشر الإعلان وإرساله عبر واتساب إلى ${sent} عضو بنجاح.`);
+            toast.success(`الإعلان اتم نشره واتبعث على واتساب لـ ${sent} عضو بنجاح.`);
           } else if (sent > 0) {
-            toast.warning(`تم نشر الإعلان، ووصل واتساب إلى ${sent} عضو وفشل لـ ${failed}. راجع "الإحصائيات" للتفاصيل: ${waErrors.slice(0, 2).join('؛ ')}`);
+            toast.warning(`الإعلان اتم نشره، وواتساب وصل لـ ${sent} عضو ومجاش لـ ${failed}. راجع "الإحصائيات" للتفاصيل: ${waErrors.slice(0, 2).join('؛ ')}`);
           } else {
-            toast.error(`تم نشر الإعلان، لكن لم تصل رسالة الواتساب لأي عضو (فشل ${failed}). السبب: ${waErrors.slice(0, 2).join('؛ ') || 'غير معروف — راجع اتصال الواتساب وأرقام الهواتف.'}`);
+            toast.error(`الإعلان اتم نشره، بس رسالة الواتساب موصلتش لأي عضو (فشل ${failed}). السبب: ${waErrors.slice(0, 2).join('؛ ') || 'مش معروف — راجع اتصال الواتساب وأرقام التليفونات.'}`);
           }
         } catch (whatsappErr) {
-          toast.error('تم نشر الإعلان بنجاح، لكن حدث خطأ أثناء الإرسال عبر واتساب: ' + (whatsappErr instanceof Error ? whatsappErr.message : ''));
+          toast.error('الإعلان اتم نشره بنجاح، بس حصلت مشكلة وإحنا بنبعت على واتساب: ' + (whatsappErr instanceof Error ? whatsappErr.message : ''));
         }
       } else {
-        toast.success('تم نشر الإعلان بنجاح.');
+        toast.success('الإعلان اتم نشره بنجاح.');
       }
       onSuccess();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'حدث خطأ غير معروف');
+      setError(err instanceof Error ? err.message : 'حصلت مشكلة مش معروفة');
     } finally {
       setLoading(false);
     }
@@ -197,7 +197,7 @@ export default function CreateAnnouncementModal({
   });
 
   return (
-    <Modal isOpen onClose={onClose} title="إنشاء إعلان جديد" maxWidth="lg">
+    <Modal isOpen onClose={onClose} title="اعمل إعلان جديد" maxWidth="lg">
       <form onSubmit={handleSubmit} className="grid gap-4" dir="rtl" noValidate>
         {error && (
           <p className="flex items-center gap-2 rounded-xl border border-red-300 bg-red-50 p-3 text-sm font-bold text-red-900 dark:border-red-800 dark:bg-red-950/50 dark:text-red-100" role="alert">
@@ -213,7 +213,7 @@ export default function CreateAnnouncementModal({
             value={formData.title}
             onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
             className={fieldInput}
-            placeholder="أدخل عنوان الإعلان"
+            placeholder="اكتب عنوان الإعلان"
             required
           />
         </label>
@@ -257,7 +257,7 @@ export default function CreateAnnouncementModal({
             />
             <span className="flex items-center gap-2 text-sm font-bold">
               <Users size={20} className="text-[var(--link)]" aria-hidden="true" />
-              جميع الأعضاء
+              كل الأعضاء
             </span>
           </label>
 
@@ -271,7 +271,7 @@ export default function CreateAnnouncementModal({
             />
             <span className="flex items-center gap-2 text-sm font-bold">
               <User size={20} className="text-[var(--link)]" aria-hidden="true" />
-              أعضاء محددين
+              أعضاء معينين
             </span>
           </label>
 
@@ -279,23 +279,23 @@ export default function CreateAnnouncementModal({
           {formData.target_audience.type === 'specific' && (
             <div className="grid gap-3 rounded-xl border border-[var(--border)] bg-[var(--bg)] p-4">
               <label className="block">
-                <span className="sr-only">البحث عن عضو</span>
+                <span className="sr-only">دور على عضو</span>
                 <input
                   type="search"
                   value={memberSearch}
                   onChange={(e) => setMemberSearch(e.target.value)}
-                  placeholder="ابحث بالاسم أو البريد..."
+                  placeholder="دور بالاسم أو الإيميل..."
                   className={fieldInput}
                 />
               </label>
               {membersLoading ? (
-                <p className="py-4 text-center text-sm text-[var(--text-muted)]" role="status">جاري تحميل الأعضاء...</p>
+                <p className="py-4 text-center text-sm text-[var(--text-muted)]" role="status">بنحمّل الأعضاء...</p>
               ) : members.length === 0 ? (
-                <p className="py-4 text-center text-[var(--text-muted)]">لا توجد أعضاء متاحين</p>
+                <p className="py-4 text-center text-[var(--text-muted)]">مفيش أعضاء متاحين</p>
               ) : (
                 <div className="grid gap-1">
                   <p className="border-b border-[var(--border)] pb-2 text-sm font-bold text-[var(--text-2)]">
-                    اختر الأعضاء ({selectedMembers.length} مختار)
+                    اختار الأعضاء ({selectedMembers.length} متحدد)
                   </p>
                   <div className="grid max-h-60 gap-1 overflow-y-auto">
                     {visibleMembers.map((member) => (
@@ -308,7 +308,7 @@ export default function CreateAnnouncementModal({
                           checked={selectedMembers.includes(member.id)}
                           onChange={() => handleMemberToggle(member.id)}
                           className={checkInput}
-                          aria-label={`اختيار ${member.full_name}`}
+                          aria-label={`اختار ${member.full_name}`}
                         />
                         <span className="min-w-0 flex-1">
                           <span className="block truncate font-bold">{member.full_name}</span>
@@ -319,7 +319,7 @@ export default function CreateAnnouncementModal({
                       </label>
                     ))}
                     {visibleMembers.length === 0 && (
-                      <p className="py-4 text-center text-sm text-[var(--text-muted)]">لا نتائج مطابقة للبحث.</p>
+                      <p className="py-4 text-center text-sm text-[var(--text-muted)]">مفيش نتائج مطابقة للبحث.</p>
                     )}
                   </div>
                 </div>
@@ -361,7 +361,7 @@ export default function CreateAnnouncementModal({
             className={fieldInput}
           />
           <span className="text-xs font-semibold text-[var(--text-muted)]">
-            اتركه فارغاً إذا كان الإعلان دائماً
+            سيبه فاضي لو الإعلان دائم
           </span>
         </label>
 
@@ -378,11 +378,11 @@ export default function CreateAnnouncementModal({
           <Button
             type="submit"
             isLoading={loading}
-            loadingText="جارٍ النشر..."
+            loadingText="بننشر..."
             icon={<Send size={16} aria-hidden="true" />}
             fullOnMobile
           >
-            نشر الإعلان
+            انشر الإعلان
           </Button>
         </div>
       </form>

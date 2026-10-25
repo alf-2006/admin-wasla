@@ -56,31 +56,31 @@ export function checkPasswordStrength(password: string): {
   feedback: string;
   isStrong: boolean;
 } {
-  if (!password) return { score: 0, feedback: 'كلمة المرور فارغة', isStrong: false };
+  if (!password) return { score: 0, feedback: 'الباسورد فاضي', isStrong: false };
   
   let score = 0;
   const feedback: string[] = [];
   
   // الطول
   if (password.length >= 8) score += 1;
-  else feedback.push('يجب أن تكون 8 أحرف على الأقل');
+  else feedback.push('لازم الباسورد يكون 8 حروف على الأقل');
   
   if (password.length >= 12) score += 1;
   
   // أحرف كبيرة وصغيرة
   if (/[a-z]/.test(password) && /[A-Z]/.test(password)) score += 1;
-  else feedback.push('استخدم أحرف كبيرة وصغيرة');
+  else feedback.push('اكتب حروف كبيرة وصغيرة');
   
   // أرقام
   if (/\d/.test(password)) score += 1;
-  else feedback.push('أضف أرقام');
+  else feedback.push('ضيف أرقام');
   
   // رموز خاصة
   if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) score += 1;
-  else feedback.push('أضف رموز خاصة');
+  else feedback.push('ضيف رموز خاصة');
   
   const isStrong = score >= 4;
-  const feedbackText = isStrong ? 'كلمة مرور قوية' : feedback.join('، ');
+  const feedbackText = isStrong ? 'باسورد قوي' : feedback.join('، ');
   
   return { score, feedback: feedbackText, isStrong };
 }

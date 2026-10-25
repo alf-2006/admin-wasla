@@ -57,14 +57,14 @@ const getMembers = async (): Promise<Member[]> => {
 
   if (sessionData.session) {
     const { data, error } = await query.select('*').order('full_name', { ascending: true });
-    if (error) throw toAppError(error, 'حدث خطأ أثناء تحميل الأعضاء.');
+    if (error) throw toAppError(error, 'حصلت مشكلة وإحنا بنحمّل الأعضاء.');
     return data ?? [];
   }
 
   const { data, error } = await query
     .select(PUBLIC_MEMBER_COLUMNS)
     .order('full_name', { ascending: true });
-  if (error) throw toAppError(error, 'حدث خطأ أثناء تحميل الأعضاء.');
+  if (error) throw toAppError(error, 'حصلت مشكلة وإحنا بنحمّل الأعضاء.');
   return (data ?? []) as Member[];
 };
 
@@ -89,7 +89,7 @@ export const useAddMember = () => {
         .insert(insertable)
         .select()
         .single();
-      if (error) throw toAppError(error, 'فشل إضافة العضو.');
+      if (error) throw toAppError(error, 'حصلت مشكلة في إضافة العضو.');
       return data as Member;
     },
     onSettled: () => qc.invalidateQueries({ queryKey: ['members'] }),
@@ -107,7 +107,7 @@ export const useUpdateMember = () => {
         .eq('id', member.id)
         .select()
         .single();
-      if (error) throw toAppError(error, 'فشل تحديث بيانات العضو.');
+      if (error) throw toAppError(error, 'حصلت مشكلة في تحديث بيانات العضو.');
       return data as Member;
     },
     // تحديث تفاؤلي: أظهر التغيير فوراً، وارْجِعه إن رفض الخادم
@@ -131,7 +131,7 @@ export const useDeleteMember = () => {
   return useMutation({
     mutationFn: async (id: number) => {
       const { error } = await supabase.from(TABLES.members).delete().eq('id', id);
-      if (error) throw toAppError(error, 'تعذر حذف العضو.');
+      if (error) throw toAppError(error, 'معرفناش نمسح العضو.');
       return id;
     },
     onSettled: () => qc.invalidateQueries({ queryKey: ['members'] }),
@@ -146,7 +146,7 @@ export const useBulkUpsertMembers = () => {
         .from(TABLES.members)
         .upsert(members, { onConflict: 'email' })
         .select();
-      if (error) throw toAppError(error, 'فشل استيراد الدفعة — لم يُحفظ شيء.');
+      if (error) throw toAppError(error, 'معرفناش نستورد الدفعة — مفيش حاجة اتحفظت.');
       return (data ?? []) as Member[];
     },
     onSettled: () => qc.invalidateQueries({ queryKey: ['members'] }),
@@ -170,9 +170,9 @@ export const fetchMemberByEmail = async (email: string, deviceToken?: string): P
 
   if (error) {
     if (error.message.includes('DEVICE_CONFLICT')) {
-      throw new Error('هذا الحساب مسجّل الدخول من متصفح أو جهاز آخر. يرجى تسجيل الخروج من الجهاز الأول ثم المحاولة مجدداً.');
+      throw new Error('الحساب ده مفتوح من متصفح أو جهاز تاني. اخرج من الجهاز الأول وجرّب تاني.');
     }
-    throw toAppError(error, 'تعذر التحقق من البريد الإلكتروني.');
+    throw toAppError(error, 'معرفناش نتحقق من البريد الإلكتروني.');
   }
   if (data && deviceToken) setDeviceToken(deviceToken);
   return (data as Member | null) ?? null;
@@ -192,6 +192,6 @@ export const updateMemberReadiness = async (memberId: number, canGo: boolean): P
     p_device_token: getDeviceToken() ?? '',
     p_can_go: canGo,
   });
-  if (error) throw toAppError(error, 'تعذر تحديث حالة الاستعداد.');
+  if (error) throw toAppError(error, 'معرفناش نحدّث حالة الاستعداد.');
   return data === true;
 };

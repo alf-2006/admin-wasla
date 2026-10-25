@@ -20,7 +20,7 @@ export function WhatsAppMemberPicker({
   return (
     <div className="grid gap-3">
       <div className="flex items-center justify-between">
-        <h3 className="font-black text-sm">اختر الأعضاء للإرسال ({memberIds.length} محدد)</h3>
+        <h3 className="font-black text-sm">اختار الأعضاء عشان تبعت لهم ({memberIds.length} محدد)</h3>
         {eligible.length > 0 && (
           <div className="flex gap-2">
             <button
@@ -43,11 +43,11 @@ export function WhatsAppMemberPicker({
 
       {loading ? (
         <p role="status" className="text-xs text-[var(--text-muted)]">
-          جارٍ تحميل الأعضاء...
+          بنحمّل الأعضاء...
         </p>
       ) : !eligible.length ? (
         <p className="text-xs text-[var(--text-muted)]">
-          لا يوجد عضو مكلف لديه رقم هاتف صالح.
+          مفيش عضو مكلف عنده رقم تليفون صالح.
         </p>
       ) : (
         <div className="grid gap-2 sm:grid-cols-2">

@@ -34,14 +34,14 @@ export default function DashboardPage() {
 
   return (
     <div className="grid gap-5" dir="rtl">
-      {isError && <ErrorState message="تعذر تحميل بعض بيانات لوحة التحكم." onRetry={retry} />}
+      {isError && <ErrorState message="معرفناش نحمّل بعض بيانات لوحة التحكم." onRetry={retry} />}
       
       {/* Hero Section */}
       <section className="grid gap-4 rounded-[var(--radius-lg)] bg-[var(--primary)] p-5 text-white sm:p-7 lg:grid-cols-[1fr_auto] lg:items-center shadow-md">
         <div>
           <p className="text-sm font-bold text-violet-200 uppercase tracking-widest leading-relaxed">مركز عمليات وصلة</p>
-          <h2 className="mt-1 text-2xl font-black sm:text-3xl tracking-tight">كل الفريق، في صورة واحدة</h2>
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-violet-100/90">تابع جاهزية الأعضاء، مؤشرات المهام، والنشاط اللحظي، واتخذ قراراتك بناءً على بيانات حقيقية.</p>
+          <h2 className="mt-1 text-2xl font-black sm:text-3xl tracking-tight">الفريق كله، في صورة واحدة</h2>
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-violet-100/90">تابع جاهزية الأعضاء، مؤشرات المهام، والنشاط دلوقتي، وخد قراراتك بناءً على بيانات حقيقية.</p>
         </div>
         <div className="grid gap-3 sm:flex sm:flex-wrap pt-3 lg:pt-0">
           <Button onClick={() => navigate('/admin/tasks')} icon={<Plus size={17} />} className="bg-white text-purple-900 hover:bg-violet-50 transition-colors" fullOnMobile>تكليف مهمة</Button>

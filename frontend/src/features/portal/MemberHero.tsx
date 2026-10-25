@@ -1,8 +1,9 @@
-import { Laptop, MapPin, Bell, Download, CheckCircle2 } from 'lucide-react';
+import { Laptop, MapPin, Bell, Download, CheckCircle2, Gift } from 'lucide-react';
 import type { Member } from '../../types/db';
 import { usePWA } from '../../hooks/usePWA';
+import { formatSigned } from '../../lib/arabic';
 
-export function MemberHero({ member, onToggleField, isUpdating }: { member: Member; onToggleField: () => void; isUpdating: boolean }) {
+export function MemberHero({ member, onToggleField, isUpdating, totalBonus, bonusLoading = false }: { member: Member; onToggleField: () => void; isUpdating: boolean; totalBonus?: number | null; bonusLoading?: boolean }) {
   const { isInstallable, installPWA, isSubscribed, subscribeToPush } = usePWA({ memberId: member.id, memberEmail: member.email });
 
   return (
@@ -10,7 +11,7 @@ export function MemberHero({ member, onToggleField, isUpdating }: { member: Memb
       <div className="grid gap-4 sm:grid-cols-[1fr_auto] sm:items-center">
         <div className="flex min-w-0 items-start gap-4">
           <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-[var(--primary)] text-xl font-black text-white">{member.full_name.charAt(0)}</span>
-          <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h1 id="member-name" className="text-xl font-black sm:text-2xl">{member.full_name}</h1></div><p className="mt-1 text-sm leading-6 text-[var(--text-2)]">{member.bio || 'عضو فاعل ومبدع في الفريق'}</p><p className="mt-1 break-all text-sm text-[var(--text-muted)]" dir="ltr">{member.email}</p></div>
+          <div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h1 id="member-name" className="text-xl font-black sm:text-2xl">{member.full_name}</h1></div><p className="mt-1 text-sm leading-6 text-[var(--text-2)]">{member.bio || 'عضو شاطر ومبدع في الفريق'}</p><p className="mt-1 break-all text-sm text-[var(--text-muted)]" dir="ltr">{member.email}</p></div>
         </div>
         
         <div className="flex flex-wrap gap-2">
@@ -30,15 +31,21 @@ export function MemberHero({ member, onToggleField, isUpdating }: { member: Memb
             }`}
           >
             {isSubscribed ? <CheckCircle2 size={14} /> : <Bell size={14} />} 
-            {isSubscribed ? 'الإشعارات مفعلة' : 'تفعيل الإشعارات'}
+            {isSubscribed ? 'الإشعارات شغالة' : 'شغّل الإشعارات'}
           </button>
 
         </div>
       </div>
-      <div className="grid gap-2 border-t border-[var(--border)] pt-4 sm:grid-cols-2">
-        <ReadinessInfo icon={<Laptop size={18} />} label="الجهاز المتوفر" value={member.device || 'غير محدد'} />
+      <div className="grid gap-2 border-t border-[var(--border)] pt-4 sm:grid-cols-3">
+        <div className="flex min-h-12 items-center justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-3 text-sm dark:border-amber-900 dark:bg-amber-950/30">
+          <span className="flex items-center gap-2 font-bold text-amber-800 dark:text-amber-200"><Gift size={18} aria-hidden="true" />رصيد البونص</span>
+          {bonusLoading
+            ? <span className="h-5 w-10 animate-pulse rounded bg-amber-200/60 dark:bg-amber-900/60" aria-label="بنحمّل الرصيد" />
+            : <strong className="text-base font-black tabular-nums text-amber-900 dark:text-amber-100">{typeof totalBonus === 'number' ? formatSigned(totalBonus) : '—'}</strong>}
+        </div>
+        <ReadinessInfo icon={<Laptop size={18} />} label="الجهاز المتاح" value={member.device || 'مش متحدد'} />
         <button type="button" onClick={onToggleField} disabled={isUpdating} aria-pressed={member.can_go_alexandria} className="flex min-h-12 items-center justify-between gap-3 rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 text-start text-sm font-bold disabled:opacity-60">
-          <span className="flex items-center gap-2"><MapPin size={18} aria-hidden="true" />جاهزية الميدان</span><span>{member.can_go_alexandria ? 'متاح' : 'غير متاح'}</span>
+          <span className="flex items-center gap-2"><MapPin size={18} aria-hidden="true" />جاهزية النزول</span><span>{member.can_go_alexandria ? 'جاهز' : 'مش جاهز'}</span>
         </button>
       </div>
     </section>

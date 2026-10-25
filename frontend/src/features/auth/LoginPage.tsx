@@ -31,11 +31,11 @@ export default function LoginPage() {
     }
 
     if (!cleanEmail) {
-      setError('يرجى كتابة البريد الإلكتروني الخاص بك.');
+      setError('اكتب بريدك الإلكتروني.');
       return;
     }
     if (!isValidEmail(cleanEmail)) {
-      setError('صيغة البريد الإلكتروني غير صحيحة. مثال: name@wasla.com');
+      setError('صيغة البريد الإلكتروني مش صحيحة. مثال: name@wasla.com');
       return;
     }
 
@@ -56,7 +56,7 @@ export default function LoginPage() {
     try {
       const member = await fetchMemberByEmail(cleanEmail, deviceToken);
       if (!member) {
-        setError('هذا البريد الإلكتروني غير مسجل في فريق وصلة. يرجى مراجعة الإدارة.');
+        setError('البريد ده مش مسجل في فريق وصلة. راجع الإدارة.');
       } else {
         // لا نخزّن session_token في الواجهة لتقليل أثر سرقة الجلسة (يظل محفوظاً في قاعدة البيانات فقط).
         setMemberRemember(remember);
@@ -65,7 +65,7 @@ export default function LoginPage() {
         navigate('/portal');
       }
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'حدث خطأ أثناء الاتصال. يرجى المحاولة لاحقاً.');
+      setError(cause instanceof Error ? cause.message : 'حصلت مشكلة وإحنا بنتصل. جرّب تاني.');
     } finally {
       setLoading(false);
     }
@@ -76,15 +76,15 @@ export default function LoginPage() {
       audience="member"
       badge="مساحة العمل والتكليفات"
       title="دخول أعضاء وصلة"
-      description="اكتب بريدك الإلكتروني المسجل في الفريق للمتابعة."
-      footer={<span className="text-sm text-[var(--text-2)]">هل تواجه مشكلة في الدخول؟ تواصل مع مسؤول فريقك.</span>}
+      description="اكتب بريدك الإلكتروني المسجل في الفريق عشان تكمّل."
+      footer={<span className="text-sm text-[var(--text-2)]">في مشكلة في الدخول؟ كلم مسؤول فريقك.</span>}
     >
       {error && <div className="auth-error" role="alert"><AlertCircle size={18} aria-hidden="true" /><span>{error}</span></div>}
       <form onSubmit={handleMemberLogin} method="post" className="auth-form" noValidate>
         <label className="auth-field" htmlFor="member-email">البريد الإلكتروني للعضو
           <span className="auth-input-wrap"><Mail size={17} aria-hidden="true" /><input id="member-email" type="email" dir="ltr" autoComplete="email" required placeholder="name@wasla.com" value={email} onChange={(event) => { setEmail(event.target.value); if (error) setError(''); }} aria-invalid={Boolean(error) || undefined} aria-describedby={error ? 'member-email-error' : undefined} /></span>
         </label>
-        {email.trim() && !isValidEmail(email.trim().toLowerCase()) && <p className="text-xs font-bold text-amber-700 dark:text-amber-300" role="note">تحقق من الصيغة: يجب أن يحتوي على @ ونطاق صحيح.</p>}
+        {email.trim() && !isValidEmail(email.trim().toLowerCase()) && <p className="text-xs font-bold text-amber-700 dark:text-amber-300" role="note">اتأكد من الصيغة: لازم يبقى فيه @ ونطاق صحيح.</p>}
         <label className="auth-remember" htmlFor="member-remember">
           <input
             id="member-remember"
@@ -93,10 +93,10 @@ export default function LoginPage() {
             onChange={(event) => setRemember(event.target.checked)}
           />
           <span className="auth-remember-box" aria-hidden="true" />
-          <span>حفظ تسجيل الدخول على هذا الجهاز</span>
+          <span>احفظ تسجيل الدخول على الجهاز ده</span>
         </label>
         <button type="submit" className="auth-submit" disabled={loading} aria-busy={loading || undefined}>
-          {loading ? 'جاري التحقق...' : 'دخول مساحة العمل'}
+          {loading ? 'بنتأكد...' : 'ادخل مساحة العمل'}
           {!loading && <ArrowLeft size={18} aria-hidden="true" />}
         </button>
       </form>

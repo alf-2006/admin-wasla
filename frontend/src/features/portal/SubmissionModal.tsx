@@ -18,7 +18,7 @@ interface SubmissionModalProps {
 
 export function SubmissionModal({ task, url, note, isSubmitting, onUrlChange, onNoteChange, onClose, onSubmit }: SubmissionModalProps) {
   const trimmedUrl = url.trim();
-  const urlError = trimmedUrl && !isValidUrl(trimmedUrl) ? 'الرابط غير صالح — يجب أن يبدأ بـ http:// أو https://' : '';
+  const urlError = trimmedUrl && !isValidUrl(trimmedUrl) ? 'الرابط مش صالح — لازم يبدأ بـ http:// أو https://' : '';
   return (
     <Modal isOpen={!!task} onClose={onClose} title="تسليم المهمة للإدارة" subtitle={task?.title}>
       <form onSubmit={onSubmit} className="grid gap-4" noValidate>
@@ -27,12 +27,12 @@ export function SubmissionModal({ task, url, note, isSubmitting, onUrlChange, on
         </label>
         {urlError && <p role="alert" className="text-xs font-bold text-red-700 dark:text-red-300">{urlError}</p>}
         <label className="grid gap-2 text-sm font-bold">ملاحظات التسليم
-          <textarea rows={4} placeholder="اكتب ما أنجزته والتفاصيل التي تود مشاركتها." value={note} onChange={(event) => onNoteChange(event.target.value)} className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] p-3 leading-6" />
+          <textarea rows={4} placeholder="اكتب اللي أنجزته والتفاصيل اللي حابب تشاركها." value={note} onChange={(event) => onNoteChange(event.target.value)} className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] p-3 leading-6" />
         </label>
-        <p className="flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm leading-6 text-amber-950 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200"><AlertCircle size={18} className="mt-1 shrink-0" />بعد الإرسال ستتحول المهمة إلى قيد المراجعة حتى تعتمدها الإدارة.</p>
+        <p className="flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm leading-6 text-amber-950 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200"><AlertCircle size={18} className="mt-1 shrink-0" />بعد الإرسال، المهمة هتبقى تحت المراجعة لحد ما الإدارة تعتمدها.</p>
         <div className="flex flex-col-reverse gap-2 border-t border-[var(--border)] pt-4 sm:flex-row sm:justify-end">
           <Button type="button" variant="secondary" onClick={onClose} fullOnMobile>إلغاء</Button>
-          <Button type="submit" isLoading={isSubmitting} loadingText="جارٍ الإرسال..." disabled={Boolean(urlError)} fullOnMobile>تأكيد التسليم</Button>
+          <Button type="submit" isLoading={isSubmitting} loadingText="بنبعت..." disabled={Boolean(urlError)} fullOnMobile>تأكيد التسليم</Button>
         </div>
       </form>
     </Modal>

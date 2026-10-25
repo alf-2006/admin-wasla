@@ -48,7 +48,7 @@ export function ToastViewport() {
             <button
               type="button"
               onClick={() => dismiss(t.id)}
-              aria-label="إغلاق التنبيه"
+              aria-label="اقفل التنبيه"
               className="-m-2 grid size-11 shrink-0 place-items-center rounded-lg hover:bg-black/5 dark:hover:bg-white/10"
             >
               <X size={16} aria-hidden="true" />

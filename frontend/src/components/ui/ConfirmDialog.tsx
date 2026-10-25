@@ -11,7 +11,7 @@ export function ConfirmDialog({
   description,
   confirmLabel = 'تأكيد',
   isPending = false,
-  pendingLabel = 'جارٍ التنفيذ...',
+  pendingLabel = 'بننفذ...',
 }: {
   isOpen: boolean;
   onClose: () => void;

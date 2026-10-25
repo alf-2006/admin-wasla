@@ -5,7 +5,6 @@ import type { Announcement } from '../../../types/db';
 import CreateAnnouncementModal from './CreateAnnouncementModal';
 import AnnouncementStatsModal from './AnnouncementStatsModal';
 import { Button } from '../../../components/ui/Button';
-import { Card } from '../../../components/ui/Card';
 import { Badge } from '../../../components/ui/Badge';
 import { ErrorState } from '../../../components/ui/ErrorState';
 import { EmptyState } from '../../../components/ui/EmptyState';
@@ -30,7 +29,7 @@ export default function AnnouncementsPage() {
       const data = await AnnouncementsAPI.getAnnouncements();
       setAnnouncements(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'حدث خطأ غير معروف');
+      setError(err instanceof Error ? err.message : 'حصلت مشكلة مش معروفة');
     } finally {
       setLoading(false);
     }
@@ -55,10 +54,10 @@ export default function AnnouncementsPage() {
       await AnnouncementsAPI.updateAnnouncement(announcement.id, {
         is_active: !announcement.is_active
       });
-      toast.success(announcement.is_active ? 'تم إلغاء تفعيل الإعلان.' : 'تم تفعيل الإعلان.');
+      toast.success(announcement.is_active ? 'الإعلان اتوقف.' : 'الإعلان اتفعّل.');
       loadAnnouncements();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'تعذر تغيير حالة الإعلان.');
+      toast.error(err instanceof Error ? err.message : 'معرفناش نغيّر حالة الإعلان.');
     }
   };
 
@@ -67,11 +66,11 @@ export default function AnnouncementsPage() {
     setIsDeleting(true);
     try {
       await AnnouncementsAPI.deleteAnnouncement(pendingDelete.id);
-      toast.success('تم حذف الإعلان نهائياً.');
+      toast.success('الإعلان اتمسح نهائيًا.');
       setPendingDelete(null);
       loadAnnouncements();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'تعذر حذف الإعلان.');
+      toast.error(err instanceof Error ? err.message : 'معرفناش نمسح الإعلان.');
     } finally {
       setIsDeleting(false);
     }
@@ -85,7 +84,7 @@ export default function AnnouncementsPage() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Intl.DateTimeFormat('ar-EG', {
+    return new Intl.DateTimeFormat('ar-EG-u-nu-latn', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -96,7 +95,7 @@ export default function AnnouncementsPage() {
 
   if (loading) {
     return (
-      <div className="grid gap-4" dir="rtl" aria-label="جاري تحميل الإعلانات">
+      <div className="grid gap-4" dir="rtl" aria-label="بنحمّل الإعلانات...">
         <CardSkeletons count={3} />
       </div>
     );
@@ -105,172 +104,98 @@ export default function AnnouncementsPage() {
   if (error) {
     return (
       <div className="grid gap-4" dir="rtl">
-        <ErrorState message={`خطأ في تحميل الإعلانات: ${error}`} onRetry={() => { void loadAnnouncements(); }} />
+        <ErrorState message={`حصلت مشكلة وإحنا بنحمّل الإعلانات: ${error}`} onRetry={() => { void loadAnnouncements(); }} />
       </div>
     );
   }
 
+  const todayKey = new Date().toDateString();
+  const stats = [
+    { label: 'كل الإعلانات', value: announcements.length, icon: MessageSquare, tone: 'bg-[var(--primary-soft)] text-[var(--link)]' },
+    { label: 'نشطة دلوقتي', value: announcements.filter((a) => a.is_active).length, icon: Users, tone: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300' },
+    { label: 'أولوية عالية', value: announcements.filter((a) => a.priority === 'high' || a.priority === 'urgent').length, icon: AlertTriangle, tone: 'bg-amber-500/10 text-amber-700 dark:text-amber-300' },
+    { label: 'اتنشرت النهارده', value: announcements.filter((a) => new Date(a.created_at).toDateString() === todayKey).length, icon: Clock, tone: 'bg-cyan-500/10 text-cyan-700 dark:text-cyan-300' },
+  ];
+
   return (
-    <div className="p-6 space-y-6" dir="rtl">
+    <div className="grid grid-cols-1 gap-4" dir="rtl">
       {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-black text-[var(--text)]">إدارة الإعلانات</h1>
-          <p className="mt-1 text-[var(--text-muted)]">
-            إنشاء وإدارة الإعلانات للأعضاء
-          </p>
+      <section className="grid gap-4 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-sm)] sm:flex sm:items-center sm:justify-between sm:p-6">
+        <div className="flex min-w-0 items-start gap-3.5">
+          <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-[var(--primary-soft)] text-[var(--link)]" aria-hidden="true"><MessageSquare size={23} /></span>
+          <div className="min-w-0">
+            <h1 className="text-[var(--fs-xl)] font-black text-[var(--text)]">إدارة الإعلانات</h1>
+            <p className="mt-1 text-sm leading-6 text-[var(--text-muted)]">ابعت التنبيهات للأعضاء وتابع مين قراها.</p>
+          </div>
         </div>
-        <Button
-          onClick={() => setShowCreateModal(true)}
-          icon={<Plus size={20} aria-hidden="true" />}
-          fullOnMobile
-        >
-          إعلان جديد
-        </Button>
-      </div>
+        <Button onClick={() => setShowCreateModal(true)} icon={<Plus size={19} aria-hidden="true" />} fullOnMobile>إعلان جديد</Button>
+      </section>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Card className="p-4">
-          <div className="flex items-center gap-3">
-            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[var(--primary-soft)] text-[var(--link)]">
-              <MessageSquare size={20} aria-hidden="true" />
-            </span>
-            <div>
-              <p className="text-sm text-[var(--text-muted)]">إجمالي الإعلانات</p>
-              <p className="text-xl font-black text-[var(--text)]">{announcements.length}</p>
+      {/* Stats */}
+      <section className="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="إحصائيات الإعلانات">
+        {stats.map(({ label, value, icon: Icon, tone }) => (
+          <div key={label} className="flex items-center gap-3 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--surface)] p-3 shadow-[var(--shadow-sm)] sm:p-4">
+            <span className={`grid size-10 shrink-0 place-items-center rounded-xl ${tone}`} aria-hidden="true"><Icon size={19} /></span>
+            <div className="min-w-0">
+              <p className="truncate text-xs font-semibold text-[var(--text-muted)] sm:text-sm">{label}</p>
+              <p className="text-xl font-black tabular-nums text-[var(--text)]">{value}</p>
             </div>
           </div>
-        </Card>
+        ))}
+      </section>
 
-        <Card className="p-4">
-          <div className="flex items-center gap-3">
-            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-              <Users size={20} aria-hidden="true" />
-            </span>
-            <div>
-              <p className="text-sm text-[var(--text-muted)]">نشطة</p>
-              <p className="text-xl font-black text-[var(--text)]">
-                {announcements.filter(a => a.is_active).length}
-              </p>
-            </div>
-          </div>
-        </Card>
+      {/* List */}
+      <section className="grid gap-3" aria-labelledby="announcements-list-title">
+        <h2 id="announcements-list-title" className="flex items-center gap-2 px-1 text-base font-black text-[var(--text)]">
+          كل الإعلانات <span className="text-sm font-bold tabular-nums text-[var(--text-muted)]">({announcements.length})</span>
+        </h2>
 
-        <Card className="p-4">
-          <div className="flex items-center gap-3">
-            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
-              <AlertTriangle size={20} aria-hidden="true" />
-            </span>
-            <div>
-              <p className="text-sm text-[var(--text-muted)]">عالية الأولوية</p>
-              <p className="text-xl font-black text-[var(--text)]">
-                {announcements.filter(a => a.priority === 'high' || a.priority === 'urgent').length}
-              </p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-4">
-          <div className="flex items-center gap-3">
-            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[var(--primary-soft)] text-[var(--link)]">
-              <Clock size={20} aria-hidden="true" />
-            </span>
-            <div>
-              <p className="text-sm text-[var(--text-muted)]">اليوم</p>
-              <p className="text-xl font-black text-[var(--text)]">
-                {announcements.filter(a => {
-                  const today = new Date().toDateString();
-                  const announcementDate = new Date(a.created_at).toDateString();
-                  return today === announcementDate;
-                }).length}
-              </p>
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      {/* Announcements List */}
-      <Card>
-        <div className="grid gap-4 p-4 sm:p-6">
-          <h2 className="text-lg font-black text-[var(--text)]">قائمة الإعلانات</h2>
-
-          {announcements.length === 0 ? (
-            <EmptyState title="لا توجد إعلانات" description="ابدأ بإنشاء أول إعلان للأعضاء." action={<Button onClick={() => setShowCreateModal(true)} icon={<Plus size={17} />} fullOnMobile>إنشاء إعلان جديد</Button>} />
-          ) : (
-            <div className="grid gap-3">
-              {announcements.map((announcement) => (
-                <article
-                  key={announcement.id}
-                  className="grid gap-3 rounded-[var(--radius)] border border-[var(--border)] bg-[var(--bg)] p-4 transition-colors hover:border-[var(--primary)]"
-                >
-                  <div className="grid gap-3 lg:flex lg:items-start lg:justify-between">
-                    <div className="grid min-w-0 gap-2">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="font-black text-[var(--text)]">
-                          {announcement.title}
-                        </h3>
-                        <Badge variant={getPriorityVariant(announcement.priority)}>
-                          {AnnouncementsAPI.getPriorityLabel(announcement.priority)}
-                        </Badge>
-                        {!announcement.is_active && (
-                          <Badge variant="neutral">
-                            غير نشط
-                          </Badge>
-                        )}
-                      </div>
-
-                      <p className="line-clamp-2 text-sm leading-6 text-[var(--text-2)]">
-                        {announcement.content}
-                      </p>
-
-                      <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[var(--text-muted)]">
-                        <span>{formatDate(announcement.created_at)}</span>
-                        <span>{AnnouncementsAPI.getAudienceLabel(announcement.target_audience)}</span>
-                        {announcement.send_whatsapp && (
-                          <span>واتساب</span>
-                        )}
-                        {announcement.send_push && (
-                          <span>إشعار فوري</span>
-                        )}
-                      </p>
-                    </div>
-
-                    <div className="flex flex-col gap-2 sm:flex-row lg:shrink-0">
-                      <Button
-                        variant="secondary"
-                        onClick={() => handleViewStats(announcement.id)}
-                        icon={<Eye size={16} aria-hidden="true" />}
-                        fullOnMobile
-                      >
-                        الإحصائيات
-                      </Button>
-
-                      <Button
-                        variant="secondary"
-                        onClick={() => handleToggleActive(announcement)}
-                        fullOnMobile
-                      >
-                        {announcement.is_active ? 'إلغاء التفعيل' : 'تفعيل'}
-                      </Button>
-
-                      <Button
-                        variant="danger"
-                        onClick={() => setPendingDelete(announcement)}
-                        icon={<Trash2 size={16} aria-hidden="true" />}
-                        fullOnMobile
-                        aria-label={`حذف إعلان ${announcement.title}`}
-                      >
-                        حذف
-                      </Button>
-                    </div>
+        {announcements.length === 0 ? (
+          <EmptyState title="مفيش إعلانات لسه" description="ابدأ واعمل أول إعلان للأعضاء." action={<Button onClick={() => setShowCreateModal(true)} icon={<Plus size={17} />}>اعمل أول إعلان</Button>} />
+        ) : (
+          <ul className="grid gap-3">
+            {announcements.map((announcement) => (
+              <li
+                key={announcement.id}
+                className={`grid gap-3 rounded-[var(--radius)] border bg-[var(--surface)] p-4 shadow-[var(--shadow-sm)] transition-colors sm:p-5 lg:flex lg:items-start lg:justify-between lg:gap-6 ${announcement.is_active ? 'border-[var(--border)]' : 'border-dashed border-[var(--border)] opacity-80'}`}
+              >
+                <div className="grid min-w-0 gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="min-w-0 break-words font-black text-[var(--text)]">{announcement.title}</h3>
+                    <Badge variant={getPriorityVariant(announcement.priority)}>{AnnouncementsAPI.getPriorityLabel(announcement.priority)}</Badge>
+                    {!announcement.is_active && <Badge variant="neutral">متوقف</Badge>}
                   </div>
-                </article>
-              ))}
-            </div>
-          )}
-        </div>
-      </Card>
+                  <p className="line-clamp-2 text-sm leading-7 text-[var(--text-2)]">{announcement.content}</p>
+                  <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-semibold text-[var(--text-muted)]">
+                    <span className="inline-flex items-center gap-1"><Clock size={13} aria-hidden="true" />{formatDate(announcement.created_at)}</span>
+                    <span className="inline-flex items-center gap-1"><Users size={13} aria-hidden="true" />{AnnouncementsAPI.getAudienceLabel(announcement.target_audience)}</span>
+                    {announcement.send_whatsapp && <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-emerald-700 dark:text-emerald-300">واتساب</span>}
+                    {announcement.send_push && <span className="rounded-full bg-[var(--primary-soft)] px-2 py-0.5 text-[var(--link)]">إشعار فوري</span>}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 border-t border-[var(--border)] pt-3 lg:shrink-0 lg:border-t-0 lg:pt-0">
+                  <Button variant="secondary" onClick={() => handleViewStats(announcement.id)} icon={<Eye size={16} aria-hidden="true" />} className="flex-1 lg:flex-none">
+                    مين قراه؟
+                  </Button>
+                  <Button variant="secondary" onClick={() => handleToggleActive(announcement)} className="flex-1 lg:flex-none">
+                    {announcement.is_active ? 'وقّف' : 'فعّل تاني'}
+                  </Button>
+                  <button
+                    type="button"
+                    onClick={() => setPendingDelete(announcement)}
+                    className="grid size-10 min-h-0 min-w-0 shrink-0 place-items-center rounded-[var(--radius-sm)] text-[var(--text-muted)] transition-colors hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-950/30"
+                    aria-label={`امسح إعلان ${announcement.title}`}
+                    title="حذف الإعلان"
+                  >
+                    <Trash2 size={17} aria-hidden="true" />
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       {/* Modals */}
       {showCreateModal && (
@@ -294,12 +219,12 @@ export default function AnnouncementsPage() {
         isOpen={pendingDelete != null}
         onClose={() => setPendingDelete(null)}
         title="حذف الإعلان"
-        subtitle={pendingDelete ? `سيتم حذف "${pendingDelete.title}" نهائياً من كل الأعضاء.` : undefined}
+        subtitle={pendingDelete ? `الإعلان هيتحذف نهائيًا من عند كل الأعضاء: "${pendingDelete.title}".` : undefined}
         maxWidth="sm"
       >
         <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <Button variant="secondary" onClick={() => setPendingDelete(null)} fullOnMobile>إلغاء</Button>
-          <Button variant="danger" onClick={() => void confirmDelete()} isLoading={isDeleting} loadingText="جارٍ الحذف..." fullOnMobile>حذف نهائي</Button>
+          <Button variant="danger" onClick={() => void confirmDelete()} isLoading={isDeleting} loadingText="بنمسح..." fullOnMobile>امسح نهائي</Button>
         </div>
       </Modal>
     </div>

@@ -50,7 +50,7 @@ export function Drawer({
 
   return (
     <div className="fixed inset-0 z-[var(--z-modal)]" role="presentation" dir="rtl">
-      <button type="button" className="absolute inset-0 bg-slate-950/45" onClick={onClose} aria-label="إغلاق الدرج" />
+      <button type="button" className="absolute inset-0 bg-slate-950/45" onClick={onClose} aria-label="اقفل القائمة الجانبية" />
       <section
         ref={panelRef}
         role="dialog"
@@ -67,7 +67,7 @@ export function Drawer({
             type="button"
             onClick={onClose}
             className="grid size-11 shrink-0 place-items-center rounded-xl border border-[var(--border)] text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-2)] hover:text-[var(--text)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--link)]"
-            aria-label="إغلاق"
+            aria-label="اقفل"
           >
             <X size={20} aria-hidden="true" />
           </button>

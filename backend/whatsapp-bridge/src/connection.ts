@@ -73,9 +73,9 @@ export async function revokeSession() {
 }
 
 export async function sendText(phone: string, text: string) {
-  if (!enabled) throw new Error('البوت متوقف. فعّله من لوحة الإدارة أولًا.');
+  if (!enabled) throw new Error('البوت واقف. شغّله من لوحة الإدارة الأول.');
   if (dryRun) return { accepted: true, simulated: true };
-  if (!connected || !socket) throw new Error('اربط رقم واتساب أولًا عن طريق QR.');
+  if (!connected || !socket) throw new Error('اربط رقم واتساب الأول عن طريق QR.');
   const jid = `${phone.replace(/\D/g, '')}@s.whatsapp.net`;
   await socket.sendMessage(jid, { text });
   return { accepted: true, simulated: false };

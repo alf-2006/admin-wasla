@@ -27,15 +27,15 @@ export function AuthShell({ title, description, badge, audience, children, foote
       </header>
       <main className="auth-layout">
         <section className="auth-story" aria-label="عن وصلة">
-          <p className="auth-eyebrow">في عالم تتسارع فيه التكنولوجيا، كان لا بد من وجود وصلة.</p>
-          <h1>أهلاً بك<br /><span>في مساحة تصنع الأثر</span></h1>
-          <p className="auth-story-copy">في وصلة، نحول الأفكار إلى واقع ونعمل معًا نحو مستقبل أفضل.</p>
+          <p className="auth-eyebrow">في عالم التكنولوجيا اللي بيتسارع، كان لازم يبقى فيه وصلة.</p>
+          <h1>أهلاً بيك<br /><span>في مساحة بتعمل فرق</span></h1>
+          <p className="auth-story-copy">في وصلة، بنحوّل الأفكار لواقع وبنشتغل سوا عشان مستقبل أحسن.</p>
           <div className="auth-benefits">
             <span>أفكار بلا حدود</span><span>فرص أكبر</span><span>مجتمع أقوى</span>
           </div>
         </section>
         <section className="auth-panel" aria-labelledby="auth-title">
-          <button type="button" onClick={toggle} className="auth-theme-toggle" aria-label={theme === 'dark' ? 'تفعيل المظهر الفاتح' : 'تفعيل المظهر الداكن'}>
+          <button type="button" onClick={toggle} className="auth-theme-toggle" aria-label={theme === 'dark' ? 'شغّل الوضع الفاتح' : 'شغّل الوضع الداكن'}>
             {theme === 'dark' ? <Sun size={19} /> : <Moon size={19} />}
           </button>
           <div className="auth-heading">

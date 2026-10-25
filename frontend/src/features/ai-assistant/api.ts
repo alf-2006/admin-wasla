@@ -64,11 +64,11 @@ export const useAskWaslaAi = () => {
       // الدالة قد تعيد 200 مع جسم { error } — عاملها كخطأ
       if (invokeError) {
         throw new Error(
-          'تعذر الوصول إلى مساعد وصلة الذكي. تأكد من اتصالك بالإنترنت ووعمل الـ Edge Function، ثم أعد المحاولة.'
+          'معرفناش نوصل لمساعد وصلة الذكي. اتأكد إن الإنترنت شغال وإن الـ Edge Function شغالة، وجرّب تاني.'
         );
       }
       if (!data || data.error) {
-        throw new Error(data?.error || 'استجابة غير مفهومة من المساعد الذكي.');
+        throw new Error(data?.error || 'رد المساعد الذكي مش مفهوم.');
       }
       return data;
     },

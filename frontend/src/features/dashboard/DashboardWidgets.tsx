@@ -1,10 +1,12 @@
-import { Trophy, TrendingDown, Clock, Activity, History, Laptop, BarChart3, Users, PieChart as PieChartIcon } from 'lucide-react';
+import { Trophy, TrendingDown, Clock, Activity, History, Laptop, BarChart3, Users, PieChart as PieChartIcon, ChevronLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import type { ReactNode } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, AreaChart, Area, CartesianGrid } from 'recharts';
 import type { Task } from '../../types/db';
 import type { DashboardMetrics } from './metrics';
 import { useThemeStore } from '../../store/theme';
 import { formatDate, formatRelativeTime } from '../../lib/dateUtils';
+import { formatSigned } from '../../lib/arabic';
 
 /** ألوان الرسوم من الـ design tokens حتى تتبع الثيم (فاتح/داكن) */
 function useChartColors() {
@@ -22,183 +24,194 @@ function useChartColors() {
   };
 }
 
+const tooltipStyle = { borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--surface)', fontWeight: 'bold' } as const;
+
+function Panel({ title, icon, action, tone = 'default', className = '', children }: { title: string; icon: ReactNode; action?: { label: string; onClick: () => void }; tone?: 'default' | 'danger' | 'warning'; className?: string; children: ReactNode }) {
+  const tones = {
+    default: 'border-[var(--border)] bg-[var(--surface)]',
+    danger: 'border-red-200 bg-red-50/60 dark:border-red-900/50 dark:bg-red-950/15',
+    warning: 'border-amber-200 bg-amber-50/60 dark:border-amber-900/50 dark:bg-amber-950/15',
+  };
+  return (
+    <section className={`flex min-w-0 flex-col rounded-[var(--radius-lg)] border p-4 shadow-[var(--shadow-sm)] sm:p-5 ${tones[tone]} ${className}`}>
+      <header className="mb-3 flex min-h-11 items-center justify-between gap-3">
+        <h3 className="flex min-w-0 items-center gap-2 font-black">{icon}<span className="truncate">{title}</span></h3>
+        {action && (
+          <button type="button" onClick={action.onClick} className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-lg px-2 text-sm font-bold text-[var(--link)] hover:bg-[var(--primary-soft)]">
+            {action.label}<ChevronLeft size={16} aria-hidden="true" />
+          </button>
+        )}
+      </header>
+      {children}
+    </section>
+  );
+}
+
+function Empty({ icon, text }: { icon: ReactNode; text: string }) {
+  return <div className="grid min-h-32 flex-1 place-items-center content-center gap-2 text-center text-sm font-bold text-[var(--text-muted)]">{icon}<span>{text}</span></div>;
+}
+
 export function DashboardWidgets({ metrics }: { metrics: DashboardMetrics; tasks: Task[] }) {
   const navigate = useNavigate();
   const chart = useChartColors();
 
-  const COLORS = [chart.success, chart.info, chart.danger, chart.muted];
-
-  const tasksData = [
-    { name: 'مكتمل', value: metrics.approvedTasks ?? 0 },
-    { name: 'قيد التنفيذ', value: metrics.inProgress ?? 0 },
-    { name: 'متأخر', value: metrics.overdue ?? 0 },
-    { name: 'لم يبدأ', value: metrics.notStarted ?? 0 },
-  ].filter(d => d.value > 0);
+  // اللون مربوط بالفئة نفسها (وليس بترتيبها بعد الفلترة) حتى لا تتبدل الألوان
+  const taskSlices = [
+    { name: 'اتعتمدت', value: metrics.approvedTasks ?? 0, color: chart.success, token: 'var(--success)' },
+    { name: 'تحت التنفيذ', value: metrics.inProgress ?? 0, color: chart.info, token: 'var(--info)' },
+    { name: 'تحت المراجعة', value: metrics.underReview ?? 0, color: chart.warning, token: 'var(--warning)' },
+    { name: 'متأخر', value: metrics.overdue ?? 0, color: chart.danger, token: 'var(--danger)' },
+    { name: 'لسه مبدأش', value: metrics.notStarted ?? 0, color: chart.muted, token: 'var(--text-muted)' },
+  ];
+  const tasksData = taskSlices.filter((slice) => slice.value > 0);
+  const totalAssignments = taskSlices.reduce((sum, slice) => sum + slice.value, 0);
 
   const deviceData = [
-    { name: 'لاب توب', count: metrics.laptopCount ?? 0, fill: chart.success },
+    { name: 'لابتوب', count: metrics.laptopCount ?? 0, fill: chart.success },
     { name: 'كمبيوتر', count: metrics.pcCount ?? 0, fill: chart.info },
     { name: 'تابلت/هاتف', count: Math.max(0, (metrics.totalMembers ?? 0) - (metrics.laptopCount ?? 0) - (metrics.pcCount ?? 0)), fill: chart.warning },
   ];
+  const timeline = metrics.timelineData ?? [];
+  const hasTimeline = timeline.some((point) => Number(point.bonus) !== 0);
+  const activity = (metrics.recentActivity ?? []).slice(0, 6);
 
   return (
-    <div className="grid gap-5 lg:grid-cols-2">
-      
-      {/* 1. Tasks Analytics */}
-      <div className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-5 shadow-sm">
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="flex items-center gap-2 font-black"><PieChartIcon size={18} className="text-[var(--link)]" />حالة المهام (Tasks)</h3>
-          <button onClick={() => navigate('/admin/tasks')} className="min-h-11 text-sm font-bold text-[var(--link)] hover:text-[var(--primary-hover)]">إدارة المهام</button>
-        </div>
-        <div className="h-56 w-full">
-          {tasksData.length > 0 ? (
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie data={tasksData} innerRadius={60} outerRadius={80} paddingAngle={5} dataKey="value" stroke="none">
-                  {tasksData.map((_, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
-                </Pie>
-                <Tooltip contentStyle={{ borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--surface)', fontWeight: 'bold' }} itemStyle={{color: 'var(--text)'}} />
-              </PieChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="flex h-full items-center justify-center text-sm font-bold text-[var(--text-muted)]">لا توجد مهام حالياً</div>
-          )}
-        </div>
-        <div className="mt-2 flex flex-wrap justify-center gap-4 text-xs font-bold text-[var(--text-secondary)]">
-          <span className="flex items-center gap-2"><span className="size-3 rounded-full" style={{ backgroundColor: 'var(--success)' }}></span>مكتمل ({metrics.approvedTasks ?? 0})</span>
-          <span className="flex items-center gap-2"><span className="size-3 rounded-full" style={{ backgroundColor: 'var(--info)' }}></span>قيد التنفيذ ({metrics.inProgress ?? 0})</span>
-          <span className="flex items-center gap-2"><span className="size-3 rounded-full" style={{ backgroundColor: 'var(--danger)' }}></span>متأخر ({metrics.overdue ?? 0})</span>
-        </div>
-      </div>
-
-      {/* 2. Top Ranking */}
-      <div className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-5 shadow-sm">
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="flex items-center gap-2 font-black"><Trophy size={18} className="text-amber-500" />أعلى 3 أعضاء (الترتيب)</h3>
-          <button onClick={() => navigate('/admin/ranking')} className="min-h-11 text-sm font-bold text-[var(--link)] hover:text-[var(--primary-hover)]">لوحة الترتيب</button>
-        </div>
-        <div className="grid gap-3">
-          {(metrics.topMembers ?? []).length > 0 ? metrics.topMembers.map((m, i) => (
-            <div key={m.id} onClick={() => navigate('/admin/ranking')} className="flex cursor-pointer items-center justify-between rounded-xl border border-[var(--border)] bg-[var(--bg)] p-3 transition-colors hover:border-[var(--primary)] hover:bg-[var(--primary-soft)]">
-              <div className="flex items-center gap-3">
-                <div className={`flex size-9 shrink-0 items-center justify-center rounded-lg font-black text-white ${i === 0 ? 'bg-amber-500 shadow-sm' : i === 1 ? 'bg-slate-400 shadow-sm' : 'bg-amber-700 shadow-sm'}`}>
-                  {i + 1}
-                </div>
-                <div className="font-bold text-[var(--text)]">{m.full_name}</div>
-              </div>
-              <div className="flex flex-col items-center rounded-lg border-2 border-dashed border-[var(--primary)] bg-[var(--surface)] px-3 py-1 font-black text-[var(--link)]">
-                <span>+{m.totalBonus}</span>
+    <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-2 lg:gap-5">
+      {/* 1. حالة المهام */}
+      <Panel title="حالة التكليفات" icon={<PieChartIcon size={18} className="shrink-0 text-[var(--link)]" aria-hidden="true" />} action={{ label: 'إدارة المهام', onClick: () => navigate('/admin/tasks') }}>
+        {tasksData.length > 0 ? (
+          <>
+            <div className="relative h-52 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={tasksData} innerRadius={62} outerRadius={84} paddingAngle={3} dataKey="value" stroke="none">
+                    {tasksData.map((slice) => <Cell key={slice.name} fill={slice.color} />)}
+                  </Pie>
+                  <Tooltip contentStyle={tooltipStyle} itemStyle={{ color: 'var(--text)' }} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="pointer-events-none absolute inset-0 grid place-items-center content-center text-center">
+                <span className="text-2xl font-black tabular-nums">{totalAssignments}</span>
+                <span className="text-xs font-bold text-[var(--text-muted)]">تكليف</span>
               </div>
             </div>
-          )) : (
-            <div className="flex h-32 flex-col items-center justify-center text-[var(--text-muted)]"><Trophy size={32} className="mb-2 opacity-50" /><span className="text-sm font-bold">لم يتم تسجيل نقاط بونص بعد</span></div>
-          )}
-        </div>
-      </div>
+            <ul className="mt-2 flex flex-wrap justify-center gap-x-4 gap-y-2 text-xs font-bold text-[var(--text-2)]">
+              {tasksData.map((slice) => (
+                <li key={slice.name} className="flex items-center gap-1.5"><span className="size-2.5 rounded-full" style={{ backgroundColor: slice.token }} aria-hidden="true" />{slice.name} <span className="tabular-nums text-[var(--text-muted)]">{slice.value}</span></li>
+              ))}
+            </ul>
+          </>
+        ) : <Empty icon={<PieChartIcon size={28} className="opacity-40" aria-hidden="true" />} text="مفيش تكليفات لسه" />}
+      </Panel>
 
-      {/* 3. Device Readiness */}
-      <div className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-5 shadow-sm">
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="flex items-center gap-2 font-black"><Laptop size={18} className="text-[var(--link)]" />جاهزية الأجهزة</h3>
-        </div>
+      {/* 2. أعلى 3 */}
+      <Panel title="الأعلى نقاطًا" icon={<Trophy size={18} className="shrink-0 text-amber-500" aria-hidden="true" />} action={{ label: 'لوحة الترتيب', onClick: () => navigate('/admin/ranking') }}>
+        {(metrics.topMembers ?? []).length > 0 ? (
+          <ol className="grid gap-2">
+            {metrics.topMembers.map((m, i) => (
+              <li key={m.id}>
+                <button type="button" onClick={() => navigate('/admin/ranking')} className="flex min-h-14 w-full items-center justify-between gap-3 rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-start transition-colors hover:border-[var(--primary)] hover:bg-[var(--primary-soft)]">
+                  <span className="flex min-w-0 items-center gap-3">
+                    <span className={`grid size-9 shrink-0 place-items-center rounded-lg font-black text-white ${i === 0 ? 'bg-amber-500' : i === 1 ? 'bg-slate-400' : 'bg-amber-700'}`}>{i + 1}</span>
+                    <span className="truncate font-bold">{m.full_name}</span>
+                  </span>
+                  <span className="shrink-0 rounded-lg bg-[var(--primary-soft)] px-2.5 py-1 text-sm font-black tabular-nums text-[var(--link)]">{formatSigned(m.totalBonus)}</span>
+                </button>
+              </li>
+            ))}
+          </ol>
+        ) : <Empty icon={<Trophy size={28} className="opacity-40" aria-hidden="true" />} text="لسه مفيش بونص متسجل" />}
+      </Panel>
+
+      {/* 3. الأجهزة */}
+      <Panel title="جاهزية الأجهزة" icon={<Laptop size={18} className="shrink-0 text-[var(--link)]" aria-hidden="true" />}>
         <div className="h-44 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={deviceData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
               <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--text-muted)', fontWeight: 600 }} />
               <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--text-muted)' }} />
-              <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{ borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--surface)', fontWeight: 'bold' }} itemStyle={{color: 'var(--text)'}} />
+              <Tooltip cursor={{ fill: 'transparent' }} contentStyle={tooltipStyle} itemStyle={{ color: 'var(--text)' }} formatter={(value) => [value, 'عضو']} />
               <Bar dataKey="count" radius={[6, 6, 0, 0]} barSize={40}>
-                {deviceData.map((d, i) => <Cell key={`bar-${i}`} fill={d.fill} />)}
+                {deviceData.map((d) => <Cell key={d.name} fill={d.fill} />)}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
         </div>
-      </div>
+      </Panel>
 
-      {/* 4. Danger Zone (Lowest Ranking) */}
-      <div className="rounded-[var(--radius-lg)] border border-red-200 bg-red-50 p-5 shadow-sm dark:border-red-900/50 dark:bg-red-950/10">
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="flex items-center gap-2 font-black text-red-600 dark:text-red-500"><TrendingDown size={18} />مؤشر الخطر (أقل بونص)</h3>
-        </div>
-        <div className="grid gap-2">
-          {(metrics.lowestMembers ?? []).length > 0 ? metrics.lowestMembers.map(m => (
-            <div key={m.id} className="flex items-center justify-between border-b border-dashed border-red-200 pb-2 last:border-0 last:pb-0 dark:border-red-900/50">
-              <div className="flex items-center gap-3">
-                <div className="flex size-8 shrink-0 items-center justify-center rounded-full border border-red-200 bg-red-50 font-black text-red-600 dark:border-red-800 dark:bg-red-900/30">{m.full_name.charAt(0)}</div>
-                <span className="font-bold text-[var(--text)]">{m.full_name}</span>
-              </div>
-              <span className="rounded-md border border-red-200 bg-red-50 px-2 py-0.5 font-black text-red-600 dark:border-red-800 dark:bg-red-900/30">{m.totalBonus}</span>
-            </div>
-          )) : (
-             <div className="flex h-32 flex-col items-center justify-center text-emerald-600 dark:text-emerald-500"><div className="mb-2 flex size-10 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30"><div className="size-6 rounded-full border-2 border-current" /></div><span className="text-sm font-bold">لا يوجد أعضاء في نطاق الخطر!</span></div>
-          )}
-        </div>
-      </div>
+      {/* 4. الأقل نقاطاً */}
+      <Panel title="محتاجين متابعة (الأقل نقاط)" tone="danger" icon={<TrendingDown size={18} className="shrink-0 text-red-600 dark:text-red-400" aria-hidden="true" />}>
+        {(metrics.lowestMembers ?? []).length > 0 ? (
+          <ul className="grid gap-1">
+            {metrics.lowestMembers.map((m) => (
+              <li key={m.id} className="flex min-h-11 items-center justify-between gap-3 border-b border-dashed border-red-200 py-1.5 last:border-0 dark:border-red-900/50">
+                <span className="flex min-w-0 items-center gap-3">
+                  <span className="grid size-8 shrink-0 place-items-center rounded-full border border-red-200 bg-[var(--surface)] font-black text-red-600 dark:border-red-800" aria-hidden="true">{m.full_name.charAt(0)}</span>
+                  <span className="truncate font-bold">{m.full_name}</span>
+                </span>
+                <span className="shrink-0 rounded-md bg-[var(--surface)] px-2 py-0.5 font-black tabular-nums text-red-600 dark:text-red-400">{formatSigned(m.totalBonus)}</span>
+              </li>
+            ))}
+          </ul>
+        ) : <Empty icon={<TrendingDown size={28} className="text-emerald-600 opacity-60" aria-hidden="true" />} text="مفيش أعضاء في نطاق الخطر" />}
+      </Panel>
 
-      {/* 5. Performance Trends Over Time */}
-      <div className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-5 shadow-sm lg:col-span-2">
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="flex items-center gap-2 font-black"><BarChart3 size={18} className="text-[var(--link)]" />أداء الفريق بمرور الوقت (نقاط بونص)</h3>
-        </div>
-        <div className="h-56 w-full" dir="ltr">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={metrics.timelineData ?? []} margin={{ top: 10, right: 0, left: -25, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
-              <XAxis dataKey="date" tickFormatter={(v) => typeof v === 'string' && v.includes('-') ? formatDate(v, 'dd MMM') : v} axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--text-muted)', fontWeight: 600 }} dy={10} />
-              <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--text-muted)' }} />
-              <Tooltip labelFormatter={(v) => typeof v === 'string' && v.includes('-') ? formatDate(v as string) : v} contentStyle={{ borderRadius: '12px', border: '1px solid var(--border)', background: 'var(--surface)', fontWeight: 'bold' }} itemStyle={{color: 'var(--text)'}} />
-              <Area type="monotone" dataKey="bonus" name="إجمالي البونص" stroke={chart.primary} strokeWidth={2} fill={chart.primary} fillOpacity={0.15} />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
+      {/* 5. الأداء عبر الوقت */}
+      <Panel title="البونص عبر الوقت" className="lg:col-span-2" icon={<BarChart3 size={18} className="shrink-0 text-[var(--link)]" aria-hidden="true" />}>
+        {hasTimeline ? (
+          <div className="h-56 w-full" dir="ltr">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={timeline} margin={{ top: 10, right: 0, left: -25, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
+                <XAxis dataKey="date" tickFormatter={(v) => typeof v === 'string' && v.includes('-') ? formatDate(v, 'd MMM') : v} axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--text-muted)', fontWeight: 600 }} dy={10} />
+                <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: 'var(--text-muted)' }} />
+                <Tooltip labelFormatter={(v) => typeof v === 'string' && v.includes('-') ? formatDate(v as string, 'd MMMM yyyy') : v} contentStyle={tooltipStyle} itemStyle={{ color: 'var(--text)' }} />
+                <Area type="monotone" dataKey="bonus" name="إجمالي البونص" stroke={chart.primary} strokeWidth={2} fill={chart.primary} fillOpacity={0.15} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        ) : <Empty icon={<BarChart3 size={28} className="opacity-40" aria-hidden="true" />} text="المنحنى هيظهر بعد تسجيل أول بونص أو خصم" />}
+      </Panel>
 
-      {/* 6. Late tasks radar */}
-      <div className="rounded-[var(--radius-lg)] border border-amber-200 bg-amber-50 p-5 shadow-sm dark:border-amber-900/50 dark:bg-amber-950/10">
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="flex items-center gap-2 font-black text-amber-700 dark:text-amber-500"><Clock size={18} />متأخرون عن المهام</h3>
-          <button onClick={() => navigate('/admin/tasks')} className="min-h-11 text-sm font-bold text-[var(--link)] hover:text-amber-600">عرض المهام</button>
-        </div>
-        <div className="grid gap-2">
-          {(metrics.lateMembers ?? []).length > 0 ? metrics.lateMembers.slice(0, 5).map((item, idx) => (
-            <div key={`${item.member.id}-${idx}`} className="flex items-center justify-between border-b border-dashed border-amber-200 pb-2 last:border-0 last:pb-0 dark:border-amber-900/50">
-              <div className="flex items-center gap-3">
-                <Users size={16} className="text-amber-600 opacity-70" />
-                <span className="font-bold text-[var(--text)]">{item.member.full_name}</span>
-              </div>
-              <span className="rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-black text-red-700 dark:bg-red-900/50 dark:text-red-400">متأخر</span>
-            </div>
-          )) : (
-            <div className="flex h-32 flex-col items-center justify-center text-[var(--text-muted)]"><Clock size={28} className="mb-2 opacity-40 text-amber-600" /><span className="text-sm font-bold">الكل ملتزم بالوقت!</span></div>
-          )}
-        </div>
-      </div>
+      {/* 6. المتأخرون */}
+      <Panel title="متأخرين عن مواعيد التسليم" tone="warning" icon={<Clock size={18} className="shrink-0 text-amber-700 dark:text-amber-400" aria-hidden="true" />} action={{ label: 'عرض المهام', onClick: () => navigate('/admin/tasks') }}>
+        {(metrics.lateMembers ?? []).length > 0 ? (
+          <ul className="grid gap-1">
+            {metrics.lateMembers.slice(0, 6).map((item, idx) => (
+              <li key={`${item.member.id}-${idx}`} className="flex min-h-12 items-center justify-between gap-3 border-b border-dashed border-amber-200 py-1.5 last:border-0 dark:border-amber-900/50">
+                <span className="grid min-w-0 leading-5">
+                  <span className="truncate font-bold">{item.member.full_name}</span>
+                  <span className="truncate text-xs text-[var(--text-muted)]">{item.taskTitle}</span>
+                </span>
+                <span className="shrink-0 rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-black text-red-700 dark:bg-red-900/50 dark:text-red-300">متأخر</span>
+              </li>
+            ))}
+            {metrics.lateMembers.length > 6 && <li className="pt-1 text-xs font-bold text-[var(--text-muted)]">و{metrics.lateMembers.length - 6} تانيين…</li>}
+          </ul>
+        ) : <Empty icon={<Clock size={28} className="text-amber-600 opacity-50" aria-hidden="true" />} text="الكل ملتزم بالمواعيد" />}
+      </Panel>
 
-      {/* 7. Recent Activity Feed */}
-      <div className="rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-5 shadow-sm">
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="flex items-center gap-2 font-black"><History size={18} className="text-[var(--link)]" />أحدث النشاطات</h3>
-        </div>
-        <div className="relative grid gap-4 before:absolute before:right-[15px] before:top-2 before:h-[calc(100%-20px)] before:w-0.5 before:bg-[var(--border-light)]">
-          {(metrics.recentActivity ?? []).length > 0 ? metrics.recentActivity.map((activity) => (
-            <div key={activity.id} className="relative z-10 flex items-start gap-4">
-              <div className={`flex size-8 shrink-0 items-center justify-center rounded-full border-2 border-[var(--surface)] text-white shadow-sm ${activity.type === 'note' ? 'bg-[var(--primary)]' : activity.type === 'task' ? 'bg-[var(--info)]' : 'bg-[var(--success)]'}`}>
-                {activity.type === 'note' ? <Activity size={14} /> : activity.type === 'task' ? <Clock size={14} /> : <Users size={14} />}
-              </div>
-              <div className="flex-1 rounded-xl border border-[var(--border)] bg-[var(--bg)] p-3 shadow-sm">
-                <p className="font-bold text-[var(--text)]">{activity.title}</p>
-                <div className="mt-1 flex items-center justify-between text-xs font-semibold text-[var(--text-muted)]">
-                  <span>{activity.meta}</span>
-                  <span dir="ltr">{activity.date instanceof Date ? formatRelativeTime(activity.date.toISOString()) : 'الآن'}</span>
+      {/* 7. أحدث النشاطات */}
+      <Panel title="أحدث النشاطات" icon={<History size={18} className="shrink-0 text-[var(--link)]" aria-hidden="true" />}>
+        {activity.length > 0 ? (
+          <ol className="relative grid gap-3 before:absolute before:start-[15px] before:top-2 before:h-[calc(100%-20px)] before:w-0.5 before:bg-[var(--border)]">
+            {activity.map((item) => (
+              <li key={item.id} className="relative z-10 flex items-start gap-3">
+                <span className={`grid size-8 shrink-0 place-items-center rounded-full border-2 border-[var(--surface)] text-white ${item.type === 'note' ? 'bg-[var(--primary)]' : item.type === 'task' ? 'bg-[var(--info)]' : 'bg-[var(--success)]'}`} aria-hidden="true">
+                  {item.type === 'note' ? <Activity size={14} /> : item.type === 'task' ? <Clock size={14} /> : <Users size={14} />}
+                </span>
+                <div className="min-w-0 flex-1 rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 py-2.5">
+                  <p className="break-words text-sm font-bold leading-6">{item.title}</p>
+                  <p className="mt-0.5 flex items-center justify-between gap-2 text-xs font-semibold text-[var(--text-muted)]">
+                    <span className="truncate">{item.meta}</span>
+                    <span className="shrink-0">{item.date instanceof Date ? formatRelativeTime(item.date.toISOString()) : 'دلوقتي'}</span>
+                  </p>
                 </div>
-              </div>
-            </div>
-          )) : (
-            <div className="flex h-32 items-center justify-center text-sm font-bold text-[var(--text-muted)]">لا يوجد نشاطات مسجلة</div>
-          )}
-        </div>
-      </div>
-
+              </li>
+            ))}
+          </ol>
+        ) : <Empty icon={<History size={28} className="opacity-40" aria-hidden="true" />} text="مفيش نشاطات متسجلة" />}
+      </Panel>
     </div>
   );
 }

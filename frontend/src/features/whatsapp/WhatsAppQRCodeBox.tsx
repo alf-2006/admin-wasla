@@ -58,7 +58,7 @@ export function WhatsAppQRCodeBox({
           >
             <AlertCircle size={30} className="text-amber-400" aria-hidden="true" />
             <p className="text-sm font-extrabold text-amber-200">انتهت صلاحية الرمز</p>
-            <p className="text-xs text-slate-300">انتهت مهلة الـ 60 ثانية لمسح الرمز.</p>
+            <p className="text-xs text-slate-300">مهلة الـ 60 ثانية لمسح الرمز خلصت.</p>
             <Button
               type="button"
               variant="primary"
@@ -67,7 +67,7 @@ export function WhatsAppQRCodeBox({
               onClick={onRefresh}
               className="mt-2 min-h-[44px] text-xs font-bold"
             >
-              تحديث الرمز
+              حدّث الرمز
             </Button>
           </div>
         )}
@@ -76,12 +76,12 @@ export function WhatsAppQRCodeBox({
       {!isExpired && (
         <div className="flex items-center gap-2 text-xs font-bold text-slate-700">
           <Clock size={15} className="text-[var(--primary)]" aria-hidden="true" />
-          <span>صلاحية الرمز تنتهي خلال: {secondsRemaining} ثانية</span>
+          <span>الرمز صلاحيته هتخلص خلال: {secondsRemaining} ثانية</span>
         </div>
       )}
 
       <p className="text-xs leading-5 text-slate-600">
-        من تطبيق واتساب على الهاتف: اذهب إلى <strong>الأجهزة المرتبطة ← ربط جهاز</strong> ثم امسح الرمز.
+        من تطبيق واتساب على موبايلك: روح لـ <strong>الأجهزة المرتبطة ← ربط جهاز</strong> وبعدين امسح الرمز.
       </p>
 
       <div className="flex w-full flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-3">
@@ -93,7 +93,7 @@ export function WhatsAppQRCodeBox({
           onClick={onRefresh}
           className="min-h-[44px] text-xs"
         >
-          توليد رمز جديد
+          طلّع رمز جديد
         </Button>
         <Button
           type="button"
@@ -102,7 +102,7 @@ export function WhatsAppQRCodeBox({
           onClick={onSimulatePair}
           className="min-h-[44px] text-xs"
         >
-          محاكاة إتمام المسح
+          جرّب إتمام المسح
         </Button>
       </div>
     </div>

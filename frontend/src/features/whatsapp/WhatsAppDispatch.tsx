@@ -4,6 +4,8 @@ import { Button } from '../../components/ui/Button';
 import type { Member, Task } from '../../types/db';
 import type { WhatsAppSendResult } from './api';
 import { WhatsAppConfirmModal } from './WhatsAppConfirmModal';
+import { formatDeadline } from '../../lib/dateUtils';
+import { taskBonus } from '../tasks/taskMeta';
 
 interface Props {
   task: Task;
@@ -16,34 +18,23 @@ interface Props {
 }
 
 export function buildTaskMessage(task: Task, member: Member): string {
-  const formatArabicDate = (iso: string) => {
-    try {
-      return new Intl.DateTimeFormat('ar-EG', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true,
-      }).format(new Date(iso));
-    } catch {
-      return iso;
-    }
-  };
+  const formatArabicDate = (value: string) => formatDeadline(value, { weekday: true, year: 'always' });
 
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173';
   const deadlineText =
     task.has_deadline && task.deadline_date
-      ? `\nالموعد النهائي المخطط للإنجاز: ${formatArabicDate(task.deadline_date)}`
+      ? `\nالموعد النهائي لإنجاز المهمة: ${formatArabicDate(task.deadline_date)}`
       : '';
+  const bonus = taskBonus(task);
+  const bonusText = bonus > 0 ? `\nبونص المهمة بعد الاعتماد: ${bonus} نقطة` : '';
 
   return (
     `السلام عليكم ${member.full_name}،\n\n` +
-    `نود إعلامك بأنه قد تم إسناد تكليف جديد إليك في منظومة وصلة بعنوان:\n` +
-    `«${task.title}»${deadlineText}\n\n` +
-    `يرجى التكرم بالدخول إلى بوابة وصلة لمراجعة تفاصيل المهمة والبدء في التنفيذ:\n` +
+    `حابين نبلغك إن اتسندت لك مهمة جديدة على منصة وصلة بعنوان:\n` +
+    `«${task.title}»${deadlineText}${bonusText}\n\n` +
+    `من فضلك ادخل على بوابة وصلة عشان تراجع تفاصيل المهمة وتبدأ التنفيذ:\n` +
     `${baseUrl}/login\n\n` +
-    `تمنياتنا لك بالتوفيق،\n` +
+    `نتمنالك التوفيق،\n` +
     `فريق إدارة وصلة.`
   );
 }
@@ -82,12 +73,12 @@ export function WhatsAppDispatch({
           <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
             <span className="flex items-center gap-1.5 font-extrabold text-[var(--text)]">
               <Eye size={16} className="text-[var(--primary)]" aria-hidden="true" />
-              <span>معاينة نص الرسالة للمستلم:</span>
+              <span>معاينة رسالة المستلم:</span>
             </span>
 
             {members.length > 1 && (
               <label className="flex items-center gap-2 text-xs text-[var(--text-muted)]">
-                <span>اختر العضو للمعاينة:</span>
+                <span>اختار العضو للمعاينة:</span>
                 <select
                   value={previewMemberIndex}
                   onChange={(e) => setPreviewMemberIndex(Number(e.target.value))}
@@ -118,7 +109,7 @@ export function WhatsAppDispatch({
           onChange={(event) => setConsentConfirmed(event.target.checked)}
         />
         <span>
-          أؤكد أن الأعضاء المحددين وافقوا مسبقاً وبشكل صريح على استلام إشعارات المهام عبر واتساب، وأن المحتوى يخص مهام مسندة إليهم حصراً.
+          بأكد إن الأعضاء المحددين وافقوا قبل كده وبشكل واضح على استلام إشعارات المهام على واتساب، وإن المحتوى خاص بمهام متسندة لهم بس.
         </span>
       </label>
 
@@ -129,12 +120,12 @@ export function WhatsAppDispatch({
         onClick={handleOpenModal}
         fullOnMobile
       >
-        استمرار ومراجعة الإرسال ({members.length} عضو)
+        كمّل وراجع الإرسال ({members.length} عضو)
       </Button>
 
       {!isConnected && (
         <p className="text-sm text-[var(--text-muted)]">
-          اربط رقم واتساب أولًا عبر رمز QR لتتمكن من تفعيل الإرسال التجريبي.
+          اربط رقم واتساب الأول عن طريق رمز QR عشان تقدر تفعّل الإرسال التجريبي.
         </p>
       )}
 
@@ -150,14 +141,14 @@ export function WhatsAppDispatch({
         <div className="mt-2 rounded-xl border border-[var(--border)] bg-[var(--surface)] p-4 text-sm leading-6">
           <p className="mb-2 flex items-center gap-2 font-bold text-[var(--text)]">
             <CheckCircle2 size={18} className="text-emerald-600" aria-hidden="true" />
-            <span>نتائج الإرسال التجريبي:</span>
+            <span>نتائج البعت التجريبي:</span>
           </p>
           <ul className="list-inside list-disc">
             <li>
-              تم الإرسال التجريبي بنجاح إلى: <b>{result.sent}</b>
+              البعت التجريبي نجح لـ: <b>{result.sent}</b>
             </li>
             <li>
-              فشل الإرسال إلى: <b>{result.failed}</b>
+              البعت فشل لـ: <b>{result.failed}</b>
             </li>
             {result.errors && result.errors.length > 0 && (
               <li className="text-[var(--danger)]">الأخطاء: {result.errors.join('، ')}</li>

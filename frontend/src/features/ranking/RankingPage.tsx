@@ -43,7 +43,7 @@ export default function RankingPage() {
   }
 
   if (isError) {
-    return <div className="grid gap-5" dir="rtl"><ErrorState message="تعذر تحميل بيانات الترتيب والتقييم." onRetry={() => { void refetch(); }} /></div>;
+    return <div className="grid gap-5" dir="rtl"><ErrorState message="معرفناش نحمّل بيانات الترتيب والتقييم." onRetry={() => { void refetch(); }} /></div>;
   }
 
   return (
@@ -55,14 +55,14 @@ export default function RankingPage() {
             <Trophy size={24} />
           </div>
           <div>
-            <h2 className="text-xl font-black text-[var(--text)] sm:text-2xl">ترتيب الفريق (Leaderboard)</h2>
-            <p className="mt-1 text-xs text-[var(--text-muted)] sm:text-sm max-w-xl leading-relaxed">
-              ترتيب أعضاء وصلة حسب نقاط التقييم (البونص) ومؤشرات الإنجاز الموثقة بالسجل. انقر على أي عضو لعرض ملفه الكامل.
+            <h2 className="text-[var(--fs-xl)] font-black text-[var(--text)]">ترتيب الفريق</h2>
+            <p className="mt-1 max-w-xl text-sm leading-relaxed text-[var(--text-muted)]">
+              الترتيب حسب نقاط البونص المسجلة في الملاحظات. دوس على أي عضو عشان تشوف ملفه الكامل.
             </p>
           </div>
         </div>
         <Button onClick={() => handleOpenAdjust()} icon={<Plus size={17} />} fullOnMobile className="min-h-11">
-          تسجيل تقييم جديد
+          سجّل تقييم جديد
         </Button>
       </section>
 
@@ -71,9 +71,9 @@ export default function RankingPage() {
         <div className="mb-3 flex items-center justify-between">
           <h3 className="font-black text-sm text-[var(--text)] flex items-center gap-2">
             <Award size={18} className="text-amber-500" />
-            منصة المتصدرين (أعلى 3 أعضاء)
+            المتصدرين
           </h3>
-          <span className="text-xs text-[var(--text-muted)]">إجمالي الأعضاء: <b className="text-[var(--text)]">{members.length}</b></span>
+          <span className="text-xs text-[var(--text-muted)]">من إجمالي <b className="tabular-nums text-[var(--text)]">{members.length}</b> عضو</span>
         </div>
         <RankingPodium
           topMembers={topThree}
@@ -83,30 +83,28 @@ export default function RankingPage() {
       </section>
 
       {/* Filters and Search */}
-      <section className="flex flex-col gap-3 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-4 shadow-[var(--shadow-sm)]">
-        <div className="flex items-center gap-2 border-b border-[var(--border)] pb-2.5">
-          <Filter size={16} className="text-[var(--primary)]" />
-          <h4 className="font-bold text-xs text-[var(--text)]">تصفية وبحث جدول الترتيب</h4>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <section className="grid gap-3 rounded-[var(--radius-lg)] border border-[var(--border)] bg-[var(--surface)] p-3 shadow-[var(--shadow-sm)] sm:p-4" aria-label="فلترة جدول الترتيب">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_auto]">
           <div className="relative">
-            <Search size={16} className="absolute end-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+            <Search size={17} className="pointer-events-none absolute inset-y-0 start-3 my-auto text-[var(--text-muted)]" aria-hidden="true" />
             <input
               type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="ابحث بالاسم أو البريد..."
-              className="w-full h-11 rounded-xl border border-[var(--border)] bg-[var(--bg)] pe-9 ps-3 text-sm focus:outline-none focus:border-[var(--primary)]"
+              aria-label="البحث في جدول الترتيب"
+              className="h-11 w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] pe-3 ps-10 text-base placeholder:text-[var(--text-muted)] focus:border-[var(--primary)] focus:outline-none focus:ring-4 focus:ring-[var(--primary-soft)] sm:text-sm"
             />
           </div>
-          <label className="flex items-center gap-2.5 h-11 px-3 rounded-xl border border-[var(--border)] bg-[var(--bg)] text-xs font-bold text-[var(--text)] cursor-pointer">
+          <label className="flex min-h-11 cursor-pointer items-center gap-2.5 rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3 text-sm font-bold text-[var(--text)] has-[:checked]:border-[var(--primary)] has-[:checked]:bg-[var(--primary-soft)]">
+            <Filter size={16} className="shrink-0 text-[var(--link)]" aria-hidden="true" />
             <input
               type="checkbox"
               checked={onlyWithBonus}
               onChange={(e) => setOnlyWithBonus(e.target.checked)}
-              className="size-4 rounded text-[var(--primary)]"
+              className="size-[18px] shrink-0"
             />
-            <span>عرض أصحاب نقاط التقييم فقط (بونص ≠ 0)</span>
+            <span>اللي عندهم نقاط بس</span>
           </label>
         </div>
       </section>
@@ -116,7 +114,7 @@ export default function RankingPage() {
         <div className="mb-2 flex items-center justify-between">
           <h3 className="font-black text-sm text-[var(--text)] flex items-center gap-2">
             <Users size={17} className="text-[var(--primary)]" />
-            قائمة الترتيب العامة ({filteredMembers.length})
+            الترتيب الكامل <span className="tabular-nums text-[var(--text-muted)]">({filteredMembers.length})</span>
           </h3>
         </div>
         <RankingTable

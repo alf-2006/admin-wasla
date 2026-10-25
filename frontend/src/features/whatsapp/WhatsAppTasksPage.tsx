@@ -26,19 +26,19 @@ export default function WhatsAppTasksPage() {
         <div className="flex items-start gap-3">
           <ShieldAlert className="mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" size={20} aria-hidden="true" />
           <div className="text-sm leading-6">
-            <h2 className="text-base font-bold">تنبيه سياسات واتساب ومخاطر حظر الحسابات</h2>
+            <h2 className="text-base font-bold">تنبيه بخصوص سياسات واتساب واحتمال حظر الحساب</h2>
             <p className="mt-1">
-              طريقة ربط QR عبر مكتبات الويب (مثل Baileys) غير رسمية وغير معتمدة من Meta، واستخدامها في الإرسال المؤتمت قد يعرّض رقم الهاتف للحظر والإيقاف النهائي بموجب سياسات WhatsApp Business.
+              طريقة الربط عن طريق QR باستخدام مكتبات الويب (زي Baileys) مش رسمية ومش معتمدة من Meta، واستخدامها في البعت التلقائي ممكن يعرّض رقم التليفون للحظر والإيقاف النهائي حسب سياسات WhatsApp Business.
             </p>
             <p className="mt-1">
-              هذا التبويب مخصص كنموذج تجريبي معزول للاختبار الإداري الداخلي فقط. في حال الرغبة في إرسال إشعارات موثوقة للإنتاج الفعلي، يُرجى استخدام تبويب <strong>الربط السحابي المعتمد (Meta Cloud API)</strong>.
+              التبويب ده معمول كنموذج تجريبي منفصل للاختبار الإداري الداخلي بس. لو عايز تبعت إشعارات موثوقة في بيئة التشغيل الفعلية، استخدم تبويب <strong>الربط السحابي الرسمي (Meta Cloud API)</strong>.
             </p>
           </div>
         </div>
       </section>
 
       {/* Tab Navigation */}
-      <div className="flex gap-2 overflow-x-auto border-b border-[var(--border)]" role="tablist" aria-label="أنماط ربط واتساب">
+      <div className="flex gap-2 overflow-x-auto border-b border-[var(--border)]" role="tablist" aria-label="طرق ربط واتساب">
         <button
           type="button"
           role="tab"
@@ -53,7 +53,7 @@ export default function WhatsAppTasksPage() {
           }`}
         >
           <QrCode size={18} aria-hidden="true" />
-          <span>الربط التجريبي عبر QR (Baileys Mock)</span>
+          <span>الربط التجريبي عن طريق QR (Baileys Mock)</span>
         </button>
         <button
           type="button"
@@ -69,7 +69,7 @@ export default function WhatsAppTasksPage() {
           }`}
         >
           <Cloud size={18} aria-hidden="true" />
-          <span>الربط السحابي المعتمد (Meta Cloud API)</span>
+          <span>الربط السحابي الرسمي (Meta Cloud API)</span>
         </button>
         <button
           type="button"
@@ -85,7 +85,7 @@ export default function WhatsAppTasksPage() {
           }`}
         >
           <Activity size={18} aria-hidden="true" />
-          <span>التشخيص الدقيق</span>
+          <span>الفحص بالتفصيل</span>
         </button>
       </div>
 

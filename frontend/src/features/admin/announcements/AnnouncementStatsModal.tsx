@@ -35,7 +35,7 @@ export default function AnnouncementStatsModal({
       setDetails(detailsData);
       setAnnouncement(announcementData);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'حدث خطأ غير معروف');
+      setError(err instanceof Error ? err.message : 'حصلت مشكلة مش معروفة');
     } finally {
       setLoading(false);
     }
@@ -63,7 +63,7 @@ export default function AnnouncementStatsModal({
 
   const formatDateTime = (value: string | null) => {
     if (!value) return '—';
-    return new Intl.DateTimeFormat('ar-EG', {
+    return new Intl.DateTimeFormat('ar-EG-u-nu-latn', {
       year: 'numeric',
       month: 'short',
       day: 'numeric',
@@ -73,17 +73,17 @@ export default function AnnouncementStatsModal({
   };
 
   const memberStatus = (row: AnnouncementMemberDetail): { label: string; variant: 'success' | 'info' | 'warning' | 'neutral' } => {
-    if (row.dismissed_at) return { label: 'مسح الإعلان', variant: 'neutral' };
-    if (row.read_at) return { label: 'قرأ الإعلان', variant: 'success' };
-    if (row.viewed_at) return { label: 'فتح ولم يقرأ', variant: 'warning' };
-    return { label: 'لم يفتح بعد', variant: 'info' };
+    if (row.dismissed_at) return { label: 'خبّاه', variant: 'neutral' };
+    if (row.read_at) return { label: 'قرا الإعلان', variant: 'success' };
+    if (row.viewed_at) return { label: 'فتح ومقراش', variant: 'warning' };
+    return { label: 'لسه ما فتحش', variant: 'info' };
   };
 
   return (
     <Modal isOpen onClose={onClose} title="إحصائيات الإعلان" maxWidth="3xl">
       <div className="grid gap-8 pb-4" dir="rtl">
         {loading ? (
-          <div className="grid gap-4" role="status" aria-label="جاري تحميل الإحصائيات">
+          <div className="grid gap-4" role="status" aria-label="بنحمّل الإحصائيات">
             <Skeleton className="h-12 w-1/3" />
             <Skeleton className="h-24 w-full" />
             <Skeleton className="h-40 w-full" />
@@ -92,28 +92,28 @@ export default function AnnouncementStatsModal({
           <ErrorState message={error} onRetry={() => { void loadStats(); }} />
         ) : !stats ? (
           <div className="py-12 text-center text-[var(--text-muted)]">
-            لا توجد إحصائيات متاحة لهذا الإعلان
+            مفيش إحصائيات متاحة للإعلان ده
           </div>
         ) : (
           <div className="grid gap-12">
             {/* Editorial Header Stats */}
             <div className="grid grid-cols-2 gap-x-8 gap-y-6 sm:grid-cols-4 border-b border-[var(--border)] pb-8">
               <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1">المستلمين</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1">اللي استلموا</p>
                 <p className="font-[Instrument_Serif] text-4xl text-[var(--text)]">{stats.total_recipients}</p>
               </div>
               <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1">تم الفتح</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1">اتفتح</p>
                 <p className="font-[Instrument_Serif] text-4xl text-[var(--text)]">{stats.viewed_count}</p>
                 <p className="text-xs mt-1 text-[var(--text-2)]">{getViewedPercentage()}% من الإجمالي</p>
               </div>
               <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1">تمت القراءة</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1">اتقرا</p>
                 <p className="font-[Instrument_Serif] text-4xl text-[var(--text)]">{stats.read_count}</p>
                 <p className="text-xs mt-1 text-[var(--text-2)]">{getReadPercentage()}% من الإجمالي</p>
               </div>
               <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1">تم المسح</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-muted)] mb-1">اتمسح</p>
                 <p className="font-[Instrument_Serif] text-4xl text-[var(--text)]">{stats.dismissed_count}</p>
                 <p className="text-xs mt-1 text-[var(--text-2)]">{getDismissedPercentage()}% من الإجمالي</p>
               </div>
@@ -126,7 +126,7 @@ export default function AnnouncementStatsModal({
                 {announcement.whatsapp_sent_at ? (
                   <>
                     <p>
-                      وصل إلى <strong>{announcement.whatsapp_sent_count}</strong> عضو
+                      وصل لـ <strong>{announcement.whatsapp_sent_count}</strong> عضو
                       {' — '}{formatDateTime(announcement.whatsapp_sent_at)}
                     </p>
                     {Array.isArray(announcement.whatsapp_errors) && announcement.whatsapp_errors.length > 0 ? (
@@ -136,11 +136,11 @@ export default function AnnouncementStatsModal({
                         ))}
                       </ul>
                     ) : (
-                      <p className="text-emerald-700 dark:text-emerald-300">لا توجد أخطاء مسجلة.</p>
+                      <p className="text-emerald-700 dark:text-emerald-300">مفيش أخطاء متسجلة.</p>
                     )}
                   </>
                 ) : (
-                  <p>لم يُسجَّل أي إرسال واتساب لهذا الإعلان بعد (ربما فشل الطلب قبل الوصول للجسر).</p>
+                  <p>لسه مفيش إرسال واتساب متسجل للإعلان ده (ممكن الطلب يكون فشل قبل ما يوصل للجسر).</p>
                 )}
               </div>
             ) : null}
@@ -148,10 +148,10 @@ export default function AnnouncementStatsModal({
             {/* تفاصيل كل عضو */}
             <div>
               <div className="mb-4 flex items-baseline justify-between">
-                <h4 className="font-bold text-[var(--text)]">تفاصيل المستلمين ({details.length})</h4>
+                <h4 className="font-bold text-[var(--text)]">تفاصيل اللي استلموا ({details.length})</h4>
               </div>
               {details.length === 0 ? (
-                <p className="text-sm text-[var(--text-muted)]">لا يوجد مستلمون لهذا الإعلان.</p>
+                <p className="text-sm text-[var(--text-muted)]">مفيش حد استلم الإعلان ده.</p>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm text-start">
@@ -161,8 +161,8 @@ export default function AnnouncementStatsModal({
                         <th className="pb-3 text-start font-bold whitespace-nowrap px-2">الحالة</th>
                         <th className="pb-3 text-start font-bold whitespace-nowrap px-2">أول فتح</th>
                         <th className="pb-3 text-start font-bold whitespace-nowrap px-2">آخر فتح (مرات)</th>
-                        <th className="pb-3 text-start font-bold whitespace-nowrap px-2">تمت القراءة</th>
-                        <th className="pb-3 text-start font-bold whitespace-nowrap px-2">المسح</th>
+                        <th className="pb-3 text-start font-bold whitespace-nowrap px-2">اتقرا</th>
+                        <th className="pb-3 text-start font-bold whitespace-nowrap px-2">اتمسح</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[var(--border)]">
@@ -198,7 +198,7 @@ export default function AnnouncementStatsModal({
             {stats.total_recipients > 0 && (
               <div className="border-t border-[var(--border)] pt-6 text-sm text-[var(--text-2)] max-w-prose leading-relaxed">
                 <p>
-                  <strong>ملاحظة:</strong> إذا كان معدل القراءة منخفضاً، جرب تغيير توقيت الإرسال أو استخدام عناوين أكثر جذباً. إذا كان معدل المسح عالياً، راجع محتوى الإعلانات لجعله أكثر فائدة.
+                  <strong>ملحوظة:</strong> لو نسبة القراءة قليلة، جرّب تغيّر وقت الإرسال أو تستخدم عناوين تشد أكتر. ولو نسبة المسح عالية، راجع محتوى الإعلانات وخليه أفيد.
                 </p>
               </div>
             )}

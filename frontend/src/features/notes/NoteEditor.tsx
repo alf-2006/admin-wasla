@@ -33,11 +33,11 @@ export function NoteEditor({ isOpen, members, onClose }: { isOpen: boolean; memb
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!text.trim()) {
-      setFormError('محتوى الملاحظة مطلوب.');
+      setFormError('اكتب محتوى الملاحظة.');
       return;
     }
     if (points !== 0 && targetMemberId == null) {
-      setFormError('البونص يُسجَّل لعضو محدد — اختر العضو المستهدف أو اجعل القيمة صفراً.');
+      setFormError('البونص بيتسجّل لعضو محدد — اختار العضو المستهدف أو خلّي القيمة صفر.');
       return;
     }
     const targetMember = members.find((member) => member.id === targetMemberId);
@@ -47,7 +47,7 @@ export function NoteEditor({ isOpen, members, onClose }: { isOpen: boolean; memb
       text: tag ? `${text.trim()} ${tag}` : text.trim(),
       author: author.trim() || 'الإدارة',
       author_role: 'Admin',
-      date: new Date().toLocaleDateString('ar-EG', { dateStyle: 'medium' }),
+      date: new Date().toLocaleDateString('ar-EG-u-nu-latn', { dateStyle: 'medium' }),
       target_member_id: targetType === 'member' ? targetMemberId : null,
       target_name: targetType === 'member' ? targetMember?.full_name ?? null : null,
     };
@@ -56,30 +56,30 @@ export function NoteEditor({ isOpen, members, onClose }: { isOpen: boolean; memb
       reset();
       onClose();
     } catch (cause) {
-      setFormError(cause instanceof Error ? cause.message : 'فشل حفظ الملاحظة.');
+      setFormError(cause instanceof Error ? cause.message : 'معرفناش نحفظ الملاحظة.');
     }
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="كتابة ملاحظة وتوجيه جديد" maxWidth="md">
+    <Modal isOpen={isOpen} onClose={onClose} title="اكتب ملاحظة وتوجيه جديد" maxWidth="md">
       <form onSubmit={submit} className="grid gap-4">
         {formError && <p className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-bold text-red-900 dark:border-red-900 dark:bg-red-950/40 dark:text-red-100" role="alert"><AlertCircle size={18} />{formError}</p>}
-        <label className="grid gap-2 text-sm font-bold">نص الملاحظة والتوجيه *
+        <label className="grid gap-2 text-sm font-bold">اكتب الملاحظة والتوجيه *
           <textarea rows={4} required value={text} onChange={(event) => setText(event.target.value)} placeholder="اكتب التوجيه أو الملاحظة هنا بالتفصيل..." className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] p-3 leading-6" />
         </label>
         <div className="grid gap-3 md:grid-cols-2">
           <label className="grid gap-2 text-sm font-bold">اسم الكاتب
             <input value={author} onChange={(event) => setAuthor(event.target.value)} className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3" />
           </label>
-          <label className="grid gap-2 text-sm font-bold">توجيه الملاحظة إلى
+          <label className="grid gap-2 text-sm font-bold">وجّه الملاحظة لـ
             <select value={targetType} onChange={(event) => setTargetType(event.target.value as typeof targetType)} className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3">
               <option value="all">كل الفريق</option><option value="member">عضو محدد</option>
             </select>
           </label>
         </div>
-        {targetType === 'member' && <label className="grid gap-2 text-sm font-bold">العضو المستهدف<select required value={targetMemberId ?? ''} onChange={(event) => setTargetMemberId(Number(event.target.value))} className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3"><option value="">اختر عضوًا</option>{members.map((member) => <option key={member.id} value={member.id}>{member.full_name}</option>)}</select></label>}
+        {targetType === 'member' && <label className="grid gap-2 text-sm font-bold">العضو اللي هيتوجّه له<select required value={targetMemberId ?? ''} onChange={(event) => setTargetMemberId(Number(event.target.value))} className="w-full rounded-xl border border-[var(--border)] bg-[var(--bg)] px-3"><option value="">اختار عضو</option>{members.map((member) => <option key={member.id} value={member.id}>{member.full_name}</option>)}</select></label>}
         <fieldset className="grid gap-2">
-          <legend className="text-sm font-bold">نقاط البونص (اختياري — تُحتسب في الترتيب عند استهداف عضو)</legend>
+          <legend className="text-sm font-bold">نقط البونص (اختياري — بتتحسب في الترتيب لما توجّهها لعضو)</legend>
           <div className="flex flex-wrap items-center gap-1.5">
             <button type="button" onClick={() => pickPoints(0)} className={`min-h-11 px-3 rounded-xl text-sm font-black transition-colors ${points === 0 ? 'bg-[var(--primary)] text-white' : 'border border-[var(--border)] bg-[var(--bg)] hover:border-[var(--primary)]'}`}>0 — بدون</button>
             {[1, 2, 3, 4, 5].map((val) => (
@@ -89,9 +89,9 @@ export function NoteEditor({ isOpen, members, onClose }: { isOpen: boolean; memb
               <button type="button" key={`neg-${val}`} onClick={() => pickPoints(val)} className={`min-h-11 min-w-11 px-3 rounded-xl text-sm font-black transition-colors ${points === val ? 'bg-red-600 text-white' : 'border border-[var(--border)] bg-[var(--bg)] hover:border-red-400'}`}>{val}</button>
             ))}
           </div>
-          <p className="text-xs font-semibold text-[var(--text-muted)]">{points === 0 ? 'ملاحظة توثيقية بدون نقاط.' : `سيُسجَّل الوسم ${points > 0 ? `[B:+${points}]` : `[B:${points}]`} ويُحتسب في ترتيب العضو.`}</p>
+          <p className="text-xs font-semibold text-[var(--text-muted)]">{points === 0 ? 'ملاحظة للتوثيق من غير نقط.' : `الوسم ${points > 0 ? `[B:+${points}]` : `[B:${points}]`} هيتسجّل ويتحسب في ترتيب العضو.`}</p>
         </fieldset>
-        <div className="flex flex-col-reverse gap-2 border-t border-[var(--border)] pt-4 sm:flex-row sm:justify-end"><Button type="button" variant="secondary" onClick={onClose} fullOnMobile>إلغاء</Button><Button type="submit" isLoading={createNote.isPending} loadingText="جارٍ الحفظ..." fullOnMobile>حفظ الملاحظة</Button></div>
+        <div className="flex flex-col-reverse gap-2 border-t border-[var(--border)] pt-4 sm:flex-row sm:justify-end"><Button type="button" variant="secondary" onClick={onClose} fullOnMobile>إلغاء</Button><Button type="submit" isLoading={createNote.isPending} loadingText="بنحفظ..." fullOnMobile>حفظ الملاحظة</Button></div>
       </form>
     </Modal>
   );
